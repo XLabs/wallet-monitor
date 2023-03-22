@@ -1,5 +1,5 @@
 import { createWalletToolbox } from "./wallets";
-import { KnownChainNames } from "./wallets/wormhole-related-utils";
+import { KnownChainNames } from "./wallets/chains";
 
 type BalanceRequestConfig = {
   [chainName in KnownChainNames]: {

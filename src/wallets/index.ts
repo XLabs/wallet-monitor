@@ -1,10 +1,25 @@
-import { isEvmChain, isTerraChain, isSolanaChain, isChain } from '../wallets/wormhole-related-utils';
+import { isEvmChain, isTerraChain, isSolanaChain, isChain } from './chains';
 
+import { WalletToolbox } from './base-wallet';
 import { EvmWalletOptions, EvmWalletToolbox } from './evm';
-import { SolanaWalletOptions, SolanaWalletToolbox } from './solana';
-import { TerraWalletOptions, TerraWalletToolbox } from './terra';
+import { 
+  SolanaWalletOptions,
+  // SolanaWalletToolbox
+} from './solana';
+import {
+  TerraWalletOptions,
+  // TerraWalletToolbox
+} from './terra';
+
+export { WalletToolbox } from './base-wallet';
 
 export type WalletOptions = EvmWalletOptions | SolanaWalletOptions | TerraWalletOptions;
+
+export type WalletConfig = {
+  address: string;
+  tokens: string[];
+  options?: WalletOptions;
+}
 
 export function createWalletToolbox(network: string, chainName: string, wallets: WalletConfig[]): WalletToolbox {
   if (!isChain(chainName)) throw new Error('Unknown chain name ' + chainName);

@@ -1,39 +1,65 @@
+import { EventEmitter } from 'stream';
 import { createWalletToolbox, WalletToolbox, WalletConfig } from './wallets';
 
 const defaultCooldown = 60 * 1000;
 
-export class WalletMonitor {
+export type WalletMonitorOptions = {
+  network: string,
+  chainName: string,
+  cooldown: number,
+}
+
+export class WalletMonitor extends EventEmitter {
   private locked = false;
-  private interval: NodeJs.Timeout | null = null;
+  private interval: ReturnType<typeof setInterval> | null = null;
+  private options: WalletMonitorOptions;
   private wallet: WalletToolbox;
 
-  constructor(network: string, public chainName: string, private wallets: WalletConfig[], private cooldown: number) {
-    if (!cooldown) this.cooldown = defaultCooldown;
+  constructor(private wallets: WalletConfig[], options: WalletMonitorOptions) {
+    super();
+    this.validateOptions(options);
+    this.options = this.parseOptions(options);
+    this.wallet = createWalletToolbox(options.network, options.chainName, wallets);
+  }
 
-    this.wallet = createWalletToolbox(network, chainName, wallets);
+  private parseOptions(monitorOptions: WalletMonitorOptions): WalletMonitorOptions {
+    return {
+      ...monitorOptions,
+      cooldown: monitorOptions.cooldown || defaultCooldown,
+    };
+  }
+
+  private validateOptions(monitorOptions: any): monitorOptions is WalletMonitorOptions {
+    if (!monitorOptions.network) throw new Error('Missing network');
+    if (!monitorOptions.chainName) throw new Error('Missing chainName');
+    return true;
   }
 
   public async run() {
     if (this.locked) {
-      console.warn(`A monitoring run is already in progress for ${this.chainName}. Will skip run`);
+      console.warn(`A monitoring run is already in progress for ${this.options.chainName}. Will skip run`);
+      this.emit('skipped', { chainName: this.options.chainName, rawConfig: this.wallets });
       return;
     };
 
     this.locked = true;
 
     try {
-      await this.wallet.pullBalances();
+      const balances = await this.wallet.pullBalances();
+      this.emit('balances', balances);
+
     } catch (error) {
-      console.error(`Error while running monitor for ${this.chainName}. Err: ${error}`);
+      console.error(`Error while running monitor for ${this.options.chainName}. Err: ${error}`);
+      this.emit('error', error);
     }
-    
+
     this.locked = false;
   }
 
   public async start() {
     this.interval = setInterval(async () => {
       this.run();
-    }, this.cooldown);
+    }, defaultCooldown);
 
     this.run();
   }
@@ -43,24 +69,19 @@ export class WalletMonitor {
   }
 }
 
-export type ChainMonitoringArgs = {
-  chainName: string;
-  config: WalletConfig;
-  cooldown: number;
-}[];
-
-export class MultiWalletMonitor {
-  private monitors: WalletMonitor[] = [];
-
-  constructor(configs: ChainMonitoringArgs) {
-    this.monitors = configs.map(({ chainName, config, cooldown }) => new WalletMonitor(chainName, config, cooldown));
+export class PrometheusWalletMonitor extends WalletMonitor {
+  constructor(wallets: WalletConfig[], options: WalletMonitorOptions) {
+    super(wallets, options);
+    this.on('balances', (balances) => {
+      // updateWalletBalances(balances) (todo, port over this part from the existing code);
+    });
   }
 
-  public async start() {
-    this.monitors.forEach(monitor => monitor.start());
-  }
+  // public serveMetrics(port, path) {
+  //   // start koa server on port and serve metrics on path
+  // }
 
-  public stop() {
-    this.monitors.forEach(monitor => monitor.stop());
-  }
+  // public attachToServer(server, path) {
+  //   // attach metrics to the given server on the given path
+  // }
 }

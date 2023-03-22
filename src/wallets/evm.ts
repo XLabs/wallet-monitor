@@ -1,26 +1,29 @@
 import { ethers } from 'ethers';
-import { WalletToolbox, WalletConfig } from './base-wallet';
-
-import { EvmChainNames } from '../wallets/wormhole-related-utils';
+import { WalletConfig } from '.';
+import { WalletToolbox } from './base-wallet';
+import { Balance } from '../balances';
 
 export type EvmWalletOptions = {
   nodeUrl: string;
 }
 
-
 export class EvmWalletToolbox extends WalletToolbox {
-  public validateConfig(rawConfig: WalletConfig[]): void {
-    
-  }
-  
-  public async parseAddressConfig(address: string): string {
+  // private provider: ethers.providers.JsonRpcProvider;
+
+  public validateConfig(rawConfig: WalletConfig): void {
+
     
   }
 
-  public async parseTokensConfig(tokens: string[]): string[] {
+  public parseTokensConfig(tokens: string[]): string[] {
+    return ['0x0000000']
+  }
+
+  public async warmup() {
 
   }
+
   public async pull(): Promise<Balance[]> {
-
+    return [];
   }
 }
