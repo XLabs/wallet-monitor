@@ -1,8 +1,6 @@
 import { createWalletToolbox, WalletToolbox, WalletConfig } from './wallets';
 
-
-
-const defaultCooldown = 60 * 1000; // interval to wait between scraping the balances
+const defaultCooldown = 60 * 1000;
 
 export class WalletMonitor {
   private locked = false;
