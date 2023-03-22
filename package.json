@@ -1,0 +1,34 @@
+{
+  "name": "wallet-monitor",
+  "version": "0.0.1",
+  "description": "A set of utilities to monitor blockchain wallets and react to them",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xlabs/wallet-monitor.git"
+  },
+  "keywords": [
+    "blockchain",
+    "wallet",
+    "wallet-balance",
+    "monitoring",
+    "wallet-monitoring"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xlabs/wallet-monitor/issues"
+  },
+  "homepage": "https://github.com/xlabs/wallet-monitor#readme",
+  "dependencies": {
+    "@certusone/wormhole-sdk": "^0.9.11",
+    "@types/node": "^18.15.5",
+    "ethers": "^5.7.0"
+  }
+}
