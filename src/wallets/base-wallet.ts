@@ -3,14 +3,10 @@ import { WalletConfig } from './';
 import { ChainName } from './chains';
 
 // This class should be extended for each chain "type" (evm, solana, etc) that needs to be supported
-
-export interface IWalletToolbox {
-  pullBalances(): Promise<Balance[]>;
-}
 export abstract class WalletToolbox {
   private warm = false;
   protected configs: any[];
-
+  abstract validateNetwork(network: string): void;
   // throw an error if the config is invalid
   abstract validateConfig(rawConfig: WalletConfig): void;
 
@@ -19,8 +15,7 @@ export abstract class WalletToolbox {
   // Example: ["ETH", "USDC"] => ["0x00000000", "0x00000001"];
   abstract parseTokensConfig(tokens: WalletConfig["tokens"]): string[];
 
-  // warmup should:
-  // instantiate provider for the chain
+  // Should instantiate provider for the chain
   // calculate data which could be re-utilized (for example token's local addresses, symbol and decimals in evm chains)
   abstract warmup(): Promise<void>;
 
@@ -35,9 +30,10 @@ export abstract class WalletToolbox {
     protected chainName: ChainName,
     protected rawConfig: WalletConfig[],
   ) {
+    this.validateNetwork(network);
     this.configs = rawConfig.map((c) => {
       this.validateConfig(c);
-      this.parseConfig(c);
+      return this.parseConfig(c);
     });
   }
 
@@ -60,11 +56,8 @@ export abstract class WalletToolbox {
     for (const config of this.configs) {
       const { address, tokens } = config;
 
-      console.log(`Pulling balances for ${address}`);
-
       const nativeBalance = await this.pullNativeBalance(address);
       balances.push(nativeBalance);
-      console.log(`Tokens: ${tokens.join(', ')}`);
 
       if (tokens.length > 0) {
         const tokenBalances = await this.pullTokenBalances(address, tokens);

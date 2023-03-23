@@ -15,7 +15,14 @@ const EVM_RINKEBY = 'rinkeby';
 const EVM_ROPSTEN = 'ropsten';
 const EVM_GOERLI = 'goerli';
 
-const EVM_NETWORKS = [EVM_MAINNET, EVM_RINKEBY, EVM_ROPSTEN, EVM_GOERLI]
+const EVM_NETWORKS = {
+  [EVM_MAINNET]: 1,
+  [EVM_RINKEBY]: 2,
+  [EVM_ROPSTEN]: 3,
+  [EVM_GOERLI]: 4,
+};
+
+export type EvmNetworks = keyof typeof EVM_NETWORKS;
 
 const EVM_KNOWN_TOKENS = {
   "USDC": {
@@ -39,13 +46,20 @@ export class EvmWalletToolbox extends WalletToolbox {
 
   constructor(network: string, chainName: EVMChainName, wallets: WalletConfig[], options: any) {
     super(network, chainName, wallets);
+    
     if (options) this.validateOptions(options);
     this.options = options;
+    this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
   }
 
   private validateOptions(options: any): options is EvmWalletOptions {
     if (typeof options !== 'object') throw new Error(`Invalid options for chain: ${this.chainName}`);
     if (!options.nodeUrl) throw new Error(`Invalid options for chain: ${this.chainName}: Missing nodeUrl`);
+    return true;
+  }
+
+  public validateNetwork(network: string): network is EvmNetworks {
+    if (!(network in EVM_NETWORKS)) throw new Error(`Invalid network "${network}" for chain: ${this.chainName}`);
     return true;
   }
 
@@ -67,10 +81,11 @@ export class EvmWalletToolbox extends WalletToolbox {
   }
 
   public async warmup() {
-    this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
+    
   }
 
   public async pullNativeBalance(address: string): Promise<Balance> {
+    const balance = await this.provider.getBalance(address);
   
     return undefined as any as Balance;
   }
