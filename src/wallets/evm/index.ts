@@ -1,32 +1,31 @@
 import { ethers } from 'ethers';
 import { WalletConfig, WalletBalance } from '../';
 import { WalletToolbox } from '../base-wallet';
-import { EthereumNetworks, ETHEREUM_CHAIN_CONFIG, KnownEthereumTokens, ETHEREUM_NETWORKS, ETHEREUM_KNOWN_TOKENS } from './ethereum.config';
 import { pullEvmNativeBalance } from '../../balances/evm';
+
+import { EthereumNetworks, ETHEREUM_CHAIN_CONFIG, ETHEREUM } from './ethereum.config';
+import { POLYGON, POLYGON_CHAIN_CONFIG } from './polygon.config';
+import { AVALANCHE, AVALANCHE_CHAIN_CONFIG } from './avalanche.config';
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
-type KnownEvmTokens = KnownEthereumTokens // | KnownPolygonTokens | KnownAvalancheTokens;
+type EvmChainConfig = {
+  chainName: string;
+  nativeCurrencySymbol: string;
+  knownTokens: Record<string, Record<string, string>>;
+  defaultConfigs: Record<string, { nodeUrl: string }>;
+  networks: Record<string, number>;
+}
 
 type EvmWalletConfig = {
   address: string;
-  tokens: KnownEvmTokens[];
+  tokens: string[];
 }
 
-const EVM_NETWORKS = {
-  ...ETHEREUM_NETWORKS,
-  // ...POLYGON_NETWORKS,
-  // ...AVALANCHE_NETWORKS,
-};
-
-const EVM_KNOWN_TOKENS = {
-  ...ETHEREUM_KNOWN_TOKENS,
-};
-
 export const EVM_CHAINS = {
-  ethereum: ETHEREUM_CHAIN_CONFIG,
-  polygon: { nativeCurrencySymbol: 'MATIC' },
-  avalanche: { nativeCurrencySymbol: 'AVAX' },
+  [ETHEREUM]: ETHEREUM_CHAIN_CONFIG,
+  [POLYGON]: POLYGON_CHAIN_CONFIG,
+  [AVALANCHE]: AVALANCHE_CHAIN_CONFIG,
 };
 
 export type EvmWalletOptions = {
@@ -37,10 +36,10 @@ export type EvmNetworks = EthereumNetworks // | PolygonNetworks | AvalancheNetwo
 
 export type EVMChainName = keyof typeof EVM_CHAINS;
 
-console.log("building EvmWalletToolbox");
 export class EvmWalletToolbox extends WalletToolbox {
   private provider: ethers.providers.JsonRpcProvider;
   private nativeCurrencyName: string;
+  private chainConfig: EvmChainConfig;
 
   constructor (
     public network: string,
@@ -49,9 +48,17 @@ export class EvmWalletToolbox extends WalletToolbox {
     public options: EvmWalletOptions,
   ) {
     super(network, chainName, rawConfig, options);
+    this.chainConfig = EVM_CHAINS[this.chainName];
+
+    const defaultOptions = this.chainConfig.defaultConfigs[this.network];
+
+    this.options = {
+      ...defaultOptions,
+      ...options,
+    };
 
     this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
-    this.nativeCurrencyName = EVM_CHAINS[this.chainName].nativeCurrencySymbol;
+    this.nativeCurrencyName = this.chainConfig.nativeCurrencySymbol;
   }
 
   public validateChainName(chainName: string): chainName is EVMChainName {
@@ -60,11 +67,12 @@ export class EvmWalletToolbox extends WalletToolbox {
   }
 
   public validateNetwork(network: string): network is EvmNetworks {
-    if (!(network in EVM_NETWORKS)) throw new Error(`Invalid network "${network}" for chain: ${this.chainName}`);
+    if (!(network in EVM_CHAINS[this.chainName].networks)) throw new Error(`Invalid network "${network}" for chain: ${this.chainName}`);
     return true;
   }
 
   public validateOptions(options: any): options is EvmWalletOptions {
+    if (!options) return true;
     if (typeof options !== 'object') throw new Error(`Invalid options for chain: ${this.chainName}`);
     if (!options.nodeUrl) throw new Error(`Invalid options for chain: ${this.chainName}: Missing nodeUrl`);
     return true;
@@ -77,7 +85,7 @@ export class EvmWalletToolbox extends WalletToolbox {
         if (typeof token !== 'string')
           throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
         
-        if (!EVM_HEX_ADDRESS_REGEX.test(token) && !(token in EVM_KNOWN_TOKENS))
+        if (!EVM_HEX_ADDRESS_REGEX.test(token) && !(token in this.chainConfig.knownTokens[this.network]))
           throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
       });
     }
@@ -88,17 +96,17 @@ export class EvmWalletToolbox extends WalletToolbox {
   public parseTokensConfig(tokens: EvmWalletConfig["tokens"]): string[] {
     return tokens.map((token) => {
       if (EVM_HEX_ADDRESS_REGEX.test(token)) {
-        // we know for sure that network is one of EvmNetworks. Not sure why TS doesn't pick that up
-        return EVM_KNOWN_TOKENS[token][this.network as EvmNetworks];
+        return token;  
       }
-      
-      return token;
+
+      return this.chainConfig.knownTokens[this.network][token];
     });
   }
 
   public async warmup() {
-
-    
+    // TODO
+    // get and store token symbol for each token in the wallet config
+    // get and store token decimals for each token in the wallet config
   }
 
   public async pullNativeBalance(address: string): Promise<WalletBalance> {

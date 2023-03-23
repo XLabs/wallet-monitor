@@ -1,10 +1,8 @@
-import { WalletBalance, WalletOptions, WalletConfig } from ".";
+import { WalletBalance, WalletOptions, WalletConfig, ChainName } from ".";
 
-console.log("Hello, world!")
 export abstract class WalletToolbox {
   private warm = false;
   protected configs: WalletConfig[];
-  protected options: WalletOptions;
 
   abstract validateNetwork(network: string): boolean;
 
@@ -37,14 +35,8 @@ export abstract class WalletToolbox {
     options: WalletOptions,
   ) {
     this.validateNetwork(network);
-
     this.validateChainName(chainName);
-
-    if (options) {
-      this.validateOptions(options);
-    }
-
-    this.options = options;
+    this.validateOptions(options);
 
     this.configs = rawConfig.map((c) => {
       this.validateConfig(c);

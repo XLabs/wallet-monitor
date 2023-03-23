@@ -63,6 +63,7 @@ export class WalletMonitor {
 
   public async start() {
     this.interval = setInterval(async () => {
+      console.log("interval running");
       this.run();
     }, defaultCooldown);
 
