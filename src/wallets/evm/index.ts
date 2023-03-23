@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
-import { WalletConfig, WalletBalance, WalletToolbox } from '../base-wallet';
+import { WalletConfig, WalletBalance } from '../';
+import { WalletToolbox } from '../base-wallet';
 import { EthereumNetworks, ETHEREUM_CHAIN_CONFIG, KnownEthereumTokens, ETHEREUM_NETWORKS, ETHEREUM_KNOWN_TOKENS } from './ethereum.config';
 import { pullEvmNativeBalance } from '../../balances/evm';
 

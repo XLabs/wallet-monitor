@@ -1,4 +1,4 @@
-import { WalletConfig } from './wallets/base-wallet';
+import { WalletConfig } from './wallets';
 import { WalletMonitor, WalletMonitorOptions } from './wallet-monitor';
 
 export type PrometheusOptions = {};

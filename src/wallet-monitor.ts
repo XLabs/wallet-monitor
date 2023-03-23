@@ -1,6 +1,6 @@
 import { EventEmitter } from 'stream';
-import { createWalletToolbox } from './wallets';
-import { WalletToolbox, WalletConfig, WalletOptions } from './wallets/base-wallet';
+import { createWalletToolbox, WalletConfig, WalletOptions, Wallet } from './wallets';
+// import { WalletToolbox } from './wallets/base-wallet';
 
 const defaultCooldown = 60 * 1000;
 
@@ -14,7 +14,7 @@ export class WalletMonitor {
   private locked = false;
   private interval: ReturnType<typeof setInterval> | null = null;
   private options: WalletMonitorOptions;
-  private wallet: WalletToolbox;
+  private wallet: Wallet;
   private emitter = new EventEmitter();
 
   constructor(options: WalletMonitorOptions, private wallets: WalletConfig[]) {

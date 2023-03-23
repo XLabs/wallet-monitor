@@ -1,32 +1,4 @@
-import { EvmWalletOptions, EvmNetworks, EVM_CHAINS, EVMChainName } from './evm';
-import { SolanaWalletOptions, SOLANA_CHAINS, SolanaChainName } from './solana';
-
-export const KNOWN_CHAINS = {
-  ...EVM_CHAINS,
-  ...SOLANA_CHAINS,
-}
-
-export type ChainName = EVMChainName | SolanaChainName;
-export type ChainId = typeof KNOWN_CHAINS[ChainName];
-
-type AllNetworks = EvmNetworks // | SolanaNetworks
-
-export type WalletOptions = EvmWalletOptions | SolanaWalletOptions;
-
-export type WalletConfig = {
-  address: string;
-  tokens: string[];
-}
-
-export type WalletBalance = {
-  address: string,
-  isNative: boolean;
-  currencyName: string;
-  balanceAbsolute: string;
-  balanceFormatted: string;
-  // only if isNative = false.
-  currencyNativeAddres?: string;
-}
+import { WalletBalance, WalletOptions, WalletConfig } from ".";
 
 console.log("Hello, world!")
 export abstract class WalletToolbox {
@@ -34,19 +6,19 @@ export abstract class WalletToolbox {
   protected configs: WalletConfig[];
   protected options: WalletOptions;
 
-  abstract validateNetwork(network: string): network is AllNetworks;
+  abstract validateNetwork(network: string): boolean;
 
-  abstract validateChainName(chainName: string): chainName is ChainName;
+  abstract validateChainName(chainName: string): boolean;
 
-  abstract validateOptions(options: WalletOptions): boolean;
+  abstract validateOptions(options: any): boolean;
 
   // throw an error if the config is invalid
-  abstract validateConfig(rawConfig: WalletConfig): boolean;
+  abstract validateConfig(rawConfig: any): boolean;
 
   // Should parse tokens received from the user.
   // The tokens returned should be a list of token addresses used by the chain client
   // Example: ["ETH", "USDC"] => ["0x00000000", "0x00000001"];
-  abstract parseTokensConfig(tokens: WalletConfig["tokens"]): string[];
+  abstract parseTokensConfig(tokens: string[]): string[];
 
   // Should instantiate provider for the chain
   // calculate data which could be re-utilized (for example token's local addresses, symbol and decimals in evm chains)
