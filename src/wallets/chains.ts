@@ -2,17 +2,17 @@
 const EVM_CHAINS = {
   ethereum: 10_000,
   polygon: 10_001,
-  avalanche: 10_003,
+  avalanche: 10_002,
 };
 
 const SOLANA_CHAINS = {
-  solana: 20_001,
-  pythnet: 20_00,
+  solana: 20_000,
+  pythnet: 20_001,
 };
 
 const TERRA_CHAINS = {
-  terra: 30_001,
-  terra2: 30_002,
+  terra: 30_000,
+  terra2: 30_001,
 };
 
 export const KNOWN_CHAINS = {
@@ -48,3 +48,4 @@ export function isSolanaChain(chainName: ChainName): chainName is SolanaChainNam
 export function isTerraChain(chainName: ChainName): chainName is TerraChainName {
   return chainName in TERRA_CHAINS;
 };
+
