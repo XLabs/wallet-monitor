@@ -1,14 +1,47 @@
-import { Balance } from '../balances';
-import { WalletConfig } from './';
-import { ChainName } from './chains';
+import { EvmWalletOptions, EvmNetworks, EVM_CHAINS, EVMChainName } from './evm';
+import { SolanaWalletOptions, SOLANA_CHAINS, SolanaChainName } from './solana';
 
-// This class should be extended for each chain "type" (evm, solana, etc) that needs to be supported
+export const KNOWN_CHAINS = {
+  ...EVM_CHAINS,
+  ...SOLANA_CHAINS,
+}
+
+export type ChainName = EVMChainName | SolanaChainName;
+export type ChainId = typeof KNOWN_CHAINS[ChainName];
+
+type AllNetworks = EvmNetworks // | SolanaNetworks
+
+export type WalletOptions = EvmWalletOptions | SolanaWalletOptions;
+
+export type WalletConfig = {
+  address: string;
+  tokens: string[];
+}
+
+export type WalletBalance = {
+  address: string,
+  isNative: boolean;
+  currencyName: string;
+  balanceAbsolute: string;
+  balanceFormatted: string;
+  // only if isNative = false.
+  currencyNativeAddres?: string;
+}
+
+console.log("Hello, world!")
 export abstract class WalletToolbox {
   private warm = false;
-  protected configs: any[];
-  abstract validateNetwork(network: string): void;
+  protected configs: WalletConfig[];
+  protected options: WalletOptions;
+
+  abstract validateNetwork(network: string): network is AllNetworks;
+
+  abstract validateChainName(chainName: string): chainName is ChainName;
+
+  abstract validateOptions(options: WalletOptions): boolean;
+
   // throw an error if the config is invalid
-  abstract validateConfig(rawConfig: WalletConfig): void;
+  abstract validateConfig(rawConfig: WalletConfig): boolean;
 
   // Should parse tokens received from the user.
   // The tokens returned should be a list of token addresses used by the chain client
@@ -20,20 +53,33 @@ export abstract class WalletToolbox {
   abstract warmup(): Promise<void>;
 
   // Should return balances for a native address in the chain
-  abstract pullNativeBalance(address: string): Promise<Balance>;
+  abstract pullNativeBalance(address: string): Promise<WalletBalance>;
 
   // Should return balances for tokens in the list for the address specified
-  abstract pullTokenBalances(address: string, tokens: string[]): Promise<Balance[]>;
+  abstract pullTokenBalances(address: string, tokens: string[]): Promise<WalletBalance[]>;
 
   constructor(
     protected network: string,
-    protected chainName: ChainName,
+    protected chainName: string,
     protected rawConfig: WalletConfig[],
+    options: WalletOptions,
   ) {
     this.validateNetwork(network);
+
+    this.validateChainName(chainName);
+
+    if (options) {
+      this.validateOptions(options);
+    }
+
+    this.options = options;
+
     this.configs = rawConfig.map((c) => {
       this.validateConfig(c);
-      return this.parseConfig(c);
+      return {
+        address: c.address,
+        tokens: this.parseTokensConfig(c.tokens),
+      }
     });
   }
 
@@ -41,30 +87,37 @@ export abstract class WalletToolbox {
     return {
       address: config.address,
       tokens: this.parseTokensConfig(config.tokens),
-      options: config.options,
     }
   }
 
-  public async pullBalances(): Promise<Balance[]> {
+  public async pullBalances(): Promise<WalletBalance[]> {
     if (!this.warm) {
       await this.warmup();
       this.warm = true;
     }
 
-    const balances: Balance[] = [];
+    const balances: WalletBalance[] = [];
 
     for (const config of this.configs) {
       const { address, tokens } = config;
 
-      const nativeBalance = await this.pullNativeBalance(address);
-      balances.push(nativeBalance);
+      try {
+        const nativeBalance = await this.pullNativeBalance(address);
+        balances.push(nativeBalance);
+      } catch (error) {
+        console.log(`Error pulling native balance for ${address}: ${error}`);
+      }
 
-      if (tokens.length > 0) {
+      if (!tokens || tokens.length === 0) continue;
+
+      try {
         const tokenBalances = await this.pullTokenBalances(address, tokens);
         balances.push(...tokenBalances);
+      } catch (error) {
+        console.log(`Error pulling token balances for ${address}: ${error}`)
       }
     }
-    
+
     return balances;
   }
 }

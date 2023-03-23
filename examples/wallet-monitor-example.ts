@@ -1,6 +1,4 @@
-// export { WalletMonitor } from './wallet-monitor';
-
-import { WalletMonitor } from './wallet-monitor';
+import { WalletMonitor } from 'wallet-monitor';
 
 const cooldown = 1000 * 30; // 30 seconds
 
@@ -44,3 +42,4 @@ monitor.start();
 setTimeout(() => {
   monitor.stop();
 }, cooldown * 6);
+

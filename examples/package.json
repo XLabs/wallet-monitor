@@ -1,0 +1,10 @@
+{
+  "description": "A set of examples for the wallet-monitor package",
+  "scripts": {
+    "dependencies": "docker-compose up -d",
+    "wallet-monitor": "ts-node ./wallet-monitor-example.ts"
+  },
+  "dependencies": {
+    "wallet-monitor": "file:../"
+  }
+}

@@ -1,27 +1,20 @@
-import { isEvmChain, isTerraChain, isSolanaChain, isChain, EVMChainName } from './chains';
+import { WalletConfig, WalletToolbox, ChainName, KNOWN_CHAINS } from './base-wallet';
+import { EvmWalletOptions, EvmNetworks, EvmWalletToolbox, EVM_CHAINS, EVMChainName } from './evm';
+import { SolanaWalletOptions, SolanaWalletToolbox, SOLANA_CHAINS, SolanaChainName } from './solana';
 
-import { WalletToolbox } from './base-wallet';
-import { EvmWalletOptions, EvmWalletToolbox } from './evm';
-import { 
-  SolanaWalletOptions,
-  // SolanaWalletToolbox
-} from './solana';
-import {
-  TerraWalletOptions,
-  // TerraWalletToolbox
-} from './terra';
-
-export { WalletToolbox } from './base-wallet';
-
-export type WalletOptions = EvmWalletOptions | SolanaWalletOptions | TerraWalletOptions;
-
-export type WalletConfig = {
-  address: string;
-  tokens: string[];
-  options?: WalletOptions;
+export function isChain (chainName: string): chainName is ChainName {
+  return chainName in KNOWN_CHAINS;
 }
 
-export function createWalletToolbox(network: string, chainName: string, wallets: WalletConfig[], walletOptions?: WalletOptions): WalletToolbox {
+export function isEvmChain(chainName: ChainName): chainName is EVMChainName {
+  return chainName in EVM_CHAINS;
+}
+
+export function isSolanaChain(chainName: ChainName): chainName is SolanaChainName {
+  return chainName in SOLANA_CHAINS;
+}
+
+export function createWalletToolbox(network: string, chainName: string, wallets: WalletConfig[], walletOptions?: any): WalletToolbox {
   if (!isChain(chainName)) throw new Error('Unknown chain name ' + chainName);
 
   switch (true) {
@@ -34,9 +27,6 @@ export function createWalletToolbox(network: string, chainName: string, wallets:
 
     // case isSolanaChain(chainName):
     //   return new SolanaWalletToolbox(network, chainName, wallets);
-
-    // case isTerraChain(chainName):
-    //   return new TerraWalletToolbox(network, chainName, wallets);
 
     default:
       throw new Error(`Unknown chain name ${chainName}`);

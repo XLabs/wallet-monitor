@@ -1,5 +1,6 @@
 import { EventEmitter } from 'stream';
-import { createWalletToolbox, WalletToolbox, WalletConfig, WalletOptions } from './wallets';
+import { createWalletToolbox } from './wallets';
+import { WalletToolbox, WalletConfig, WalletOptions } from './wallets/base-wallet';
 
 const defaultCooldown = 60 * 1000;
 
@@ -9,15 +10,14 @@ export type WalletMonitorOptions = {
   cooldown: number,
   walletOptions?: WalletOptions,
 }
-
-export class WalletMonitor extends EventEmitter {
+export class WalletMonitor {
   private locked = false;
   private interval: ReturnType<typeof setInterval> | null = null;
   private options: WalletMonitorOptions;
   private wallet: WalletToolbox;
+  private emitter = new EventEmitter();
 
   constructor(options: WalletMonitorOptions, private wallets: WalletConfig[]) {
-    super();
     this.validateOptions(options);
     this.options = this.parseOptions(options);
     this.wallet = createWalletToolbox(options.network, options.chainName, wallets, options.walletOptions);
@@ -39,7 +39,7 @@ export class WalletMonitor extends EventEmitter {
   private async run() {
     if (this.locked) {
       console.warn(`A monitoring run is already in progress for ${this.options.chainName}. Will skip run`);
-      this.emit('skipped', { chainName: this.options.chainName, rawConfig: this.wallets });
+      this.emitter.emit('skipped', { chainName: this.options.chainName, rawConfig: this.wallets });
       return;
     };
 
@@ -47,14 +47,18 @@ export class WalletMonitor extends EventEmitter {
 
     try {
       const balances = await this.wallet.pullBalances();
-      this.emit('balances', balances);
+      this.emitter.emit('balances', balances);
 
     } catch (error) {
       console.error(`Error while running monitor for ${this.options.chainName}. Err: ${error}`);
-      this.emit('error', error);
+      this.emitter.emit('error', error);
     }
 
     this.locked = false;
+  }
+
+  public on(event: string, listener: (...args: any[]) => void) {
+    this.emitter.on(event, listener);
   }
 
   public async start() {
