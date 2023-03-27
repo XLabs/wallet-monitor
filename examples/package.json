@@ -2,7 +2,7 @@
   "description": "A set of examples for the wallet-monitor package",
   "scripts": {
     "docker": "docker-compose up -d",
-    "wallet-monitor": "ts-node ./wallet-monitor-example.ts"
+    "wallet-monitor": "ts-node ./wallet-monitor.ts"
   },
   "dependencies": {
     "wallet-monitor": "file:../",
