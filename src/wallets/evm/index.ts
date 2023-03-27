@@ -9,7 +9,6 @@ import { EthereumNetworks, ETHEREUM_CHAIN_CONFIG, ETHEREUM } from './ethereum.co
 import { POLYGON, POLYGON_CHAIN_CONFIG } from './polygon.config';
 import { AVALANCHE, AVALANCHE_CHAIN_CONFIG } from './avalanche.config';
 
-
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
 type EvmChainConfig = {
@@ -46,8 +45,6 @@ export type EvmWalletOptions = BaseWalletOptions & {
 
 export type EvmNetworks = EthereumNetworks // | PolygonNetworks | AvalancheNetworks;
 
-
-
 function getUniqueTokens(wallets: EvmWalletConfig[]): string[] {
   const tokens = wallets.reduce((acc, wallet) => {
     return [...acc, ...wallet.tokens];
@@ -72,7 +69,6 @@ export class EvmWalletToolbox extends WalletToolbox {
     super(network, chainName, rawConfig, options, logger);
     
     this.chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
-    this.logger.debug(`EVM wallet config: ${JSON.stringify(this.chainConfig)}`);
 
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
@@ -128,7 +124,6 @@ export class EvmWalletToolbox extends WalletToolbox {
   }
 
   public async warmup() {
-    this.logger.debug("warmup " + JSON.stringify(this.configs));
     const uniqueTokens = getUniqueTokens(this.configs);
 
     await mapConcurrent(uniqueTokens, async (tokenAddress) => {
@@ -160,6 +155,6 @@ export class EvmWalletToolbox extends WalletToolbox {
         balanceFormatted,
         currencyName: tokenData.symbol,
       };
-    });
+    }, this.options.tokenPollConcurrency);
   }
 }
