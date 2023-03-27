@@ -12,7 +12,7 @@ const monitor = new WalletMonitor({
   // this are 3 random public addresses I got from ether-scan
   {
     address: '0x80C67432656d59144cEFf962E8fAF8926599bCF8',
-    tokens: []
+    tokens: ['UsDc', 'DaI']
   },
   {
     address: '0x8d0d970225597085A59ADCcd7032113226C0419d',

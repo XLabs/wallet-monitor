@@ -22,7 +22,15 @@ type EvmWalletConfig = {
   tokens: string[];
 }
 
-export const EVM_CHAINS = {
+const EVM_CHAINS = {
+  [ETHEREUM]: 1,
+  [POLYGON]: 2,
+  [AVALANCHE]: 3,
+};
+
+export type EVMChainName = keyof typeof EVM_CHAINS;
+
+export const EVM_CHAIN_CONFIGS: Record<EVMChainName, EvmChainConfig> = {
   [ETHEREUM]: ETHEREUM_CHAIN_CONFIG,
   [POLYGON]: POLYGON_CHAIN_CONFIG,
   [AVALANCHE]: AVALANCHE_CHAIN_CONFIG,
@@ -35,7 +43,6 @@ export type EvmWalletOptions = BaseWalletOptions & {
 
 export type EvmNetworks = EthereumNetworks // | PolygonNetworks | AvalancheNetworks;
 
-export type EVMChainName = keyof typeof EVM_CHAINS;
 
 export class EvmWalletToolbox extends WalletToolbox {
   private provider: ethers.providers.JsonRpcProvider;
@@ -51,22 +58,24 @@ export class EvmWalletToolbox extends WalletToolbox {
   ) {
     super(network, chainName, rawConfig, options, logger);
     
-    this.chainConfig = EVM_CHAINS[this.chainName];
+    this.chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
+    this.logger.debug(`EVM wallet config: ${JSON.stringify(this.chainConfig)}`);
 
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
-
+    this.logger.debug(`EVM wallet options: ${JSON.stringify({ ...this.options, logger: undefined })}`);
+    
     this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
   }
 
   public validateChainName(chainName: string): chainName is EVMChainName {
-    if (!(chainName in EVM_CHAINS)) throw new Error(`Invalid chain name "${chainName}" for EVM wallet`);
+    if (!(chainName in EVM_CHAIN_CONFIGS)) throw new Error(`Invalid chain name "${chainName}" for EVM wallet`);
     return true;
   }
 
   public validateNetwork(network: string): network is EvmNetworks {
-    if (!(network in EVM_CHAINS[this.chainName].networks)) throw new Error(`Invalid network "${network}" for chain: ${this.chainName}`);
+    if (!(network in EVM_CHAIN_CONFIGS[this.chainName].networks)) throw new Error(`Invalid network "${network}" for chain: ${this.chainName}`);
     return true;
   }
 
@@ -79,15 +88,16 @@ export class EvmWalletToolbox extends WalletToolbox {
   public validateConfig(rawConfig: WalletConfig): rawConfig is EvmWalletConfig {
     if (!rawConfig.address) throw new Error(`Invalid config for chain: ${this.chainName}: Missing address`);
     if (rawConfig.tokens && rawConfig.tokens.length) {
+      const chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
+
       rawConfig.tokens.forEach((token) => {
         if (typeof token !== 'string')
           throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
-        
         if (
           !EVM_HEX_ADDRESS_REGEX.test(token) &&
-          !(token.toLowerCase() in this.chainConfig.knownTokens[this.network])
+          !(token.toUpperCase() in chainConfig.knownTokens[this.network])
         ) {
-          throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
+          throw new Error(`Invalid token config for chain: ${this.chainName}: Invalid token "${token}"`);
         }
       });
     }
@@ -101,7 +111,7 @@ export class EvmWalletToolbox extends WalletToolbox {
         return token;  
       }
 
-      return this.chainConfig.knownTokens[this.network][token];
+      return EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network][token];
     });
   }
 
@@ -122,6 +132,7 @@ export class EvmWalletToolbox extends WalletToolbox {
   }
 
   public async pullTokenBalances(address: string, tokens: string[]): Promise<WalletBalance[]> {
+
     return [];
   }
 }

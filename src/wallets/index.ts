@@ -1,9 +1,9 @@
-import { EvmWalletOptions, EvmWalletToolbox, EVM_CHAINS, EVMChainName, EvmNetworks } from './evm';
+import { EvmWalletOptions, EvmWalletToolbox, EVM_CHAIN_CONFIGS, EVMChainName, EvmNetworks } from './evm';
 // import { SolanaWalletOptions, SolanaWalletToolbox, SOLANA_CHAINS, SolanaChainName } from './solana';
 
 
 export const KNOWN_CHAINS = {
-  ...EVM_CHAINS,
+  ...EVM_CHAIN_CONFIGS,
   // ...SOLANA_CHAINS,
 }
 
@@ -33,7 +33,7 @@ export function isChain (chainName: string): chainName is ChainName {
 }
 
 export function isEvmChain(chainName: ChainName): chainName is EVMChainName {
-  return chainName in EVM_CHAINS;
+  return chainName in EVM_CHAIN_CONFIGS;
 }
 
 // export function isSolanaChain(chainName: ChainName): chainName is SolanaChainName {
