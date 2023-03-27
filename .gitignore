@@ -6,4 +6,4 @@ npm-debug.log
 .nyc
 .env
 .DS_Store
-
+./examples/logs/*

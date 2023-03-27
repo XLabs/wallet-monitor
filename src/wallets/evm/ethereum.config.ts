@@ -34,20 +34,25 @@ export const ETHEREUM_KNOWN_TOKENS = {
   },
 }
 
+const ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY = 10;
 // TODO:
 // Node Urls were provided by copilot, validate them
 export const ETHEREUM_DEFAULT_CONFIGS = {
   [ETHEREUM_MAINNET]: {
     nodeUrl: 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    tokenPollConcurrency: ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
   [ETHEREUM_RINKEBY]: {
     nodeUrl: 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    tokenPollConcurrency: ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
   [ETHEREUM_ROPSTEN]: {
     nodeUrl: 'https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    tokenPollConcurrency: ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
   [ETHEREUM_GOERLI]: {
     nodeUrl: 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    tokenPollConcurrency: ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
 }
 

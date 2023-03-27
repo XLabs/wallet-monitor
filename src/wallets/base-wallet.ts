@@ -1,8 +1,32 @@
-import { WalletBalance, WalletOptions, WalletConfig, ChainName } from ".";
+import { WalletBalance, WalletOptions, WalletConfig } from ".";
+
+export declare interface Logger {
+  debug: (message: string) => void;
+  info: (message: string) => void;
+  warn: (message: string) => void;
+  error: (message: string) => void;
+}
+
+export type BaseWalletOptions = {
+  logger?: Logger;
+}
+
+function isFunction (fn: any) {
+  return fn && typeof fn === 'function';
+}
+
+function isValidLogger(logger: any): logger is Logger {
+  return logger &&
+    isFunction(logger.debug) &&
+    isFunction(logger.info) &&
+    isFunction(logger.warn) &&
+    isFunction(logger.error);
+}
 
 export abstract class WalletToolbox {
   private warm = false;
   protected configs: WalletConfig[];
+  protected logger: Logger;
 
   abstract validateNetwork(network: string): boolean;
 
@@ -32,11 +56,14 @@ export abstract class WalletToolbox {
     protected network: string,
     protected chainName: string,
     protected rawConfig: WalletConfig[],
-    options: WalletOptions,
+    options?: WalletOptions,
+    logger?: Logger,
   ) {
     this.validateNetwork(network);
     this.validateChainName(chainName);
     this.validateOptions(options);
+
+    this.logger = this.getLogger(logger);
 
     this.configs = rawConfig.map((c) => {
       this.validateConfig(c);
@@ -47,15 +74,25 @@ export abstract class WalletToolbox {
     });
   }
 
+  private getLogger(logger: any): Logger {
+    if (logger && isValidLogger(logger)) return logger;
+    return console;
+  }
+
   protected parseConfig(config: WalletConfig): WalletConfig {
-    return {
+    const walletConfig = {
       address: config.address,
       tokens: this.parseTokensConfig(config.tokens),
-    }
+    };
+
+    this.logger.debug(`Parsed config: ${JSON.stringify(walletConfig)}`);
+
+    return walletConfig;
   }
 
   public async pullBalances(): Promise<WalletBalance[]> {
     if (!this.warm) {
+      this.logger.debug("Warmin up wallet toolbox...")
       await this.warmup();
       this.warm = true;
     }
@@ -64,21 +101,33 @@ export abstract class WalletToolbox {
 
     for (const config of this.configs) {
       const { address, tokens } = config;
+      
+      this.logger.info(`Pulling balances for ${address}...`);
 
       try {
         const nativeBalance = await this.pullNativeBalance(address);
         balances.push(nativeBalance);
+
+        this.logger.debug(`Balances for ${address} pulled: ${JSON.stringify(nativeBalance)}`)
       } catch (error) {
-        console.log(`Error pulling native balance for ${address}: ${error}`);
+        this.logger.error(`Error pulling native balance for ${address}: ${error}`);
       }
 
-      if (!tokens || tokens.length === 0) continue;
+      if (!tokens || tokens.length === 0) {
+        this.logger.debug(`No token balances to pull for ${address}`);
+        continue;
+      }
+
+      this.logger.debug(`Pulling tokens (${tokens.join(', ')}) for ${address}...`);      
 
       try {
         const tokenBalances = await this.pullTokenBalances(address, tokens);
+
+        this.logger.debug(`Token balances for ${address} pulled: ${JSON.stringify(tokenBalances)}`);
+
         balances.push(...tokenBalances);
       } catch (error) {
-        console.log(`Error pulling token balances for ${address}: ${error}`)
+        this.logger.error(`Error pulling token balances for ${address}: ${error}`);
       }
     }
 

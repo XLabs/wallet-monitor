@@ -1,4 +1,5 @@
 import { WalletMonitor } from 'wallet-monitor';
+import { getLogger } from './helpers';
 
 const cooldown = 1000 * 15; // 15 seconds
 
@@ -6,7 +7,7 @@ const monitor = new WalletMonitor({
   network: 'mainnet',
   chainName: 'ethereum',
   cooldown,
-//   walletOptions: { nodeUrl: 'https://mainnet.infura.io/v3/...' },
+  walletOptions: { logger: getLogger('debug') },
 }, [
   // this are 3 random public addresses I got from ether-scan
   {

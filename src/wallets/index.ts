@@ -41,7 +41,7 @@ export function isEvmChain(chainName: ChainName): chainName is EVMChainName {
 // }
 
 export function createWalletToolbox(
-  network: string, chainName: string, wallets: WalletConfig[], walletOptions?: any
+  network: string, chainName: string, wallets: WalletConfig[], walletOptions?: WalletOptions
 ): Wallet {
   if (!isChain(chainName)) throw new Error('Unknown chain name ' + chainName);
 

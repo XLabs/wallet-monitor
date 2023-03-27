@@ -7,7 +7,7 @@ const defaultCooldown = 60 * 1000;
 export type WalletMonitorOptions = {
   network: string,
   chainName: string,
-  cooldown: number,
+  cooldown?: number,
   walletOptions?: WalletOptions,
 }
 export class WalletMonitor {
@@ -23,17 +23,18 @@ export class WalletMonitor {
     this.wallet = createWalletToolbox(options.network, options.chainName, wallets, options.walletOptions);
   }
 
+  private validateOptions(monitorOptions: any): monitorOptions is WalletMonitorOptions {
+    if (!monitorOptions.network) throw new Error('Missing network option');
+    if (!monitorOptions.chainName) throw new Error('Missing chainName option');
+    if (monitorOptions.cooldown && typeof monitorOptions.cooldown !== 'number') throw new Error('Invalid cooldown option');
+    return true;
+  }
+
   private parseOptions(monitorOptions: WalletMonitorOptions): WalletMonitorOptions {
     return {
       ...monitorOptions,
       cooldown: monitorOptions.cooldown || defaultCooldown,
     };
-  }
-
-  private validateOptions(monitorOptions: any): monitorOptions is WalletMonitorOptions {
-    if (!monitorOptions.network) throw new Error('Missing network option');
-    if (!monitorOptions.chainName) throw new Error('Missing chainName option');
-    return true;
   }
 
   private async run() {
@@ -63,7 +64,6 @@ export class WalletMonitor {
 
   public async start() {
     this.interval = setInterval(async () => {
-      console.log("interval running");
       this.run();
     }, defaultCooldown);
 

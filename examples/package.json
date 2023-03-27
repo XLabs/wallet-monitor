@@ -5,9 +5,11 @@
     "wallet-monitor": "ts-node ./wallet-monitor-example.ts"
   },
   "dependencies": {
-    "wallet-monitor": "file:../"
+    "wallet-monitor": "file:../",
+    "winston": "^3.8.2"
   },
   "devDependencies": {
     "ts-node": "^10.9.1"
+    
   }
 }
