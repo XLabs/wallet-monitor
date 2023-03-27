@@ -11,7 +11,7 @@ export type BaseWalletOptions = {
   logger?: Logger;
 }
 
-function isFunction (fn: any) {
+function isFunction(fn: any) {
   return fn && typeof fn === 'function';
 }
 
@@ -92,7 +92,7 @@ export abstract class WalletToolbox {
 
   public async pullBalances(): Promise<WalletBalance[]> {
     if (!this.warm) {
-      this.logger.debug("Warmin up wallet toolbox...")
+      this.logger.debug("Warming up wallet toolbox...")
       await this.warmup();
       this.warm = true;
     }
@@ -101,7 +101,7 @@ export abstract class WalletToolbox {
 
     for (const config of this.configs) {
       const { address, tokens } = config;
-      
+
       this.logger.info(`Pulling balances for ${address}...`);
 
       try {
@@ -118,7 +118,7 @@ export abstract class WalletToolbox {
         continue;
       }
 
-      this.logger.debug(`Pulling tokens (${tokens.join(', ')}) for ${address}...`);      
+      this.logger.debug(`Pulling tokens (${tokens.join(', ')}) for ${address}...`);
 
       try {
         const tokenBalances = await this.pullTokenBalances(address, tokens);

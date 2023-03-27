@@ -1,11 +1,14 @@
 import { ethers } from 'ethers';
+
+import { mapConcurrent } from '../../utils';
 import { WalletConfig, WalletBalance } from '../';
 import { WalletToolbox, BaseWalletOptions, Logger } from '../base-wallet';
-import { pullEvmNativeBalance } from '../../balances/evm';
+import { pullEvmNativeBalance, EvmTokenData, pullEvmTokenData, pullEvmTokenBalance } from '../../balances/evm';
 
 import { EthereumNetworks, ETHEREUM_CHAIN_CONFIG, ETHEREUM } from './ethereum.config';
 import { POLYGON, POLYGON_CHAIN_CONFIG } from './polygon.config';
 import { AVALANCHE, AVALANCHE_CHAIN_CONFIG } from './avalanche.config';
+
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
@@ -44,9 +47,19 @@ export type EvmWalletOptions = BaseWalletOptions & {
 export type EvmNetworks = EthereumNetworks // | PolygonNetworks | AvalancheNetworks;
 
 
+
+function getUniqueTokens(wallets: EvmWalletConfig[]): string[] {
+  const tokens = wallets.reduce((acc, wallet) => {
+    return [...acc, ...wallet.tokens];
+  }, [] as string[]);
+
+  return [...new Set(tokens)];
+}
+
 export class EvmWalletToolbox extends WalletToolbox {
   private provider: ethers.providers.JsonRpcProvider;
   private chainConfig: EvmChainConfig;
+  private tokenData: Record<string, EvmTokenData> = {};
   public options: EvmWalletOptions;
 
   constructor (
@@ -110,29 +123,43 @@ export class EvmWalletToolbox extends WalletToolbox {
       if (EVM_HEX_ADDRESS_REGEX.test(token)) {
         return token;  
       }
-
-      return EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network][token];
+      return EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network][token.toUpperCase()];
     });
   }
 
   public async warmup() {
-    // TODO
-    // get and store token symbol for each token in the wallet config
-    // get and store token decimals for each token in the wallet config
+    this.logger.debug("warmup " + JSON.stringify(this.configs));
+    const uniqueTokens = getUniqueTokens(this.configs);
+
+    await mapConcurrent(uniqueTokens, async (tokenAddress) => {
+      this.tokenData[tokenAddress] = await pullEvmTokenData(this.provider, tokenAddress);
+    }, this.options.tokenPollConcurrency);
+
+    this.logger.debug(`EVM token data: ${JSON.stringify(this.tokenData)}`);
   }
 
   public async pullNativeBalance(address: string): Promise<WalletBalance> {
     const balance = await pullEvmNativeBalance(this.provider, address);
-
+    const balanceFormatted = ethers.utils.formatEther(balance.balanceAbsolute.toString());
     return {
       ...balance,
       address,
+      balanceFormatted,
       currencyName: this.chainConfig.nativeCurrencySymbol,
     }
   }
 
   public async pullTokenBalances(address: string, tokens: string[]): Promise<WalletBalance[]> {
-
-    return [];
+    return mapConcurrent(tokens, async (tokenAddress) => {
+      const tokenData = this.tokenData[tokenAddress];
+      const balance = await pullEvmTokenBalance(this.provider, tokenAddress, address);
+      const balanceFormatted = ethers.utils.formatUnits(balance.balanceAbsolute.toString(), tokenData.decimals);
+      return {
+        ...balance,
+        address,
+        balanceFormatted,
+        currencyName: tokenData.symbol,
+      };
+    });
   }
 }

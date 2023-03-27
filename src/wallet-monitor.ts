@@ -51,7 +51,7 @@ export class WalletMonitor {
       this.emitter.emit('balances', balances);
 
     } catch (error) {
-      console.error(`Error while running monitor for ${this.options.chainName}. Err: ${error}`);
+      console.error(`Error while running monitor for ${this.options.chainName}-${this.options.network} Err: ${error}`);
       this.emitter.emit('error', error);
     }
 
