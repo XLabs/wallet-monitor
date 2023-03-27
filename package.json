@@ -28,7 +28,10 @@
   "homepage": "https://github.com/xlabs/wallet-monitor#readme",
   "dependencies": {
     "@certusone/wormhole-sdk": "^0.9.11",
-    "@types/node": "^18.15.5",
     "ethers": "^5.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.7",
+    "typescript": "^5.0.2"
   }
 }
