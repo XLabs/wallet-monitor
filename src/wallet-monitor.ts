@@ -1,26 +1,38 @@
 import { EventEmitter } from 'stream';
+
+import { Logger } from './utils';
 import { createWalletToolbox, WalletConfig, WalletOptions, Wallet } from './wallets';
-// import { WalletToolbox } from './wallets/base-wallet';
 
 const defaultCooldown = 60 * 1000;
 
 export type WalletMonitorOptions = {
-  network: string,
-  chainName: string,
-  cooldown?: number,
-  walletOptions?: WalletOptions,
+  network: string;
+  chainName: string;
+  cooldown?: number;
+  logger?: Logger;
+  walletOptions?: WalletOptions;
 }
 export class WalletMonitor {
   private locked = false;
+  protected logger: Logger;
   private interval: ReturnType<typeof setInterval> | null = null;
   private options: WalletMonitorOptions;
-  private wallet: Wallet;
   private emitter = new EventEmitter();
+  
+  public wallet: Wallet;
 
   constructor(options: WalletMonitorOptions, private wallets: WalletConfig[]) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
-    this.wallet = createWalletToolbox(options.network, options.chainName, wallets, options.walletOptions);
+
+    this.logger = options.logger || console;
+
+    this.wallet = createWalletToolbox(
+      options.network,
+      options.chainName,
+      wallets,
+      { ...options.walletOptions, logger: this.logger },
+    );
   }
 
   private validateOptions(monitorOptions: any): monitorOptions is WalletMonitorOptions {

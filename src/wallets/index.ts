@@ -19,11 +19,11 @@ export type WalletConfig = {
 export type WalletBalance = {
   address: string,
   isNative: boolean;
-  currencyName: string;
-  balanceAbsolute: string;
-  balanceFormatted: string;
+  symbol: string;
+  rawBalance: string;
+  formattedBalance: string;
   // only if isNative = false.
-  currencyNativeAddres?: string;
+  tokenAddress?: string;
 }
 
 type AllNetworks = EvmNetworks // | SolanaNetworks

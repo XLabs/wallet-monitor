@@ -1,11 +1,6 @@
 import { WalletBalance, WalletOptions, WalletConfig } from ".";
 
-export declare interface Logger {
-  debug: (message: string) => void;
-  info: (message: string) => void;
-  warn: (message: string) => void;
-  error: (message: string) => void;
-}
+import { Logger } from '../utils';
 
 export type BaseWalletOptions = {
   logger?: Logger;
@@ -27,7 +22,7 @@ export abstract class WalletToolbox {
   private warm = false;
   protected configs: WalletConfig[];
   protected logger: Logger;
-
+  
   abstract validateNetwork(network: string): boolean;
 
   abstract validateChainName(chainName: string): boolean;
@@ -57,13 +52,13 @@ export abstract class WalletToolbox {
     protected chainName: string,
     protected rawConfig: WalletConfig[],
     options?: WalletOptions,
-    logger?: Logger,
   ) {
     this.validateNetwork(network);
     this.validateChainName(chainName);
     this.validateOptions(options);
 
-    this.logger = this.getLogger(logger);
+
+    this.logger = this.getLogger(options?.logger);
 
     this.configs = rawConfig.map((c) => {
       this.validateConfig(c);

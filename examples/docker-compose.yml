@@ -1,27 +1,6 @@
 version: '3.8'
 
 services:
-  redis:
-    image: redis
-    ports:
-      - "6379:6379"
-
-  loki:
-    image: grafana/loki:latest
-    container_name: wallet-monitor_loki
-    ports:
-      - '3100:3100'
-
-  promtail:
-    image: grafana/promtail:latest
-    container_name: wallet-monitorpromtail
-    volumes:
-      - ./logs:/logs
-      - ./dependencies/promtail-config.yaml:/etc/promtail/promtail-config.yaml
-    command: -config.file=/etc/promtail/promtail-config.yaml
-    links:
-      - loki
-
   grafana:
     image: grafana/grafana:latest
     container_name: wallet-monitor_grafana
@@ -32,8 +11,6 @@ services:
 
     volumes:
       - ./dependencies/grafana:/etc/grafana/provisioning
-    depends_on:
-      - loki
 
   prometheus:
     image: prom/prometheus

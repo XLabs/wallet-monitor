@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
 
-import { mapConcurrent } from '../../utils';
 import { WalletConfig, WalletBalance } from '../';
-import { WalletToolbox, BaseWalletOptions, Logger } from '../base-wallet';
+import { mapConcurrent, Logger } from '../../utils';
+import { WalletToolbox, BaseWalletOptions } from '../base-wallet';
 import { pullEvmNativeBalance, EvmTokenData, pullEvmTokenData, pullEvmTokenBalance } from '../../balances/evm';
 
 import { EthereumNetworks, ETHEREUM_CHAIN_CONFIG, ETHEREUM } from './ethereum.config';
@@ -64,16 +64,14 @@ export class EvmWalletToolbox extends WalletToolbox {
     public chainName: EVMChainName,
     public rawConfig: WalletConfig[],
     options?: EvmWalletOptions,
-    logger?: Logger
   ) {
-    super(network, chainName, rawConfig, options, logger);
+    super(network, chainName, rawConfig, options);
     
     this.chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
 
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
-    this.logger.debug(`EVM wallet options: ${JSON.stringify({ ...this.options, logger: undefined })}`);
     
     this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
   }
@@ -135,12 +133,12 @@ export class EvmWalletToolbox extends WalletToolbox {
 
   public async pullNativeBalance(address: string): Promise<WalletBalance> {
     const balance = await pullEvmNativeBalance(this.provider, address);
-    const balanceFormatted = ethers.utils.formatEther(balance.balanceAbsolute.toString());
+    const formattedBalance = ethers.utils.formatEther(balance.rawBalance);
     return {
       ...balance,
       address,
-      balanceFormatted,
-      currencyName: this.chainConfig.nativeCurrencySymbol,
+      formattedBalance,
+      symbol: this.chainConfig.nativeCurrencySymbol,
     }
   }
 
@@ -148,12 +146,12 @@ export class EvmWalletToolbox extends WalletToolbox {
     return mapConcurrent(tokens, async (tokenAddress) => {
       const tokenData = this.tokenData[tokenAddress];
       const balance = await pullEvmTokenBalance(this.provider, tokenAddress, address);
-      const balanceFormatted = ethers.utils.formatUnits(balance.balanceAbsolute.toString(), tokenData.decimals);
+      const formattedBalance = ethers.utils.formatUnits(balance.rawBalance, tokenData.decimals);
       return {
         ...balance,
         address,
-        balanceFormatted,
-        currencyName: tokenData.symbol,
+        formattedBalance,
+        symbol: tokenData.symbol,
       };
     }, this.options.tokenPollConcurrency);
   }

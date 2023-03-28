@@ -2,11 +2,12 @@
   "description": "A set of examples for the wallet-monitor package",
   "scripts": {
     "docker": "docker-compose up -d",
-    "wallet-monitor": "ts-node ./wallet-monitor.ts"
+    "wallet-monitor": "ts-node ./wallet-monitor.ts",
+    "prometheus-wallet-monitor": "ts-node ./prometheus-wallet-monitor.ts"
   },
   "dependencies": {
     "wallet-monitor": "file:../",
-    "winston": "^3.8.2"
+    "winston": "3.8.2"
   },
   "devDependencies": {
     "ts-node": "^10.9.1"

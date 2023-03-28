@@ -33,7 +33,7 @@ export async function pullEvmTokenBalance(
   const balance = await contract.balanceOf(address);
   return {
     isNative: false,
-    balanceAbsolute: balance.toString(),
+    rawBalance: balance.toString(),
   }
 };
 
@@ -43,11 +43,9 @@ export async function pullEvmNativeBalance(
 ): Promise<Balance>{
   const weiAmount = await provider.getBalance(address);
   
-
   return {
     isNative: true,
-    balanceAbsolute: weiAmount.toString(),
-    
+    rawBalance: weiAmount.toString(),
   }
 }
 
