@@ -114,7 +114,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
         isNative: false,
         rawBalance: tokenBalance.toString(),
         address,
-        formattedBalance: (tokenBalance / tokenData.decimals).toString(),
+        formattedBalance: (tokenBalance / 10**tokenData.decimals).toString(),
         symbol: 'unknown',
       }
     })
