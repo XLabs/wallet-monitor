@@ -1,5 +1,5 @@
 {
-  "name": "wallet-monitor",
+  "name": "@xlabs-xyz/wallet-monitor",
   "version": "0.0.1",
   "description": "A set of utilities to monitor blockchain wallets and react to them",
   "main": "lib/index.js",
@@ -18,7 +18,17 @@
     "wallet",
     "wallet-balance",
     "monitoring",
-    "wallet-monitoring"
+    "wallet-monitoring",
+    "wallet scraping",
+    "wallet-scraping",
+    "wallet exporter",
+    "wallet-exporter",
+    "wallet monitoring",
+    "wallet balance exporter",
+    "wallet balance export",
+    "wallet balance scrape",
+    "wallet balance monitor",
+    "wallet balance monitoring"
   ],
   "author": "",
   "license": "MIT",

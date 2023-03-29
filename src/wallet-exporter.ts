@@ -1,28 +1,33 @@
 import Koa from 'koa';
 import Router from 'koa-router';
 
-import { Gauge, register } from 'prom-client';
+import { Gauge, Registry } from 'prom-client';
 
 import { WalletConfig, WalletBalance } from './wallets';
-import { WalletMonitor, WalletMonitorOptions } from './wallet-monitor';
+import { WalletWatcher, WalletMonitorOptions } from './wallet-watcher';
 
 export type PrometheusOptions = {
+  registry?: Registry;
   gaugeName?: string,
 };
 
-export class PrometheusWalletMonitor extends WalletMonitor {
+export class WalletExporter extends WalletWatcher {
   private gauge: Gauge;
   public app?: Koa;
+  protected registry: Registry;
+
   constructor(options: WalletMonitorOptions, wallets: WalletConfig[], promOpts: PrometheusOptions = {}) {
     super(options, wallets);
 
     this.validatePrometheusOptions(promOpts);
+    this.registry = promOpts.registry || new Registry();
 
     const gaugeName = promOpts.gaugeName || 'wallet_monitor_balances';
     this.gauge = new Gauge({
       name: gaugeName,
       help: "Balances pulled for each configured wallet",
       labelNames: ["chain_name", "network", "symbol", "is_native", "token_address", "wallet_address"],
+      registers: [this.registry],
     });
 
     this.on('balances', (balances) => {
@@ -47,8 +52,8 @@ export class PrometheusWalletMonitor extends WalletMonitor {
     });
   }
 
-  public getMetricsToServe() {
-    return register.metrics();
+  public metrics() {
+    return this.registry.metrics();
   }
 
   public startMetricsServer(port: number = 3001, path: string = '/metrics'): Promise<void> {
@@ -56,8 +61,7 @@ export class PrometheusWalletMonitor extends WalletMonitor {
     const router = new Router();
 
     router.get(path, async (ctx: Koa.Context) => {
-      this.logger.debug('Serving Prometheus metrics: OK');
-      ctx.body = await this.getMetricsToServe();
+      ctx.body = await this.metrics();
       this.logger.debug('Prometheus metrics served: OK');
     });
 

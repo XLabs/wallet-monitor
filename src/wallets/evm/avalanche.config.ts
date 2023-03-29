@@ -1,3 +1,4 @@
+const AVALANCHE_MAINNET = 'mainnet';
 
 export const AVALANCHE = 'avalanche';
 
@@ -14,5 +15,6 @@ export const AVALANCHE_CHAIN_CONFIG = {
   nativeCurrencySymbol: 'avax',
   knownTokens: AVALANCHE_KNOWN_TOKENS,
   networks: AVALANCHE_NETWORKS,
-  defaultConfigs: {}
+  defaultConfigs: {},
+  defaultNetwork: AVALANCHE_MAINNET,
 };

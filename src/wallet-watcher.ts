@@ -12,7 +12,8 @@ export type WalletMonitorOptions = {
   logger?: Logger;
   walletOptions?: WalletOptions;
 }
-export class WalletMonitor {
+
+export class WalletWatcher {
   private locked = false;
   protected logger: Logger;
   private interval: ReturnType<typeof setInterval> | null = null;

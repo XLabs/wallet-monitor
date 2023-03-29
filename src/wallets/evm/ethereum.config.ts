@@ -62,6 +62,7 @@ export const ETHEREUM_CHAIN_CONFIG = {
   knownTokens: ETHEREUM_KNOWN_TOKENS,
   defaultConfigs: ETHEREUM_DEFAULT_CONFIGS,
   nativeCurrencySymbol: ETHEREUM_CURRENCY_SYMBOL,
+  defaultNetwork: ETHEREUM_MAINNET
 }
 
 export type EthereumNetworks = keyof typeof ETHEREUM_NETWORKS;
