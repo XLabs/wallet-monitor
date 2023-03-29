@@ -125,8 +125,6 @@ export class EvmWalletToolbox extends WalletToolbox {
 
   public async warmup() {
     const uniqueTokens = getUniqueTokens(this.configs);
-    this.logger.debug(`${JSON.stringify(this.configs)}`);
-
 
     await mapConcurrent(uniqueTokens, async (tokenAddress) => {
       this.tokenData[tokenAddress] = await pullEvmTokenData(this.provider, tokenAddress);
