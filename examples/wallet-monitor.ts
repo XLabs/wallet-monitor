@@ -1,7 +1,7 @@
 import { WalletMonitor } from 'wallet-monitor';
 
 
-const monitor = new WalletMonitor({
+const ethMonitor = new WalletMonitor({
   network: 'mainnet',
   chainName: 'ethereum',
   // cooldown is optional. Defaults to 60 seconds.
@@ -41,27 +41,30 @@ const monitor = new WalletMonitor({
   }
 ]);
 
+const solanaMonitor = new WalletMonitor({
+    network: `mainnet-beta`,
+    chainName: 'solana',
+  }, [
+    {
+      // Random address taken from solana explorer
+      address: "6VnfVsLdLwNuuCmooLTziQ99PFXZ5vc3yyqyb9tMDhhw",
+      tokens: ["usdc"]
+    }
+  ]
+)
 
-monitor.on('balances', (balances) => {
-  // Do what you need with your balances
-  console.log("Received Balances:", balances);
-});
+const monitors = [ethMonitor, solanaMonitor]
 
-
-monitor.on('error', (error) => {
-  // one of the polling runs failed. The monitor will poll again after "cooldown" time
-  console.error("Error:", error);
-});
-
-monitor.on('skipped', (skipped) => {
-  // a polling run was skipped because the previous one was still running
-  console.warn(skipped);
-});
-
-
-monitor.start();
-
-
-setTimeout(() => {
-  monitor.stop();
-}, cooldown * 6);
+monitors.forEach((monitor) => {
+  monitor.on('balances', (balances) => {
+    console.log("Received Balances:", balances);
+  })
+  monitor.on('error', (error) => {
+    console.error("Error:", error);
+  })
+  monitor.on('skipped', (skipped) => {
+    console.error("Skipped:", skipped);
+  })
+  monitor.start();
+  setTimeout(monitor.stop, 5 * 60 * 1000)
+})

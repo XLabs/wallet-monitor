@@ -4,6 +4,8 @@ import {PYTHNET, PYTHNET_CHAIN_CONFIG} from "./pythnet.config";
 import {BaseWalletOptions, WalletToolbox} from "../base-wallet";
 import {WalletBalance, WalletConfig, WalletOptions} from "../index";
 import {pullSolanaNativeBalance} from "../../balances/solana";
+import {getMint, Mint, TOKEN_PROGRAM_ID} from "@solana/spl-token";
+import {mapConcurrent} from "../../utils";
 
 
 type SolanaChainConfig = {
@@ -41,6 +43,7 @@ export type SolanaWalletOptions = BaseWalletOptions & {
 export class SolanaWalletToolbox extends WalletToolbox {
   private chainConfig: SolanaChainConfig;
   public options: SolanaWalletOptions;
+  private tokenData: Record<string, Mint> = {};
   private connection: Connection;
 
   constructor(
@@ -64,13 +67,12 @@ export class SolanaWalletToolbox extends WalletToolbox {
   }
 
   parseTokensConfig(tokens: SolanaWalletConfig['tokens']): string[] {
-    // TODO: Figure out if this function is called after already validating that the tokens are admissible (i.e.: on curve)
-    //  because if so, we could just lookup into knownTokens and if not found return the string.
-    //  No need to validate twice.
     return tokens.map((token) => {
-      if (PublicKey.isOnCurve(token))
-        return token;
-      return SOLANA_CHAIN_CONFIGS[this.chainName].knownTokens[this.network][token.toUpperCase()];
+      const knownTokens = SOLANA_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
+      if (token.toUpperCase() in knownTokens)
+        return knownTokens[token.toUpperCase()];
+      else
+        return token
     });
   }
 
@@ -87,7 +89,35 @@ export class SolanaWalletToolbox extends WalletToolbox {
   }
 
   async pullTokenBalances(address: string, tokens: string[]): Promise<WalletBalance[]> {
-    return Promise.resolve([]);
+    // Because one user account could be the owner of multiple token accounts with the same mint account,
+    //  we need to aggregate data and sum over the distinct mint accounts.
+    const tokenBalances = await this.connection.getParsedTokenAccountsByOwner(
+      new PublicKey(address),
+      { programId: TOKEN_PROGRAM_ID }
+    )
+
+    // decimals field of the map value doesn't change each time, but we still put it there for convenience.
+    const tokenBalancesDistinct: Map<string, number> = new Map()
+    tokenBalances.value.forEach((tokenAccount) => {
+      const mintAccount = tokenAccount.account.data.parsed.info.mint
+      const tokenAccountBalance = tokenAccount.account.data.parsed.info.tokenAmount.amount
+      tokenBalancesDistinct.set(mintAccount, (tokenBalancesDistinct.get(mintAccount) ?? 0) + tokenAccountBalance)
+    })
+
+    // Assuming that tokens[] is actually an array of mint account addresses.
+    return tokens.map((token) => {
+      const tokenData = this.tokenData[token];
+
+      // We are choosing to show a balance of 0 for a token that is not owned by the address.
+      const tokenBalance = tokenBalancesDistinct.get(token) ?? 0;
+      return {
+        isNative: false,
+        rawBalance: tokenBalance.toString(),
+        address,
+        formattedBalance: (tokenBalance / tokenData.decimals).toString(),
+        symbol: 'unknown',
+      }
+    })
   }
 
   validateChainName(chainName: string): chainName is SolanaChainName {
@@ -103,10 +133,15 @@ export class SolanaWalletToolbox extends WalletToolbox {
       rawConfig.tokens.forEach((token: any) => {
         if (typeof token !== 'string')
           throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
-        if (
-          PublicKey.isOnCurve(new PublicKey(token)) &&
-          !(token.toUpperCase() in chainConfig.knownTokens[this.network])
-        ) {
+        let admissibleAddress: boolean
+        try {
+          new PublicKey(token)
+          admissibleAddress = true
+        } catch (e) {
+          admissibleAddress = false
+        }
+        if (!(token.toUpperCase() in chainConfig.knownTokens[this.network]) &&
+        !admissibleAddress) {
           throw new Error(`Invalid token config for chain: ${this.chainName}: Invalid token "${token}"`);
         }
       })
@@ -124,6 +159,14 @@ export class SolanaWalletToolbox extends WalletToolbox {
     return false;
   }
 
-  async warmup() {}
-
+  async warmup() {
+    // 1. Get all distinct tokens among all addresses.
+    const distinctTokens = [...new Set(this.configs.flatMap(({address, tokens}) => {
+      return tokens
+    }))]
+    // 2. gather information about that mint with mapConcurrent().
+    await mapConcurrent(distinctTokens, async (token) => {
+      this.tokenData[token] = await getMint(this.connection, new PublicKey(token))
+    })
+  }
 }

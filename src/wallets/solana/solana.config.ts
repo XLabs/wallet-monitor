@@ -1,4 +1,4 @@
-const SOLANA_MAINNET = 'mainnet';
+const SOLANA_MAINNET = 'mainnet-beta';
 const SOLANA_DEVTNET = 'devnet';
 const SOLANA_CURRENCY_SYMBOL = 'SOL';
 
@@ -11,7 +11,9 @@ export const SOLANA_NETWORKS = {
 
 export const SOLANA_KNOWN_TOKENS = {
   // TBD
-  [SOLANA_MAINNET]: {},
+  [SOLANA_MAINNET]: {
+    "USDC": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+  },
   [SOLANA_DEVTNET]: {},
 }
 
