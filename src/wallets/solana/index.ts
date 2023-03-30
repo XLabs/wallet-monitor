@@ -171,6 +171,6 @@ export class SolanaWalletToolbox extends WalletToolbox {
     // 2. gather information about that mint with mapConcurrent().
     await mapConcurrent(distinctTokens, async (token) => {
       this.tokenData[token] = await getMint(this.connection, new PublicKey(token))
-    })
+    }, this.options.tokenPollConcurrency)
   }
 }
