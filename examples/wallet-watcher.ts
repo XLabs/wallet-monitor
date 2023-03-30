@@ -11,7 +11,7 @@ const ethMonitor = new WalletWatcher({
   // cooldown: 100* 15,
 
   // logger is optional. You can pass a logger if you are interested in getting logs from the monitor
-  logger: console,
+  // logger: console,
 
   // Wallet options are optional.
   // The options available depend on the blockchain type you are monitoring (evm, solana, algo, etc...)

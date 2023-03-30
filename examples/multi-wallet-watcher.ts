@@ -22,6 +22,11 @@ const watcher = new MultiWalletWatcher({
       "0x8d0d970225597085A59ADCcd7032113226C0419d": ["usdc"],
       "0xBd8eDBCad57b5197373309954DD959fCCa40d183": ["Usdc", "Dai"]
     }
+  },
+  solana: {
+    addresses: {
+      '6VnfVsLdLwNuuCmooLTziQ99PFXZ5vc3yyqyb9tMDhhw': ['usdc']
+    }
   }
 }, options);
 
