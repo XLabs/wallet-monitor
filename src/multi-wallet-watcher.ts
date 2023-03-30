@@ -50,7 +50,7 @@ export class MultiWalletWatcher {
         this.balances[chainName][address] = [];
       };
 
-      const chainWatcher = new WalletWatcher({ chainName, network }, wallets);
+      const chainWatcher = new WalletWatcher({ chainName, network, logger: this.logger }, wallets);
 
       chainWatcher.on('error', (...args: any[]) => {
         this.emitter.emit('error', ...args);
