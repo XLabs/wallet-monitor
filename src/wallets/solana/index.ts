@@ -107,6 +107,10 @@ export class SolanaWalletToolbox extends WalletToolbox {
     // Assuming that tokens[] is actually an array of mint account addresses.
     return tokens.map((token) => {
       const tokenData = this.tokenData[token];
+      const tokenKnownInfo = Object
+        .entries(this.chainConfig.knownTokens[this.network])
+        .find(([_,value]) => value === token)
+      const tokenKnownSymbol = tokenKnownInfo ? tokenKnownInfo[0] : undefined
 
       // We are choosing to show a balance of 0 for a token that is not owned by the address.
       const tokenBalance = tokenBalancesDistinct.get(token) ?? 0;
@@ -115,7 +119,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
         rawBalance: tokenBalance.toString(),
         address,
         formattedBalance: (tokenBalance / 10**tokenData.decimals).toString(),
-        symbol: 'unknown',
+        symbol: tokenKnownSymbol ?? 'unknown',
       }
     })
   }
