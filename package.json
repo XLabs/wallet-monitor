@@ -1,0 +1,54 @@
+{
+  "name": "@xlabs-xyz/wallet-monitor",
+  "version": "0.0.1",
+  "description": "A set of utilities to monitor blockchain wallets and react to them",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xlabs/wallet-monitor.git"
+  },
+  "keywords": [
+    "blockchain",
+    "wallet",
+    "wallet-balance",
+    "monitoring",
+    "wallet-monitoring",
+    "wallet scraping",
+    "wallet-scraping",
+    "wallet exporter",
+    "wallet-exporter",
+    "wallet monitoring",
+    "wallet balance exporter",
+    "wallet balance export",
+    "wallet balance scrape",
+    "wallet balance monitor",
+    "wallet balance monitoring"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xlabs/wallet-monitor/issues"
+  },
+  "homepage": "https://github.com/xlabs/wallet-monitor#readme",
+  "dependencies": {
+    "@certusone/wormhole-sdk": "^0.9.11",
+    "bluebird": "^3.7.2",
+    "ethers": "^5.7.0",
+    "koa": "^2.14.1",
+    "koa-router": "^12.0.0",
+    "prom-client": "^14.2.0"
+  },
+  "devDependencies": {
+    "@types/bluebird": "^3.5.38",
+    "@types/koa": "^2.13.6",
+    "@types/koa-router": "^7.4.4",
+    "@types/node": "^18.15.7",
+    "typescript": "^5.0.2"
+  }
+}
