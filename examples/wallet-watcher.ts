@@ -1,9 +1,9 @@
 import { WalletWatcher } from 'wallet-monitor';
 
 // If some configuration is not correct, WalletMonitor will throw an error inmediately, even if it
-// wasn't started yet. If the monitor was instantiated correctly, you can be sure that it has all 
+// wasn't started yet. If the monitor was instantiated correctly, you can be sure that it has all
 // necessary configuration to run, including valid addresses and tokens.
-const monitor = new WalletWatcher({
+const ethMonitor = new WalletWatcher({
   network: 'mainnet',
   chainName: 'ethereum',
   // cooldown is optional. Defaults to 60 seconds.
@@ -11,7 +11,7 @@ const monitor = new WalletWatcher({
   // cooldown: 100* 15,
 
   // logger is optional. You can pass a logger if you are interested in getting logs from the monitor
-  logger: console,
+  // logger: console,
 
   // Wallet options are optional.
   // The options available depend on the blockchain type you are monitoring (evm, solana, algo, etc...)
@@ -41,27 +41,36 @@ const monitor = new WalletWatcher({
   },
   {
     address: '0xBd8eDBCad57b5197373309954DD959fCCa40d183',
-    
+
     // the token names are case insensitive
     tokens: ['Usdc', 'Dai']
   }
 ]);
 
-// This event will be called each time balances are received for the wallets
-monitor.on('balances', (balances) => {
-  // Do what you need with your balances
-  console.log("Received Balances:", balances);
-});
+const solanaMonitor = new WalletWatcher({
+    network: `mainnet-beta`,
+    chainName: 'solana',
+  }, [
+    {
+      // Random address taken from solana explorer
+      address: "6VnfVsLdLwNuuCmooLTziQ99PFXZ5vc3yyqyb9tMDhhw",
+      tokens: ["usdc"]
+    }
+  ]
+)
 
-// This event will be called in case an error arrises in the polling process
-// The monitor will automatically poll again after "cooldown" time
-monitor.on('error', (error) => {
-  console.error("Error:", error);
-});
+const monitors = [ethMonitor, solanaMonitor]
 
-// A polling run was skipped because the previous one was still running
-monitor.on('skipped', (skipped) => { 
-  console.warn(skipped);
-});
-
-monitor.start();
+monitors.forEach((monitor) => {
+  monitor.on('balances', (balances) => {
+    console.log("Received Balances:", balances);
+  })
+  monitor.on('error', (error) => {
+    console.error("Error:", error);
+  })
+  monitor.on('skipped', (skipped) => {
+    console.error("Skipped:", skipped);
+  })
+  monitor.start();
+  setTimeout(monitor.stop, 5 * 60 * 1000)
+})

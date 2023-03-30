@@ -94,12 +94,12 @@ export class EvmWalletToolbox extends WalletToolbox {
     return true;
   }
 
-  public validateConfig(rawConfig: WalletConfig): rawConfig is EvmWalletConfig {
+  public validateConfig(rawConfig: any): rawConfig is EvmWalletConfig {
     if (!rawConfig.address) throw new Error(`Invalid config for chain: ${this.chainName}: Missing address`);
     if (rawConfig.tokens && rawConfig.tokens.length) {
       const chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
 
-      rawConfig.tokens.forEach((token) => {
+      rawConfig.tokens.forEach((token: any) => {
         if (typeof token !== 'string')
           throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
         if (
