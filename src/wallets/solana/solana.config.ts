@@ -33,6 +33,7 @@ export const SOLANA_DEFAULT_CONFIGS = {
 export const SOLANA_CHAIN_CONFIG = {
   chainName: SOLANA,
   networks: SOLANA_NETWORKS,
+  defaultNetwork: SOLANA_MAINNET,
   knownTokens: SOLANA_KNOWN_TOKENS,
   defaultConfigs: SOLANA_DEFAULT_CONFIGS,
   nativeCurrencySymbol: SOLANA_CURRENCY_SYMBOL,

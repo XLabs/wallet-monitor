@@ -14,6 +14,7 @@ type SolanaChainConfig = {
   knownTokens: Record<string, Record<string, string>>;
   defaultConfigs: Record<string, { nodeUrl: string }>;
   networks: Record<string, number>;
+  defaultNetwork: string;
 }
 
 type SolanaWalletConfig = {
@@ -47,9 +48,9 @@ export class SolanaWalletToolbox extends WalletToolbox {
   private connection: Connection;
 
   constructor(
-    protected network: string,
-    protected chainName: SolanaChainName,
-    protected rawConfig: WalletConfig[],
+    public network: string,
+    public chainName: SolanaChainName,
+    public rawConfig: WalletConfig[],
     options?: WalletOptions,
   ) {
     super(network, chainName, rawConfig, options);
