@@ -47,7 +47,7 @@ const ethMonitor = new WalletWatcher({
   }
 ]);
 
-const solanaMonitor = new WalletMonitor({
+const solanaMonitor = new WalletWatcher({
     network: `mainnet-beta`,
     chainName: 'solana',
   }, [
