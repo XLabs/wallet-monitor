@@ -1,6 +1,6 @@
 import { EventEmitter } from 'stream';
 
-import { Logger } from './utils';
+import { getSilentLogger, Logger } from './utils';
 import { createWalletToolbox, WalletConfig, WalletOptions, Wallet } from './wallets';
 
 const defaultCooldown = 60 * 1000;
@@ -26,7 +26,7 @@ export class WalletWatcher {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
 
-    this.logger = options.logger || console;
+    this.logger = options.logger || getSilentLogger();
 
     this.wallet = createWalletToolbox(
       options.network,

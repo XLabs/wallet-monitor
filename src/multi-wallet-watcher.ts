@@ -1,6 +1,6 @@
 import { EventEmitter } from 'stream';
 
-import { Logger } from './utils';
+import { getSilentLogger, Logger } from './utils';
 import { WalletWatcher } from "./wallet-watcher";
 import { ChainName, isChain, KNOWN_CHAINS, WalletBalance } from './wallets';
 
@@ -21,7 +21,7 @@ export type Balances = Record<ChainName, WalletBalancesByAddress>;
 
 
 export type MultiWalletWatcherOptions = {
-  logger: Logger;
+  logger?: Logger;
 };
 function getDefaultNetwork(chainName: ChainName) {
   return KNOWN_CHAINS[chainName].defaultNetwork;
@@ -34,7 +34,7 @@ export class MultiWalletWatcher {
   protected logger: Logger; 
 
   constructor(rawConfig: MultiWalletWatcherConfig, options?: MultiWalletWatcherOptions) {
-    this.logger = options?.logger || console;
+    this.logger = options?.logger || getSilentLogger();
     this.balances = {} as Balances;
     this.watchers = [] as WalletWatcher[];
     

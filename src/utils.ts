@@ -10,3 +10,12 @@ export declare interface Logger {
   warn: (message: string) => void;
   error: (message: string) => void;
 }
+
+export function getSilentLogger () {
+  return {
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+  };
+}
