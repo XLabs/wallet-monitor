@@ -11,6 +11,42 @@ export type PrometheusOptions = {
   gaugeName?: string,
 };
 
+export function updateExporterGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance) {
+  const { symbol, isNative, tokenAddress, address } = balance;
+  gauge
+    .labels(chainName, network, symbol, isNative.toString(), tokenAddress || '', address)
+    .set(parseFloat(balance.formattedBalance));
+}
+
+export function createExporterGauge (registry: Registry, gaugeName: string) {
+  return new Gauge({
+    name: gaugeName,
+    help: "Balances pulled for each configured wallet",
+    labelNames: ["chain_name", "network", "symbol", "is_native", "token_address", "wallet_address"],
+    registers: [registry],
+  });
+}
+
+export function startMetricsServer (
+  port: number, path: string, getMetrics: () => Promise<string>
+): Promise<Koa> {
+  const app = new Koa();
+  const router = new Router();
+
+  router.get(path, async (ctx: Koa.Context) => {
+    ctx.body = await getMetrics();
+  });
+
+  app.use(router.routes());
+  app.use(router.allowedMethods());
+
+  return new Promise(resolve => {
+    app.listen(port, () => {
+      resolve(app);
+    })
+  });
+}
+
 export class WalletExporter extends WalletWatcher {
   private gauge: Gauge;
   public app?: Koa;
@@ -22,16 +58,15 @@ export class WalletExporter extends WalletWatcher {
     this.validatePrometheusOptions(promOpts);
     this.registry = promOpts.registry || new Registry();
 
-    const gaugeName = promOpts.gaugeName || 'wallet_monitor_balances';
-    this.gauge = new Gauge({
-      name: gaugeName,
-      help: "Balances pulled for each configured wallet",
-      labelNames: ["chain_name", "network", "symbol", "is_native", "token_address", "wallet_address"],
-      registers: [this.registry],
-    });
+    this.gauge = createExporterGauge(
+      this.registry,
+      promOpts.gaugeName || 'wallet_monitor_balance'
+    );
 
     this.on('balances', (balances) => {
-      this.updateWalletBalances(this.wallet.chainName, this.wallet.network, balances);
+      balances.forEach((balance: WalletBalance) => {
+        updateExporterGauge(this.gauge, this.wallet.chainName, this.wallet.network, balance);
+      });
     });
   }
 
@@ -43,39 +78,23 @@ export class WalletExporter extends WalletWatcher {
     return true;
   };
 
-  private updateWalletBalances(chainName: string, network: string, balances: WalletBalance[]) {
-    balances.forEach((balance) => {
-      const { symbol, isNative, tokenAddress, address } = balance;
-      this.gauge
-        .labels(chainName, network, symbol, isNative.toString(), tokenAddress || '', address)
-        .set(parseFloat(balance.formattedBalance));
-    });
-  }
-
   public metrics() {
     return this.registry.metrics();
   }
 
-  public startMetricsServer(port: number = 3001, path: string = '/metrics'): Promise<void> {
-    const app = new Koa();
-    const router = new Router();
-
-    router.get(path, async (ctx: Koa.Context) => {
-      ctx.body = await this.metrics();
+  public async startMetricsServer(port: number = 3001, path: string = '/metrics'): Promise<void> {
+    this.app = await startMetricsServer(port, path, async () => {
+      const metrics = await this.metrics()
       this.logger.debug('Prometheus metrics served: OK');
+      return metrics;
     });
 
-    app.use(router.routes());
-    app.use(router.allowedMethods());
+    this.logger.info(`Wallet Monitor Prometheus server listening on :${port}${path}`);
+    
+    this.start();
+  }
 
-    this.app = app;
-
-    return new Promise(resolve => {
-      this.logger.info(`Wallet Monitor Prometheus server listening on :${port}${path}`);
-      app.listen(port, () => {
-        this.start();
-        resolve();
-      })
-    });
+  public getRegistry() {
+    return this.registry;
   }
 }

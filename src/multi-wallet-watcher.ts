@@ -10,7 +10,7 @@ export type WalletWatcherChainConfig = {
   addresses: Record<string, string[]>;
 }
 
-type WalletBalancesByAddress = Record<string, WalletBalance[]>;
+export type WalletBalancesByAddress = Record<string, WalletBalance[]>;
 
 export type MultiWalletWatcherConfig = Record<string, WalletWatcherChainConfig>;
 
@@ -60,7 +60,7 @@ export class MultiWalletWatcher {
         const mappedBalances = this.mapBalances(balances);
         const lastBalance = this.balances[chainName];
         this.balances[chainName] = mappedBalances;
-        this.emitter.emit('balances', chainName, mappedBalances, lastBalance);
+        this.emitter.emit('balances', chainName, network, mappedBalances, lastBalance);
       });
 
       this.watchers.push(chainWatcher);
