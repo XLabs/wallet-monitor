@@ -12,11 +12,13 @@ import { AVALANCHE, AVALANCHE_CHAIN_CONFIG } from './avalanche.config';
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
 type EvmChainConfig = {
+  // TODO: most of this properties should actually be in a BaseChainConfig type
   chainName: string;
   nativeCurrencySymbol: string;
   knownTokens: Record<string, Record<string, string>>;
   defaultConfigs: Record<string, { nodeUrl: string }>;
   networks: Record<string, number>;
+  defaultNetwork: string;
 }
 
 type EvmWalletConfig = {

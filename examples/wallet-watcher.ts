@@ -1,7 +1,9 @@
-import { WalletMonitor } from 'wallet-monitor';
+import { WalletWatcher } from 'wallet-monitor';
 
-
-const ethMonitor = new WalletMonitor({
+// If some configuration is not correct, WalletMonitor will throw an error inmediately, even if it
+// wasn't started yet. If the monitor was instantiated correctly, you can be sure that it has all
+// necessary configuration to run, including valid addresses and tokens.
+const ethMonitor = new WalletWatcher({
   network: 'mainnet',
   chainName: 'ethereum',
   // cooldown is optional. Defaults to 60 seconds.
@@ -9,14 +11,16 @@ const ethMonitor = new WalletMonitor({
   // cooldown: 100* 15,
 
   // logger is optional. You can pass a logger if you are interested in getting logs from the monitor
-  // logger: console,
+  logger: console,
 
   // Wallet options are optional.
   // The options available depend on the blockchain type you are monitoring (evm, solana, algo, etc...)
   // the options for each type of chain are defined in wallets/<chain-type>/index.ts
   // the all can share a basic set of options defined in wallets/base-wallet.ts
-  
-  // walletOptions: {},
+  walletOptions: {
+    // nodeUrl: 'https://eth.llamarpc.com',
+    // tokenPollConcurrency: 1,
+  },
 }, [
   {
     // This is the public native address of the wallet you want to monitor
@@ -31,11 +35,13 @@ const ethMonitor = new WalletMonitor({
   },
   {
     address: '0x8d0d970225597085A59ADCcd7032113226C0419d',
+
     // for tokens not supported you can add the token address instead:
-    tokens: ['0x5592ec0cfb4dbc12d3ab100b257153436a1f0fea']
+    tokens: ['usdc']
   },
   {
     address: '0xBd8eDBCad57b5197373309954DD959fCCa40d183',
+
     // the token names are case insensitive
     tokens: ['Usdc', 'Dai']
   }

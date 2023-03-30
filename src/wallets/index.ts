@@ -28,7 +28,7 @@ export type WalletBalance = {
   tokenAddress?: string;
 }
 
-type AllNetworks = EvmNetworks | SolanaNetworks
+export type AllNetworks = EvmNetworks | SolanaNetworks
 
 export function isChain (chainName: string): chainName is ChainName {
   return chainName in KNOWN_CHAINS;

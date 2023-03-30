@@ -1,5 +1,20 @@
 
-export { createWalletToolbox } from './wallets';
-export { WalletMonitor } from './wallet-monitor';
-export { PrometheusWalletMonitor } from './prometheus-wallet-monitor';
-// import { WalletMonitor } from './wallet-monitor';
+export { WalletWatcher } from './wallet-watcher';
+export { WalletExporter } from './wallet-exporter';
+export { MultiWalletWatcher } from './multi-wallet-watcher';
+export { MultiWalletExporter } from './multi-wallet-exporter';
+
+import { EVM_CHAIN_CONFIGS  } from './wallets/evm';
+// import { SOLANA_CHAINS } from './wallets/solana';
+
+/**
+ * A map of chain names to their available networks.
+ * It's exposed to the library user for convenience.
+ * In most cases you can use the network name as you would expect it and it should work,
+ * but this map contains available networks for each chain just in case you want to be 100% sure.
+ */
+export const NETWORKS = {
+    [EVM_CHAIN_CONFIGS.ethereum.chainName]: EVM_CHAIN_CONFIGS.ethereum.networks,
+    [EVM_CHAIN_CONFIGS.polygon.chainName]: EVM_CHAIN_CONFIGS.polygon.networks,
+    [EVM_CHAIN_CONFIGS.avalanche.chainName]: EVM_CHAIN_CONFIGS.avalanche.networks,
+};

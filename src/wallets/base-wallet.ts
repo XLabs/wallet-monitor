@@ -1,6 +1,6 @@
 import { WalletBalance, WalletOptions, WalletConfig } from ".";
 
-import { Logger } from '../utils';
+import { getSilentLogger, Logger } from '../utils';
 
 export type BaseWalletOptions = {
   logger?: Logger;
@@ -71,7 +71,7 @@ export abstract class WalletToolbox {
 
   private getLogger(logger: any): Logger {
     if (logger && isValidLogger(logger)) return logger;
-    return console;
+    return getSilentLogger();
   }
 
   protected parseConfig(config: WalletConfig): WalletConfig {

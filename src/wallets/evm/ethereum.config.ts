@@ -13,8 +13,6 @@ export const ETHEREUM_NETWORKS = {
   [ETHEREUM_GOERLI]: 4,
 };
 
-// TODO:
-// Token addresses were provided by copilot, validate them
 export const ETHEREUM_KNOWN_TOKENS = {
   [ETHEREUM_MAINNET]: {
     "USDC": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
@@ -35,9 +33,15 @@ export const ETHEREUM_KNOWN_TOKENS = {
 }
 
 const ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY = 10;
-// TODO:
-// Node Urls were provided by copilot, validate them
-export const ETHEREUM_DEFAULT_CONFIGS = {
+
+type EthereumDefaultConfig = {
+  nodeUrl: string;
+  tokenPollConcurrency: number;
+}
+
+type DefaultConfigs = Record<EthereumNetworks, EthereumDefaultConfig>;
+
+export const ETHEREUM_DEFAULT_CONFIGS: DefaultConfigs = {
   [ETHEREUM_MAINNET]: {
     nodeUrl: 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
     tokenPollConcurrency: ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY,
@@ -62,6 +66,7 @@ export const ETHEREUM_CHAIN_CONFIG = {
   knownTokens: ETHEREUM_KNOWN_TOKENS,
   defaultConfigs: ETHEREUM_DEFAULT_CONFIGS,
   nativeCurrencySymbol: ETHEREUM_CURRENCY_SYMBOL,
+  defaultNetwork: ETHEREUM_MAINNET
 }
 
 export type EthereumNetworks = keyof typeof ETHEREUM_NETWORKS;
