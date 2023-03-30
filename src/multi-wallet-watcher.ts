@@ -19,7 +19,6 @@ export type Balances = Record<ChainName, WalletBalancesByAddress>;
 //   [chainName in keyof ChainName]: WalletBalancesByAddress;
 // }
 
-
 export type MultiWalletWatcherOptions = {
   logger?: Logger;
 };
