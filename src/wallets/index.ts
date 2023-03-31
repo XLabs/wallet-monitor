@@ -56,7 +56,7 @@ export function createWalletToolbox(
         walletOptions);
 
     case isSolanaChain(chainName):
-      return new SolanaWalletToolbox(network, chainName as SolanaChainName, wallets);
+      return new SolanaWalletToolbox(network, chainName as SolanaChainName, wallets, walletOptions);
 
     default:
       throw new Error(`Unknown chain name ${chainName}`);
