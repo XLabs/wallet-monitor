@@ -12,12 +12,10 @@ export const FANTOM_NETWORKS = {
 
 export const FANTOM_KNOWN_TOKENS = {
     [FANTOM_MAINNET]: {
-        "USDC": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-        "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+        "USDC": "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75",
+        "DAI": "0x8D11eC38a3EB5E956B052f67Da8Bdc9bef8Abf3E",
     },
     [FANTOM_TESTNET]: {
-        "USDC": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-        "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
     },
 };
 

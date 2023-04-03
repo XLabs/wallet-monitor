@@ -2,7 +2,7 @@ import { EvmDefaultConfigs } from "./index";
 
 export const MOONBEAM = "moonbeam";
 
-const MOONBEAM_MAINNET = "mainnet";
+const MOONBEAM_MAINNET = "moonbeam-mainnet";
 const MOONBASE_ALPHA = "moonbase-alpha";
 
 export const MOONBEAM_NETWORKS = {
@@ -12,12 +12,11 @@ export const MOONBEAM_NETWORKS = {
 
 export const MOONBEAM_KNOWN_TOKENS = {
     [MOONBEAM_MAINNET]: {
-        "USDC": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-        "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+        "USDC": "0x818ec0a7fe18ff94269904fced6ae3dae6d6dc0b",
+        "DAI": "0x765277eebeca2e31912c9946eae1021199b39c61",
     },
     [MOONBASE_ALPHA]: {
-        "USDC": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-        "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+
     },
 };
 
@@ -25,11 +24,11 @@ const MOONBEAM_DEFAULT_TOKEN_POLL_CONCURRENCY = 10;
 
 export const MOONBEAM_DEFAULT_CONFIGS: EvmDefaultConfigs = {
     [MOONBEAM_MAINNET]: {
-        nodeUrl: "https://rpc.moonbeam.network",
+        nodeUrl: "https://rpc.ankr.com/moonbeam",
         tokenPollConcurrency: MOONBEAM_DEFAULT_TOKEN_POLL_CONCURRENCY,
     },
     [MOONBASE_ALPHA]: {
-        nodeUrl: "https://rpc.testnet.moonbeam.network",
+        nodeUrl: "wss://wss.api.moonbase.moonbeam.network",
         tokenPollConcurrency: MOONBEAM_DEFAULT_TOKEN_POLL_CONCURRENCY,
     },
 };

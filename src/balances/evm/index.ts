@@ -17,8 +17,10 @@ export async function pullEvmTokenData(
 ): Promise<EvmTokenData> {
   const contract = getTokenContract(provider, tokenAddress);
 
-  const symbol = await contract.symbol();
-  const decimals = await contract.decimals();
+  const [symbol, decimals] = await Promise.all([
+    contract.symbol(),
+    contract.decimals(),
+  ]);
 
   return { symbol, decimals };
 }

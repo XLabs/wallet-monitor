@@ -19,19 +19,16 @@ export const POLYGON_NETWORKS = {
 export const POLYGON_KNOWN_TOKENS = {
   [POLYGON_MAINNET]: {
     "USDC": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-    "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+    "DAI": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
   },
   [POLYGON_MUMBAI]: {
-    "USDC": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-    "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+
   },
   [POLYGON_HEIMDALL]: {
-    "USDC": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-    "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+
   },
   [POLYGON_BOR]: {
-    "USDC": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-    "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+
   },
 }
 

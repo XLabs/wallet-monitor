@@ -1,6 +1,6 @@
 import { EvmDefaultConfigs } from './index';
 
-const CELO = 'celo';
+export const CELO = 'celo';
 
 const CELO_MAINNET = 'mainnet';
 const CELO_ALFAJORES = 'alfajores';
@@ -12,12 +12,10 @@ const CELO_NETWORKS = {
 
 export const CELO_KNOWN_TOKENS = {
     [CELO_MAINNET]: {
-        "USDC": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-        "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+
     },
     [CELO_ALFAJORES]: {
-        "USDC": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-        "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+
     },
 };
 
