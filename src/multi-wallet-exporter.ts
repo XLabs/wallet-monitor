@@ -1,15 +1,21 @@
 import Koa from 'koa';
-import { Gauge, Registry } from 'prom-client';
+import {Counter, Gauge, Registry} from 'prom-client';
 
 import { ChainName, AllNetworks, WalletBalance } from './wallets';
 import { MultiWalletWatcher, MultiWalletWatcherConfig, MultiWalletWatcherOptions, WalletBalancesByAddress } from './multi-wallet-watcher';
-import { PrometheusOptions, createExporterGauge, startMetricsServer } from './wallet-exporter';
+import {
+  PrometheusOptions,
+  createExporterGauge,
+  startMetricsServer,
+  createExporterErrorCounter
+} from './wallet-exporter';
 
 export type MultiWalletExporterOptions = MultiWalletWatcherOptions & {
   prometheus?: PrometheusOptions
 }
 export class MultiWalletExporter extends MultiWalletWatcher {
   private gauge: Gauge;
+  private errorCounter: Counter;
   private registry: Registry;
   private app?: Koa;
 
@@ -25,6 +31,11 @@ export class MultiWalletExporter extends MultiWalletWatcher {
       options?.prometheus?.gaugeName || 'wallet_monitor_balance'
     );
 
+    this.errorCounter = createExporterErrorCounter(
+      this.registry,
+      options?.prometheus?.errorsName || 'errors'
+    )
+
     this.on('balances', (
       chainName: ChainName,
       network: AllNetworks,
@@ -33,6 +44,10 @@ export class MultiWalletExporter extends MultiWalletWatcher {
       Object.values(balancesByAddress).forEach((balances) => {
         this.updateBalanceMetrics(chainName, network, balances);
       });
+    });
+
+    this.on('error', (...args: any[]) => {
+      this.errorCounter.inc();
     });
   }
 

@@ -1,7 +1,7 @@
 import Koa from 'koa';
 import Router from 'koa-router';
 
-import { Gauge, Registry } from 'prom-client';
+import {Counter, Gauge, Registry} from 'prom-client';
 
 import { WalletConfig, WalletBalance } from './wallets';
 import { WalletWatcher, WalletMonitorOptions } from './wallet-watcher';
@@ -9,6 +9,7 @@ import { WalletWatcher, WalletMonitorOptions } from './wallet-watcher';
 export type PrometheusOptions = {
   registry?: Registry;
   gaugeName?: string,
+  errorsName?: string
 };
 
 export function updateExporterGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance) {
@@ -25,6 +26,14 @@ export function createExporterGauge (registry: Registry, gaugeName: string) {
     labelNames: ["chain_name", "network", "symbol", "is_native", "token_address", "wallet_address"],
     registers: [registry],
   });
+}
+
+export function createExporterErrorCounter(registry: Registry, counterName: string) {
+  return new Counter({
+    name: counterName,
+    help: "Errors thrown by any wallet watcher",
+    registers: [registry]
+  })
 }
 
 export function startMetricsServer (
