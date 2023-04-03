@@ -53,12 +53,13 @@ export abstract class WalletToolbox {
     protected rawConfig: WalletConfig[],
     options?: WalletOptions,
   ) {
+    this.logger = this.getLogger(options?.logger);
+    
     this.validateNetwork(network);
     this.validateChainName(chainName);
     this.validateOptions(options);
 
 
-    this.logger = this.getLogger(options?.logger);
 
     this.configs = rawConfig.map((c) => {
       this.validateConfig(c);

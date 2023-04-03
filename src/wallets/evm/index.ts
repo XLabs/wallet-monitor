@@ -1,13 +1,17 @@
 import { ethers } from 'ethers';
 
 import { WalletConfig, WalletBalance } from '../';
-import { mapConcurrent, Logger } from '../../utils';
+import { mapConcurrent } from '../../utils';
 import { WalletToolbox, BaseWalletOptions } from '../base-wallet';
 import { pullEvmNativeBalance, EvmTokenData, pullEvmTokenData, pullEvmTokenBalance } from '../../balances/evm';
 
-import { EthereumNetworks, ETHEREUM_CHAIN_CONFIG, ETHEREUM } from './ethereum.config';
-import { POLYGON, POLYGON_CHAIN_CONFIG } from './polygon.config';
-import { AVALANCHE, AVALANCHE_CHAIN_CONFIG } from './avalanche.config';
+import { EthereumNetwork, ETHEREUM_CHAIN_CONFIG, ETHEREUM } from './ethereum.config';
+import { PolygonNetwork, POLYGON, POLYGON_CHAIN_CONFIG } from './polygon.config';
+import { AvalancheNetwork, AVALANCHE, AVALANCHE_CHAIN_CONFIG } from './avalanche.config';
+import { BscNetwork, BSC, BSC_CHAIN_CONFIG } from './bsc.config';
+import { FantomNetwork, FANTOM, FANTOM_CHAIN_CONFIG } from './fantom.config';
+import { CeloNetwork, CELO, CELO_CHAIN_CONFIG } from './celo.config';
+import { MoonbeamNetwork, MOONBEAM, MOONBEAM_CHAIN_CONFIG } from './moonbeam.config';
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
@@ -30,7 +34,18 @@ const EVM_CHAINS = {
   [ETHEREUM]: 1,
   [POLYGON]: 2,
   [AVALANCHE]: 3,
+  [BSC]: 4,
+  [FANTOM]: 5,
+  [CELO]: 6,
+  [MOONBEAM]: 7,
 };
+
+export type EvmDefaultConfig = {
+  nodeUrl: string;
+  tokenPollConcurrency?: number;
+}
+
+export type EvmDefaultConfigs = Record<string, EvmDefaultConfig>;
 
 export type EVMChainName = keyof typeof EVM_CHAINS;
 
@@ -38,6 +53,10 @@ export const EVM_CHAIN_CONFIGS: Record<EVMChainName, EvmChainConfig> = {
   [ETHEREUM]: ETHEREUM_CHAIN_CONFIG,
   [POLYGON]: POLYGON_CHAIN_CONFIG,
   [AVALANCHE]: AVALANCHE_CHAIN_CONFIG,
+  [BSC]: BSC_CHAIN_CONFIG,
+  [FANTOM]: FANTOM_CHAIN_CONFIG,
+  [CELO]: CELO_CHAIN_CONFIG,
+  [MOONBEAM]: MOONBEAM_CHAIN_CONFIG,
 };
 
 export type EvmWalletOptions = BaseWalletOptions & {
@@ -45,7 +64,8 @@ export type EvmWalletOptions = BaseWalletOptions & {
   tokenPollConcurrency?: number;
 }
 
-export type EvmNetworks = EthereumNetworks // | PolygonNetworks | AvalancheNetworks;
+export type EvmNetworks = EthereumNetwork | PolygonNetwork | BscNetwork | AvalancheNetwork
+  | FantomNetwork | CeloNetwork | MoonbeamNetwork;
 
 function getUniqueTokens(wallets: EvmWalletConfig[]): string[] {
   const tokens = wallets.reduce((acc, wallet) => {
@@ -68,13 +88,12 @@ export class EvmWalletToolbox extends WalletToolbox {
     options?: EvmWalletOptions,
   ) {
     super(network, chainName, rawConfig, options);
-    
     this.chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
 
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
-    
+
     this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
   }
 
