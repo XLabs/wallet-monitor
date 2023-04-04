@@ -7,7 +7,7 @@ import {
   PrometheusOptions,
   createExporterGauge,
   startMetricsServer,
-  createExporterErrorCounter
+  createExporterErrorCounter, createExporterLastUpdate
 } from './wallet-exporter';
 
 export type MultiWalletExporterOptions = MultiWalletWatcherOptions & {
@@ -16,6 +16,7 @@ export type MultiWalletExporterOptions = MultiWalletWatcherOptions & {
 export class MultiWalletExporter extends MultiWalletWatcher {
   private gauge: Gauge;
   private errorCounters: Map<string, Counter> = new Map();
+  private lastUpdate: Gauge;
   private registry: Registry;
   private app?: Koa;
 
@@ -31,11 +32,15 @@ export class MultiWalletExporter extends MultiWalletWatcher {
       options?.prometheus?.gaugeName || 'wallet_monitor_balance'
     );
 
+    this.lastUpdate = createExporterLastUpdate(this.registry, options?.prometheus?.lastUpdateName || 'last_update');
+
     this.on('balances', (
       chainName: ChainName,
       network: AllNetworks,
       balancesByAddress: WalletBalancesByAddress,
     ) => {
+      // Eh, my apologies for this bad name.
+      this.updateLastUpdateMetrics(chainName);
       Object.values(balancesByAddress).forEach((balances) => {
         this.updateBalanceMetrics(chainName, network, balances);
       });
@@ -45,7 +50,7 @@ export class MultiWalletExporter extends MultiWalletWatcher {
       if(!(chainName in this.errorCounters))
         this.errorCounters.set(
           chainName,
-          createExporterErrorCounter(this.registry, `${chainName}_errors`)
+          createExporterErrorCounter(this.registry, `${chainName}_${options?.prometheus?.errorsName || `errors`}`)
         )
       const counter = this.errorCounters.get(chainName)!
       counter.inc();
@@ -59,6 +64,12 @@ export class MultiWalletExporter extends MultiWalletWatcher {
         .labels(chainName, network, symbol, isNative.toString(), tokenAddress || '', address)
         .set(parseFloat(balance.formattedBalance));
     });
+  }
+
+  private updateLastUpdateMetrics(chainName: string) {
+    this.lastUpdate
+      .labels(chainName)
+      .set(Date.now())
   }
 
   private validatePrometheusOptions(options: any): options is PrometheusOptions {

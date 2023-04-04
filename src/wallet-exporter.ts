@@ -9,6 +9,7 @@ import { WalletWatcher, WalletMonitorOptions } from './wallet-watcher';
 export type PrometheusOptions = {
   registry?: Registry;
   gaugeName?: string,
+  lastUpdateName?: string,
   errorsName?: string
 };
 
@@ -26,6 +27,15 @@ export function createExporterGauge (registry: Registry, gaugeName: string) {
     labelNames: ["chain_name", "network", "symbol", "is_native", "token_address", "wallet_address"],
     registers: [registry],
   });
+}
+
+export function createExporterLastUpdate(registry: Registry, gaugeName: string) {
+  return new Gauge({
+    name: gaugeName,
+    help: "Last successful update for each chain",
+    labelNames: ["chain_name"],
+    registers: [registry]
+  })
 }
 
 export function createExporterErrorCounter(registry: Registry, counterName: string) {
