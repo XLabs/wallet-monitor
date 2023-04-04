@@ -53,12 +53,13 @@ export abstract class WalletToolbox {
     protected rawConfig: WalletConfig[],
     options?: WalletOptions,
   ) {
+    this.logger = this.getLogger(options?.logger);
+    
     this.validateNetwork(network);
     this.validateChainName(chainName);
     this.validateOptions(options);
 
 
-    this.logger = this.getLogger(options?.logger);
 
     this.configs = rawConfig.map((c) => {
       this.validateConfig(c);
@@ -87,8 +88,13 @@ export abstract class WalletToolbox {
 
   public async pullBalances(): Promise<WalletBalance[]> {
     if (!this.warm) {
-      this.logger.debug("Warming up wallet toolbox...")
-      await this.warmup();
+      this.logger.debug(`Warming up wallet toolbox for chain ${this.chainName}...`);
+      try {
+        await this.warmup();
+      } catch (error) {
+        this.logger.error(`Error warming up wallet toolbox for chain (${this.chainName}): ${error}`);
+        return [];
+      }
       this.warm = true;
     }
 

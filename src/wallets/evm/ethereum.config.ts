@@ -1,3 +1,5 @@
+import { EvmDefaultConfigs } from './index';
+
 const ETHEREUM_MAINNET = 'mainnet';
 const ETHEREUM_RINKEBY = 'rinkeby';
 const ETHEREUM_ROPSTEN = 'ropsten';
@@ -34,14 +36,7 @@ export const ETHEREUM_KNOWN_TOKENS = {
 
 const ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY = 10;
 
-type EthereumDefaultConfig = {
-  nodeUrl: string;
-  tokenPollConcurrency: number;
-}
-
-type DefaultConfigs = Record<EthereumNetworks, EthereumDefaultConfig>;
-
-export const ETHEREUM_DEFAULT_CONFIGS: DefaultConfigs = {
+export const ETHEREUM_DEFAULT_CONFIGS: EvmDefaultConfigs = {
   [ETHEREUM_MAINNET]: {
     nodeUrl: 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
     tokenPollConcurrency: ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY,
@@ -69,5 +64,5 @@ export const ETHEREUM_CHAIN_CONFIG = {
   defaultNetwork: ETHEREUM_MAINNET
 }
 
-export type EthereumNetworks = keyof typeof ETHEREUM_NETWORKS;
-export type KnownEthereumTokens = keyof typeof ETHEREUM_KNOWN_TOKENS;
+export type EthereumNetwork = keyof typeof ETHEREUM_NETWORKS;
+// export type KnownEthereumTokens = keyof typeof ETHEREUM_KNOWN_TOKENS;
