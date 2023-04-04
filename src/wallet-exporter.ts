@@ -31,7 +31,7 @@ export function createExporterGauge (registry: Registry, gaugeName: string) {
 export function createExporterErrorCounter(registry: Registry, counterName: string) {
   return new Counter({
     name: counterName,
-    help: "Errors thrown by any wallet watcher",
+    help: "Errors thrown by wallet watcher",
     registers: [registry]
   })
 }

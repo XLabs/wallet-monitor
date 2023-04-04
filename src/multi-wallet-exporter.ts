@@ -15,7 +15,7 @@ export type MultiWalletExporterOptions = MultiWalletWatcherOptions & {
 }
 export class MultiWalletExporter extends MultiWalletWatcher {
   private gauge: Gauge;
-  private errorCounter: Counter;
+  private errorCounters: Map<string, Counter> = new Map();
   private registry: Registry;
   private app?: Koa;
 
@@ -31,11 +31,6 @@ export class MultiWalletExporter extends MultiWalletWatcher {
       options?.prometheus?.gaugeName || 'wallet_monitor_balance'
     );
 
-    this.errorCounter = createExporterErrorCounter(
-      this.registry,
-      options?.prometheus?.errorsName || 'errors'
-    )
-
     this.on('balances', (
       chainName: ChainName,
       network: AllNetworks,
@@ -46,8 +41,14 @@ export class MultiWalletExporter extends MultiWalletWatcher {
       });
     });
 
-    this.on('error', (...args: any[]) => {
-      this.errorCounter.inc();
+    this.on('error', (chainName: string, ...args: any[]) => {
+      if(!(chainName in this.errorCounters))
+        this.errorCounters.set(
+          chainName,
+          createExporterErrorCounter(this.registry, `${chainName}_errors`)
+        )
+      const counter = this.errorCounters.get(chainName)!
+      counter.inc();
     });
   }
 
