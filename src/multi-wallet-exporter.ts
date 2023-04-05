@@ -11,7 +11,7 @@ import {
 } from './wallet-exporter';
 
 export type MultiWalletExporterOptions = MultiWalletWatcherOptions & {
-  prometheus?: PrometheusOptions
+  prometheus?: PrometheusOptions;
 }
 export class MultiWalletExporter extends MultiWalletWatcher {
   private gauge: Gauge;
@@ -19,6 +19,8 @@ export class MultiWalletExporter extends MultiWalletWatcher {
   private lastRefreshTimestamp: Gauge;
   private registry: Registry;
   private app?: Koa;
+  private prometheusPort: number;
+  private prometheusPath: string;
 
   constructor(rawConfig: MultiWalletWatcherConfig, options?: MultiWalletExporterOptions) {
     super(rawConfig, options);
@@ -26,6 +28,9 @@ export class MultiWalletExporter extends MultiWalletWatcher {
     this.validatePrometheusOptions(options?.prometheus);
     
     this.registry = options?.prometheus?.registry || new Registry();
+
+    this.prometheusPort = options?.prometheus?.port || 9090;
+    this.prometheusPath = options?.prometheus?.path || '/metrics';
 
     this.gauge = createExporterGauge(
       this.registry,
@@ -87,14 +92,14 @@ export class MultiWalletExporter extends MultiWalletWatcher {
     return this.registry.metrics();
   }
 
-  public async startMetricsServer(port: number = 3001, path: string = '/metrics'): Promise<void> {
-    this.app = await startMetricsServer(port, path, async () => {
+  public async startMetricsServer(): Promise<void> {
+    this.app = await startMetricsServer(this.prometheusPort, this.prometheusPath, async () => {
       const metrics = await this.metrics()
       this.logger.debug('Prometheus metrics served: OK');
       return metrics;
     });
 
-    this.logger.info(`Wallet Monitor Prometheus server listening on :${port}${path}`);
+    this.logger.info(`Wallet Monitor Prometheus server listening on :${this.prometheusPort}${this.prometheusPath}`);
     
     this.start();
   }

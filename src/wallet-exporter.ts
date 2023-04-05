@@ -4,13 +4,15 @@ import Router from 'koa-router';
 import {Counter, Gauge, Registry} from 'prom-client';
 
 import { WalletConfig, WalletBalance } from './wallets';
-import { WalletWatcher, WalletMonitorOptions } from './wallet-watcher';
+import { WalletWatcher, WalletWatcherOptions } from './wallet-watcher';
 
 export type PrometheusOptions = {
   registry?: Registry;
   gaugeName?: string,
   lastUpdateName?: string,
   errorsName?: string
+  port?: number;
+  path?: string;
 };
 
 export function updateExporterGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance) {
@@ -71,7 +73,7 @@ export class WalletExporter extends WalletWatcher {
   public app?: Koa;
   protected registry: Registry;
 
-  constructor(options: WalletMonitorOptions, wallets: WalletConfig[], promOpts: PrometheusOptions = {}) {
+  constructor(options: WalletWatcherOptions, wallets: WalletConfig[], promOpts: PrometheusOptions = {}) {
     super(options, wallets);
 
     this.validatePrometheusOptions(promOpts);

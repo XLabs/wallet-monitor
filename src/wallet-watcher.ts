@@ -3,12 +3,12 @@ import { EventEmitter } from 'stream';
 import { getSilentLogger, Logger } from './utils';
 import { createWalletToolbox, WalletConfig, WalletOptions, Wallet } from './wallets';
 
-const defaultCooldown = 60 * 1000;
+const DEFAULT_POLL_INTERVAL = 60 * 1000;
 
-export type WalletMonitorOptions = {
+export type WalletWatcherOptions = {
   network: string;
   chainName: string;
-  cooldown?: number;
+  pollInterval?: number;
   logger?: Logger;
   walletOptions?: WalletOptions;
 }
@@ -17,12 +17,12 @@ export class WalletWatcher {
   private locked = false;
   protected logger: Logger;
   private interval: ReturnType<typeof setInterval> | null = null;
-  private options: WalletMonitorOptions;
+  private options: WalletWatcherOptions;
   private emitter = new EventEmitter();
   
   public wallet: Wallet;
 
-  constructor(options: WalletMonitorOptions, private wallets: WalletConfig[]) {
+  constructor(options: WalletWatcherOptions, private wallets: WalletConfig[]) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
 
@@ -36,17 +36,17 @@ export class WalletWatcher {
     );
   }
 
-  private validateOptions(monitorOptions: any): monitorOptions is WalletMonitorOptions {
+  private validateOptions(monitorOptions: any): monitorOptions is WalletWatcherOptions {
     if (!monitorOptions.network) throw new Error('Missing network option');
     if (!monitorOptions.chainName) throw new Error('Missing chainName option');
-    if (monitorOptions.cooldown && typeof monitorOptions.cooldown !== 'number') throw new Error('Invalid cooldown option');
+    if (monitorOptions.pollInterval && typeof monitorOptions.pollInterval !== 'number') throw new Error('Invalid pollInterval option');
     return true;
   }
 
-  private parseOptions(monitorOptions: WalletMonitorOptions): WalletMonitorOptions {
+  private parseOptions(monitorOptions: WalletWatcherOptions): WalletWatcherOptions {
     return {
       ...monitorOptions,
-      cooldown: monitorOptions.cooldown || defaultCooldown,
+      pollInterval: monitorOptions.pollInterval || DEFAULT_POLL_INTERVAL,
     };
   }
 
@@ -78,7 +78,7 @@ export class WalletWatcher {
   public async start() {
     this.interval = setInterval(async () => {
       this.run();
-    }, defaultCooldown);
+    }, DEFAULT_POLL_INTERVAL);
 
     this.run();
   }

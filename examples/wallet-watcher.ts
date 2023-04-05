@@ -6,9 +6,9 @@ import { WalletWatcher } from 'wallet-monitor';
 const ethMonitor = new WalletWatcher({
   network: 'mainnet',
   chainName: 'ethereum',
-  // cooldown is optional. Defaults to 60 seconds.
+  // pollInterval is optional. Defaults to 60 seconds.
   // sets the time between each polling run
-  // cooldown: 100* 15,
+  // pollInterval: 100* 15,
 
   // logger is optional. You can pass a logger if you are interested in getting logs from the monitor
   // logger: console,
