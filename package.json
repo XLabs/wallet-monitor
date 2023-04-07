@@ -1,6 +1,6 @@
 {
   "name": "@xlabs-xyz/wallet-monitor",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A set of utilities to monitor blockchain wallets and react to them",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -50,6 +50,7 @@
     "@types/koa": "^2.13.6",
     "@types/koa-router": "^7.4.4",
     "@types/node": "^18.15.7",
+    "prettier": "^2.8.7",
     "typescript": "^5.0.2"
   }
 }
