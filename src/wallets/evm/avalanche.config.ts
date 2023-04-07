@@ -31,7 +31,7 @@ export const AVALANCHE_DEFAULT_CONFIGS = {
 
 export const AVALANCHE_CHAIN_CONFIG = {
   chainName: AVALANCHE,
-  nativeCurrencySymbol: "avax",
+  nativeCurrencySymbol: "AVAX",
   knownTokens: AVALANCHE_KNOWN_TOKENS,
   networks: AVALANCHE_NETWORKS,
   defaultConfigs: AVALANCHE_DEFAULT_CONFIGS,
