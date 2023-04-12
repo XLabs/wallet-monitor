@@ -29,7 +29,7 @@ export function createExporterGauge (registry: Registry, gaugeName: string) {
   });
 }
 
-export function createExporterLastUpdate(registry: Registry, gaugeName: string) {
+export function createExporterLastRefresh(registry: Registry, gaugeName: string) {
   return new Gauge({
     name: gaugeName,
     help: "Last successful update for each chain",

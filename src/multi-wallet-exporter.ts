@@ -7,7 +7,7 @@ import {
   PrometheusOptions,
   createExporterGauge,
   startMetricsServer,
-  createExporterErrorCounter, createExporterLastUpdate
+  createExporterErrorCounter, createExporterLastRefresh
 } from './wallet-exporter';
 
 export type MultiWalletExporterOptions = MultiWalletWatcherOptions & {
@@ -16,7 +16,7 @@ export type MultiWalletExporterOptions = MultiWalletWatcherOptions & {
 export class MultiWalletExporter extends MultiWalletWatcher {
   private gauge: Gauge;
   private errorCounters: Map<string, Counter> = new Map();
-  private lastUpdate: Gauge;
+  private lastRefreshTimestamp: Gauge;
   private registry: Registry;
   private app?: Koa;
 
@@ -32,15 +32,14 @@ export class MultiWalletExporter extends MultiWalletWatcher {
       options?.prometheus?.gaugeName || 'wallet_monitor_balance'
     );
 
-    this.lastUpdate = createExporterLastUpdate(this.registry, options?.prometheus?.lastUpdateName || 'last_update');
+    this.lastRefreshTimestamp = createExporterLastRefresh(this.registry, options?.prometheus?.lastUpdateName || 'last_update');
 
     this.on('balances', (
       chainName: ChainName,
       network: AllNetworks,
       balancesByAddress: WalletBalancesByAddress,
     ) => {
-      // Eh, my apologies for this bad name.
-      this.updateLastUpdateMetrics(chainName);
+      this.updateLastRefreshMetrics(chainName);
       Object.values(balancesByAddress).forEach((balances) => {
         this.updateBalanceMetrics(chainName, network, balances);
       });
@@ -66,8 +65,8 @@ export class MultiWalletExporter extends MultiWalletWatcher {
     });
   }
 
-  private updateLastUpdateMetrics(chainName: string) {
-    this.lastUpdate
+  private updateLastRefreshMetrics(chainName: string) {
+    this.lastRefreshTimestamp
       .labels(chainName)
       .set(Date.now())
   }
