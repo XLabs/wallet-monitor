@@ -1,9 +1,10 @@
 {
   "description": "A set of examples for the wallet-monitor package",
   "scripts": {
-    "docker": "docker-compose up -d",
     "wallet-watcher": "ts-node ./wallet-watcher.ts",
-    "prometheus-wallet-monitor": "ts-node ./prometheus-wallet-monitor.ts"
+    "wallet-exporter": "ts-node ./wallet-exporter.ts",
+    "multi-wallet-watcher": "ts-node ./multi-wallet-watcher.ts",
+    "multi-wallet-exporter": "ts-node ./multi-wallet-exporter.ts"
   },
   "dependencies": {
     "wallet-monitor": "file:../",

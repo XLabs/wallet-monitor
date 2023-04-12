@@ -1,15 +1,22 @@
 import Koa from 'koa';
-import { Gauge, Registry } from 'prom-client';
+import {Counter, Gauge, Registry} from 'prom-client';
 
 import { ChainName, AllNetworks, WalletBalance } from './wallets';
 import { MultiWalletWatcher, MultiWalletWatcherConfig, MultiWalletWatcherOptions, WalletBalancesByAddress } from './multi-wallet-watcher';
-import { PrometheusOptions, createExporterGauge, startMetricsServer } from './wallet-exporter';
+import {
+  PrometheusOptions,
+  createExporterGauge,
+  startMetricsServer,
+  createExporterErrorCounter, createExporterLastRefresh
+} from './wallet-exporter';
 
 export type MultiWalletExporterOptions = MultiWalletWatcherOptions & {
   prometheus?: PrometheusOptions
 }
 export class MultiWalletExporter extends MultiWalletWatcher {
   private gauge: Gauge;
+  private errorCounters: Map<string, Counter> = new Map();
+  private lastRefreshTimestamp: Gauge;
   private registry: Registry;
   private app?: Koa;
 
@@ -25,14 +32,27 @@ export class MultiWalletExporter extends MultiWalletWatcher {
       options?.prometheus?.gaugeName || 'wallet_monitor_balance'
     );
 
+    this.lastRefreshTimestamp = createExporterLastRefresh(this.registry, options?.prometheus?.lastUpdateName || 'last_update');
+
     this.on('balances', (
       chainName: ChainName,
       network: AllNetworks,
       balancesByAddress: WalletBalancesByAddress,
     ) => {
+      this.updateLastRefreshMetrics(chainName);
       Object.values(balancesByAddress).forEach((balances) => {
         this.updateBalanceMetrics(chainName, network, balances);
       });
+    });
+
+    this.on('error', (chainName: string, ...args: any[]) => {
+      if(!(chainName in this.errorCounters))
+        this.errorCounters.set(
+          chainName,
+          createExporterErrorCounter(this.registry, `${chainName}_${options?.prometheus?.errorsName || `errors`}`)
+        )
+      const counter = this.errorCounters.get(chainName)!
+      counter.inc();
     });
   }
 
@@ -43,6 +63,12 @@ export class MultiWalletExporter extends MultiWalletWatcher {
         .labels(chainName, network, symbol, isNative.toString(), tokenAddress || '', address)
         .set(parseFloat(balance.formattedBalance));
     });
+  }
+
+  private updateLastRefreshMetrics(chainName: string) {
+    this.lastRefreshTimestamp
+      .labels(chainName)
+      .set(Date.now())
   }
 
   private validatePrometheusOptions(options: any): options is PrometheusOptions {
