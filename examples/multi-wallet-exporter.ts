@@ -1,8 +1,9 @@
 import { MultiWalletExporter } from 'wallet-monitor';
 
 const options = {
+  pollInterval: 10000, // optional, defaults to 60 seconds
   // Passing a logger is optional in case you want to see logs.
-  logger: console,
+  // logger: console,
 
   // Options for prometheus are passed inside the prometheus prop:
   prometheus: {

@@ -21,7 +21,9 @@ export type Balances = Record<ChainName, WalletBalancesByAddress>;
 
 export type MultiWalletWatcherOptions = {
   logger?: Logger;
+  pollInterval?: number;
 };
+
 function getDefaultNetwork(chainName: ChainName) {
   return KNOWN_CHAINS[chainName].defaultNetwork;
 }
@@ -49,7 +51,11 @@ export class MultiWalletWatcher {
         this.balances[chainName][address] = [];
       };
 
-      const chainWatcher = new WalletWatcher({ chainName, network, logger: this.logger }, wallets);
+      const watcherConfig = {
+        chainName, network, logger: this.logger, pollInterval: options?.pollInterval,
+      };
+
+      const chainWatcher = new WalletWatcher(watcherConfig, wallets);
 
       chainWatcher.on('error', (...args: any[]) => {
         this.emitter.emit('error', chainName, ...args);

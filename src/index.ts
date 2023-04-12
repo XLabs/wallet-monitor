@@ -7,6 +7,12 @@ export { MultiWalletExporter } from './multi-wallet-exporter';
 import { EVM_CHAIN_CONFIGS  } from './wallets/evm';
 // import { SOLANA_CHAINS } from './wallets/solana';
 
+import { MultiWalletWatcherConfig as MWWConfig } from './multi-wallet-watcher';
+import { MultiWalletExporterOptions as MWEOptions } from './multi-wallet-exporter';
+
+export type MultiWalletExporterOptions = MWEOptions;
+export type MultiWalletWatcherConfig = MWWConfig;
+
 /**
  * A map of chain names to their available networks.
  * It's exposed to the library user for convenience.
@@ -18,3 +24,4 @@ export const NETWORKS = {
     [EVM_CHAIN_CONFIGS.polygon.chainName]: EVM_CHAIN_CONFIGS.polygon.networks,
     [EVM_CHAIN_CONFIGS.avalanche.chainName]: EVM_CHAIN_CONFIGS.avalanche.networks,
 };
+
