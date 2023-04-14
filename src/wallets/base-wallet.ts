@@ -103,7 +103,7 @@ export abstract class WalletToolbox {
     for (const config of this.configs) {
       const { address, tokens } = config;
 
-      this.logger.info(`Pulling balances for ${address}...`);
+      this.logger.debug(`Pulling balances for ${address}...`);
 
       try {
         const nativeBalance = await this.pullNativeBalance(address);
