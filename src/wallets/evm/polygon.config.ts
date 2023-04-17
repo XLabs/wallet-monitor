@@ -1,4 +1,4 @@
-import { ETHEREUM_KNOWN_TOKENS } from './ethereum.config';
+import { DEVNET } from '../index';
 import { EvmDefaultConfigs } from './index';
 
 export const POLYGON = 'polygon';

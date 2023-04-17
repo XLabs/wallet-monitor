@@ -1,3 +1,4 @@
+import { DEVNET } from '../';
 import { EvmDefaultConfigs } from "./index";
 
 export const MOONBEAM = "moonbeam";
@@ -6,8 +7,9 @@ const MOONBEAM_MAINNET = "moonbeam-mainnet";
 const MOONBASE_ALPHA = "moonbase-alpha";
 
 export const MOONBEAM_NETWORKS = {
-  [MOONBEAM_MAINNET]: 1,
-  [MOONBASE_ALPHA]: 2,
+  [DEVNET]: 1,
+  [MOONBEAM_MAINNET]: 2,
+  [MOONBASE_ALPHA]: 3,
 };
 
 export const MOONBEAM_KNOWN_TOKENS = {
@@ -16,6 +18,7 @@ export const MOONBEAM_KNOWN_TOKENS = {
     DAI: "0x765277eebeca2e31912c9946eae1021199b39c61",
   },
   [MOONBASE_ALPHA]: {},
+  [DEVNET]: {},
 };
 
 const MOONBEAM_DEFAULT_TOKEN_POLL_CONCURRENCY = 10;
@@ -27,6 +30,10 @@ export const MOONBEAM_DEFAULT_CONFIGS: EvmDefaultConfigs = {
   },
   [MOONBASE_ALPHA]: {
     nodeUrl: "https://rpc.testnet.moonbeam.network",
+    tokenPollConcurrency: MOONBEAM_DEFAULT_TOKEN_POLL_CONCURRENCY,
+  },
+  [DEVNET]: {
+    nodeUrl: "https://localhost:8545",
     tokenPollConcurrency: MOONBEAM_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
 };

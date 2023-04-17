@@ -1,3 +1,4 @@
+import { DEVNET } from '../index';
 import { EvmDefaultConfigs } from "./index";
 
 export const CELO = "celo";
@@ -6,8 +7,9 @@ const CELO_MAINNET = "mainnet";
 const CELO_ALFAJORES = "alfajores";
 
 const CELO_NETWORKS = {
-  [CELO_MAINNET]: 1,
-  [CELO_ALFAJORES]: 2,
+  [DEVNET]: 1,
+  [CELO_MAINNET]: 2,
+  [CELO_ALFAJORES]: 3,
 };
 
 export const CELO_KNOWN_TOKENS = {
