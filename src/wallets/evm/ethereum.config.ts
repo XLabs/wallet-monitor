@@ -1,3 +1,4 @@
+import { DEVNET } from '../index';
 import { EvmDefaultConfigs } from './index';
 
 const ETHEREUM_MAINNET = 'mainnet';
@@ -9,10 +10,11 @@ const ETHEREUM_CURRENCY_SYMBOL = 'ETH';
 export const ETHEREUM = 'ethereum';
 
 export const ETHEREUM_NETWORKS = {
-  [ETHEREUM_MAINNET]: 1,
-  [ETHEREUM_RINKEBY]: 2,
-  [ETHEREUM_ROPSTEN]: 3,
-  [ETHEREUM_GOERLI]: 4,
+  [DEVNET]: 1,
+  [ETHEREUM_MAINNET]: 2,
+  [ETHEREUM_RINKEBY]: 3,
+  [ETHEREUM_ROPSTEN]: 4,
+  [ETHEREUM_GOERLI]: 5,
 };
 
 export const ETHEREUM_KNOWN_TOKENS = {
@@ -32,6 +34,7 @@ export const ETHEREUM_KNOWN_TOKENS = {
     "USDC": "0x07865c6e87b9f70255377e024ace6630c1eaa37f",
     "DAI": "0x5592ec0cfb4dbc12d3ab100b257153436a1f0fea",
   },
+  [DEVNET]: {},
 }
 
 const ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY = 10;
@@ -51,6 +54,10 @@ export const ETHEREUM_DEFAULT_CONFIGS: EvmDefaultConfigs = {
   },
   [ETHEREUM_GOERLI]: {
     nodeUrl: 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    tokenPollConcurrency: ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY,
+  },
+  [DEVNET]: {
+    nodeUrl: 'https://localhost:8545',
     tokenPollConcurrency: ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
 }

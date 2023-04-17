@@ -1,8 +1,8 @@
+export const DEVNET = 'devnet';
+
 import { EvmWalletOptions, EvmWalletToolbox, EVM_CHAIN_CONFIGS, EVMChainName, EvmNetworks } from './evm';
 import {SOLANA_CHAIN_CONFIGS, SOLANA_CHAINS, SolanaChainName, SolanaWalletOptions, SolanaWalletToolbox} from "./solana";
 import {SolanaNetworks} from "./solana/solana.config";
-// import { SolanaWalletOptions, SolanaWalletToolbox, SOLANA_CHAINS, SolanaChainName } from './solana';
-
 
 export const KNOWN_CHAINS = {
   ...EVM_CHAIN_CONFIGS,

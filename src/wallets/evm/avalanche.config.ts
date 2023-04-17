@@ -1,11 +1,13 @@
+import { DEVNET } from "..";
 export const AVALANCHE = "avalanche";
 
 const AVALANCHE_MAINNET = "mainnet";
 const AVALANCHE_TESTNET = "testnet";
 
 export const AVALANCHE_NETWORKS = {
-  [AVALANCHE_MAINNET]: 1,
-  [AVALANCHE_TESTNET]: 2,
+  [DEVNET]: 1,
+  [AVALANCHE_MAINNET]: 2,
+  [AVALANCHE_TESTNET]: 3,
 };
 
 export const AVALANCHE_KNOWN_TOKENS = {
@@ -14,6 +16,7 @@ export const AVALANCHE_KNOWN_TOKENS = {
     DAI: "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
   },
   [AVALANCHE_TESTNET]: {},
+  [DEVNET]: {},
 };
 
 export const AVALANCHE_DEFAULT_TOKEN_POLL_CONCURRENCY = 10;
@@ -27,6 +30,10 @@ export const AVALANCHE_DEFAULT_CONFIGS = {
     nodeUrl: "https://api.avax-test.network/ext/bc/C/rpc",
     tokenPollConcurrency: AVALANCHE_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
+  [DEVNET]: {
+    nodeUrl: "https://localhost:8545",
+    tokenPollConcurrency: AVALANCHE_DEFAULT_TOKEN_POLL_CONCURRENCY,
+  }
 };
 
 export const AVALANCHE_CHAIN_CONFIG = {

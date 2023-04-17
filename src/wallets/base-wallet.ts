@@ -59,8 +59,6 @@ export abstract class WalletToolbox {
     this.validateChainName(chainName);
     this.validateOptions(options);
 
-
-
     this.configs = rawConfig.map((c) => {
       this.validateConfig(c);
       return {
