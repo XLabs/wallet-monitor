@@ -105,3 +105,72 @@ Each wallet object can have the following properties:
 
 -   `network`: (optional) the network you want to monitor. Default value is the main network of each chain.
 -   `chainConfig`: (optional) an object with configuration options for the blockchain you want to monitor wallets in. The options available depend on the type of blockchain being monitored. The available options are defined in `src/wallets/<chain-type>/<chain-name>.config.ts`. You can pass the options you want to override as properties of this object.
+
+### What data will I get?:
+Suppose a `wallets` configuration for monitoring that look like this:
+```
+const wallets = {
+  ethereum: {
+    addresses: {
+      0x80C67432656d59144cEFf962E8fAF8926599bCF8: ['USDC'],
+      0x8d0d970225597085A59ADCcd7032113226C0419d: ['DAI'],
+      0xBd8eDBCad57b5197373309954DD959fCCa40d183: [],
+    }
+  }
+}
+```
+This configuration will:
+- pull the native balance for all three addresses
+- pull the USDC balance for `0x80C67432656d59144cEFf962E8fAF8926599bCF8`
+- pull the DAI balance for `0x80C67432656d59144cEFf962E8fAF8926599bCF8`
+
+The return value of `getBalances()` for this example will look like this:
+```
+{
+    "ethereum": {
+        "0x80C67432656d59144cEFf962E8fAF8926599bCF8": [
+            {
+                "isNative": true, // the native balance for this wallet
+                "rawBalance": "104032581332177120568",
+                "address": "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
+                "formattedBalance": "104.032581332177120568",
+                "symbol": "ETH"
+            },
+            {
+                "isNative": false, // USDC balance for this wallet
+                "rawBalance": "20000000",
+                "address": "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
+                "formattedBalance": "20.0",
+                "symbol": "USDC"
+            },
+
+        ],
+        "0x8d0d970225597085A59ADCcd7032113226C0419d": [
+            {
+                "isNative": true, // the native balance for this wallet
+                "rawBalance": "60372718604099355",
+                "address": "0x8d0d970225597085A59ADCcd7032113226C0419d",
+                "formattedBalance": "0.060372718604099355",
+                "symbol": "ETH"
+            },
+            {
+                "isNative": false, // DAI balance for this wallet
+                "rawBalance": "2000600180000000000",
+                "address": "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
+                "formattedBalance": "2.00060018",
+                "symbol": "DAI"
+            }
+        ],
+        "0xBd8eDBCad57b5197373309954DD959fCCa40d183": [
+            {
+                "isNative": true, // Native balance for this wallet
+                "rawBalance": "2380949603180521",
+                "address": "0xBd8eDBCad57b5197373309954DD959fCCa40d183",
+                "formattedBalance": "0.002380949603180521",
+                "symbol": "ETH"
+            }
+            // no tokens were configured for this wallet
+        ]
+    }
+}
+```

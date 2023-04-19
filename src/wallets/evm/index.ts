@@ -103,7 +103,6 @@ export class EvmWalletToolbox extends WalletToolbox {
   }
 
   public validateNetwork(network: string): network is EvmNetworks {
-    this.logger.info("asdasdasdasd " + JSON.stringify(EVM_CHAIN_CONFIGS[this.chainName].networks));
     if (!(network in EVM_CHAIN_CONFIGS[this.chainName].networks)) throw new Error(`Invalid network "${network}" for chain: ${this.chainName}`);
 
     return true;
