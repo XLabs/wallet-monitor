@@ -1,7 +1,7 @@
 
 ## TL;DR
 
-Wallet Monitor exposes a few utilities to monitor the balance of N wallets in N blockchain. Optionally, you can also monitor the balance of N tokens for the wallets.
+Wallet Monitor exposes a few utilities to monitor the balance of N wallets in M blockchains. Optionally, you can also monitor the balance of tokens for the wallets.
 
 The module requires near 0 configuration by defaulting most required values to what would be reasonable, but it can be configured more granularly if needed.
 
@@ -53,10 +53,14 @@ const exporter = new MultiWalletExporter(wallets);
 
 
 exporter.startMetricsServer(); // Starts a prometheus server with the resulting metrics
+
+// Listening to events and getting balances are available just as in MultiWalletWatcher
+exporter.on('balances', () => {}) 
+exporter.getBalances();
 ```
 
 ### Integrating with an existing prometheus server:
-If you already have a server running and don't want to start a new prometheus server, you can get the prometheus registry or the registry metrics from the exporter instance. If you don't start the service, you will need to call `exporter.start()` in order to start polling for the wallet balances.
+If you already have a server running and don't want to start a new prometheus server, you can get the prometheus registry or the registry metrics from the exporter instance. If you don't call `startMetricsServer`, you will need to call `exporter.start()` in order to start polling for the wallet balances.
 Example code:
 ```
 ```javascript
@@ -100,4 +104,4 @@ const wallets = {
 Each wallet object can have the following properties:
 
 -   `network`: (optional) the network you want to monitor. Default value is the main network of each chain.
--   `chainConfig`: (optional) an object with configuration options for the blockchain you want to monitor. The options available depend on the type of blockchain being monitored. The available options are defined in `src/wallets/<chain-type>/<chain-name>.config.ts`. You can pass the options you want to override as properties of this object.
+-   `chainConfig`: (optional) an object with configuration options for the blockchain you want to monitor wallets in. The options available depend on the type of blockchain being monitored. The available options are defined in `src/wallets/<chain-type>/<chain-name>.config.ts`. You can pass the options you want to override as properties of this object.
