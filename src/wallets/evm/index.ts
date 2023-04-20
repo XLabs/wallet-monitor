@@ -76,7 +76,7 @@ function getUniqueTokens(wallets: EvmWalletConfig[]): string[] {
 }
 
 export class EvmWalletToolbox extends WalletToolbox {
-  private provider: ethers.providers.JsonRpcProvider;
+  // private provider: ethers.providers.JsonRpcProvider;
   private chainConfig: EvmChainConfig;
   private tokenData: Record<string, EvmTokenData> = {};
   public options: EvmWalletOptions;
@@ -144,7 +144,7 @@ export class EvmWalletToolbox extends WalletToolbox {
   }
 
   public async warmup() {
-    const uniqueTokens = getUniqueTokens(this.configs);
+    const uniqueTokens = getUniqueTokens(Object.values(this.wallets));
 
     await mapConcurrent(uniqueTokens, async (tokenAddress) => {
       this.tokenData[tokenAddress] = await pullEvmTokenData(this.provider, tokenAddress);

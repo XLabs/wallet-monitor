@@ -1,9 +1,20 @@
-import { WalletBalance, WalletOptions, WalletConfig } from ".";
+export interface WalletPool {
+  acquire(): Promise<string>;
+  // blockAndAquire(blockTimeout: number): Promise<WalletInterface>;
+  release(wallet: string): Promise<void>;
+}
 
+import { WalletBalance, WalletOptions, WalletConfig } from ".";
 import { getSilentLogger, Logger } from '../utils';
+import { LocalWalletPool } from "./wallet-pool";
 
 export type BaseWalletOptions = {
   logger?: Logger;
+}
+
+export type WalletInterface = {
+  address: string;
+  provider: any; // TODO use providers union type
 }
 
 function isFunction(fn: any) {
@@ -18,11 +29,16 @@ function isValidLogger(logger: any): logger is Logger {
     isFunction(logger.error);
 }
 
+type WalletsMap = Record<string, WalletConfig>;
+
 export abstract class WalletToolbox {
+  protected provider: any;// TODO: reevaluate the best way to do this
   private warm = false;
-  protected configs: WalletConfig[];
+  private walletPool: WalletPool;
+  protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};
+  protected wallets: WalletsMap;
   protected logger: Logger;
-  
+
   abstract validateNetwork(network: string): boolean;
 
   abstract validateChainName(chainName: string): boolean;
@@ -47,6 +63,8 @@ export abstract class WalletToolbox {
   // Should return balances for tokens in the list for the address specified
   abstract pullTokenBalances(address: string, tokens: string[]): Promise<WalletBalance[]>;
 
+  // abstract transferNativeBalance(sourceAddress: string, targetAddress: string, amount: string): Promise<void>;
+
   constructor(
     protected network: string,
     protected chainName: string,
@@ -54,18 +72,23 @@ export abstract class WalletToolbox {
     options?: WalletOptions,
   ) {
     this.logger = this.getLogger(options?.logger);
-    
+
     this.validateNetwork(network);
     this.validateChainName(chainName);
     this.validateOptions(options);
 
-    this.configs = rawConfig.map((c) => {
+    this.wallets = rawConfig.reduce((acc, c) => {
       this.validateConfig(c);
-      return {
-        address: c.address,
-        tokens: this.parseTokensConfig(c.tokens),
-      }
-    });
+
+      return Object.assign(acc, {
+        [c.address]: {
+          address: c.address,
+          tokens: this.parseTokensConfig(c.tokens),
+        }
+      });
+    }, {});
+
+    this.walletPool = new LocalWalletPool(Object.keys(this.wallets)); // if HA: new DistributedWalletPool();
   }
 
   private getLogger(logger: any): Logger {
@@ -98,7 +121,7 @@ export abstract class WalletToolbox {
 
     const balances: WalletBalance[] = [];
 
-    for (const config of this.configs) {
+    for (const config of Object.values(this.wallets)) {
       const { address, tokens } = config;
 
       this.logger.debug(`Pulling balances for ${address}...`);
@@ -131,5 +154,25 @@ export abstract class WalletToolbox {
     }
 
     return balances;
+  }
+
+  public async acquire(): Promise<WalletInterface> {
+    const walletAddress = await this.walletPool.acquire();
+    return {
+      address: walletAddress,
+      provider: this.provider,
+    }
+  }
+
+  public async release(wallet: WalletInterface) {
+    await this.walletPool.release(wallet.address);
+  }
+
+  public async transferBalance(sourceAddress: string, targetAddress: string, amount: string): Promise<void> {
+    // const wallet = this.pool.acquire();
+
+    // this.transferNativeBalance(wallet);
+
+    // this.pool.release(wallet);
   }
 }

@@ -1,25 +1,30 @@
 import { EventEmitter } from 'stream';
 
 import { getSilentLogger, Logger } from './utils';
-import { createWalletToolbox, WalletConfig, WalletOptions, Wallet } from './wallets';
+import { createWalletToolbox, WalletConfig, WalletOptions, Wallet, WalletBalance } from './wallets';
+import { WalletInterface } from './wallets/base-wallet';
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 
 export type WalletWatcherOptions = {
+  logger?: Logger;
   network: string;
   chainName: string;
-  pollInterval?: number;
-  logger?: Logger;
+  rebalance: any; // TODO: type this
+  balancePollInterval?: number;
   walletOptions?: WalletOptions;
 }
 
-export class WalletWatcher {
+export type WalletBalancesByAddress = Record<string, WalletBalance[]>;
+
+export class SingleWalletManager {
   private locked = false;
   protected logger: Logger;
+  protected balancesByAddress: Record<string, WalletBalance[]> = {};
   private interval: ReturnType<typeof setInterval> | null = null;
   private options: WalletWatcherOptions;
   private emitter = new EventEmitter();
-  
+
   public wallet: Wallet;
 
   constructor(options: WalletWatcherOptions, private wallets: WalletConfig[]) {
@@ -34,6 +39,13 @@ export class WalletWatcher {
       wallets,
       { ...options.walletOptions, logger: this.logger },
     );
+
+    if (options.rebalance) {
+      // create worker that calls executeRebalanceIfNeeded at intervals
+      // options.rebalance.strategy
+      // options.rebalance.rebalanceInterval
+      // options.rebalance.rebalanceThreshold?
+    }
   }
 
   private validateOptions(monitorOptions: any): monitorOptions is WalletWatcherOptions {
@@ -46,7 +58,7 @@ export class WalletWatcher {
   private parseOptions(monitorOptions: WalletWatcherOptions): WalletWatcherOptions {
     return {
       ...monitorOptions,
-      pollInterval: monitorOptions.pollInterval || DEFAULT_POLL_INTERVAL,
+      balancePollInterval: monitorOptions.balancePollInterval || DEFAULT_POLL_INTERVAL,
     };
   }
 
@@ -61,7 +73,9 @@ export class WalletWatcher {
 
     try {
       const balances = await this.wallet.pullBalances();
-      this.emitter.emit('balances', balances);
+      const lastBalance = this.balancesByAddress;
+      this.balancesByAddress = this.mapBalances(balances);
+      this.emitter.emit('balances', balances, this.balancesByAddress, lastBalance);
 
     } catch (error) {
       console.error(`Error while running monitor for ${this.options.chainName}-${this.options.network} Err: ${error}`);
@@ -70,6 +84,14 @@ export class WalletWatcher {
 
     this.locked = false;
   }
+
+  protected mapBalances(balances: WalletBalance[]) {
+    return balances.reduce((acc, balance) => {
+      if (!acc[balance.address]) acc[balance.address] = [];
+      acc[balance.address].push(balance);
+      return acc;
+    }, {} as WalletBalancesByAddress);
+  };
 
   public on(event: string, listener: (...args: any[]) => void) {
     this.emitter.on(event, listener);
@@ -85,5 +107,32 @@ export class WalletWatcher {
 
   public stop() {
     if (this.interval) clearInterval(this.interval);
+  }
+
+  public getBalances(): WalletBalancesByAddress {
+    return this.balancesByAddress;
+  }
+
+  public async withWallet(fn: (w: WalletInterface) => {}) {
+    const wallet = await this.wallet.acquire();
+    
+    let result: any;
+    try {
+      result = await fn(wallet);
+    } catch (error) {
+      this.logger.error(`Error while executing wallet function: ${error}`);
+      await this.wallet.release(wallet);
+      throw error;
+    }
+
+    await this.wallet.release(wallet);
+
+    return result;
+  }
+
+  // Returns a boolean indicating if a rebalance was executed
+  public async executeRebalanceIfNeeded(): Promise<Boolean> {
+
+    return false;
   }
 }

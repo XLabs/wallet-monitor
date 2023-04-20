@@ -166,7 +166,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
 
   async warmup() {
     // 1. Get all distinct tokens among all addresses.
-    const distinctTokens = [...new Set(this.configs.flatMap(({address, tokens}) => {
+    const distinctTokens = [...new Set(Object.values(this.wallets).flatMap(({address, tokens}) => {
       return tokens
     }))]
     // 2. gather information about that mint with mapConcurrent().
