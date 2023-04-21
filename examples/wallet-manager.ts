@@ -1,5 +1,4 @@
-import { WalletManager, WalletBalancesByAddress, WalletManagerOptions, WalletManagerConfig } from 'wallet-monitor';
-import { WalletInterface } from '../lib/wallets/base-wallet';
+import { WalletManager, WalletBalancesByAddress, WalletManagerOptions, WalletManagerConfig, WalletInterface } from 'wallet-monitor';
 
 const options: WalletManagerOptions = {
   logger: console,
@@ -11,7 +10,6 @@ const options: WalletManagerOptions = {
   }
 };
 
-
 const allChainWallets: WalletManagerConfig = {
   ethereum: {
     wallets: [
@@ -21,9 +19,14 @@ const allChainWallets: WalletManagerConfig = {
       },
       {
         address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
-        tokens: ["usdc"]
+        tokens: []
       }
     ]
+  },
+  solana: {
+    wallets: [
+      { address: "6VnfVsLdLwNuuCmooLTziQ99PFXZ5vc3yyqyb9tMDhhw", tokens: ['usdc'] },
+    ],
   }
 }
 

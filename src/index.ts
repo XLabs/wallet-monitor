@@ -9,10 +9,14 @@ import {
     WalletManagerConfig as WMConfig,
     WalletBalancesByAddress as WBBA,
 } from './wallet-manager';
+import {
+    WalletInterface as WI,
+} from './wallets/base-wallet';
 
 export type WalletManagerOptions = WMOptions;
 export type WalletManagerConfig = WMConfig;
 export type WalletBalancesByAddress = WBBA;
+export type WalletInterface = WI;
 
 /**
  * A map of chain names to their available networks.
