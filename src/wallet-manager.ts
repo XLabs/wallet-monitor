@@ -4,7 +4,7 @@ import { Registry } from 'prom-client';
 
 import { getSilentLogger, Logger } from './utils';
 import { PrometheusExporter } from './prometheus-exporter';
-import { SingleWalletManager } from "./single-wallet-manager";
+import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor } from "./single-wallet-manager";
 import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
 
 type WalletManagerChainConfig = {
@@ -70,18 +70,16 @@ export class WalletManager {
         this.emitter.emit('error', chainName, ...args);
       });
 
-      chainManager.on('balances', (balances: WalletBalance[]) => {
+      chainManager.on('balances', (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
         this.exporter?.updateBalances(chainName, network, balances);
         
-        this.emitter.emit('balances', chainName, network, balances);
+        this.emitter.emit('balances', chainName, network, balances, previousBalances);
       });
 
       this.managers[chainName] = chainManager;
-    };
-  }
 
-  public start() {
-    Object.values(this.managers).forEach((manager) => manager.start());
+      chainManager.start();
+    };
   }
 
   public stop() {
@@ -100,9 +98,27 @@ export class WalletManager {
     return this.exporter?.getRegistry();
   }
 
-  // public withWallet(chainName: ChainName, , walle) {
-  //   return this.managers[chainName].withWallet(walletAddress);
-  // }
+  public withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void> {
+    const chainManager = this.managers[chainName];
+    if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
 
+    return chainManager.withWallet(fn, opts);
+  }
 
+  public getAllBalances(): Record<string, WalletBalancesByAddress> {
+    const balances: Record<string, WalletBalancesByAddress> = {};
+
+    for (const [chainName, manager] of Object.entries(this.managers)) {
+      balances[chainName] = manager.getBalances();
+    }
+
+    return balances;
+  }
+
+  public getChainBalances(chainName: ChainName): WalletBalancesByAddress {
+    const manager = this.managers[chainName];
+    if (!manager) throw new Error(`No wallets configured for chain: ${chainName}`);
+
+    return manager.getBalances();
+  }
 }

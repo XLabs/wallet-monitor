@@ -1,26 +1,19 @@
-import { WalletManager } from 'wallet-monitor';
+import { WalletManager, WalletBalancesByAddress, WalletManagerOptions, WalletManagerConfig } from 'wallet-monitor';
+import { WalletInterface } from '../lib/wallets/base-wallet';
 
-const options = {
+const options: WalletManagerOptions = {
   logger: console,
   balancePollInterval: 10000,
   metrics: {
     enabled: true,
     serve: true,
-    // port: 9091,
-    // path: '/metrics',
-    // registry: new Registry()
+    port: 9091,
   }
 };
 
 
-const allChainWallets = {
+const allChainWallets: WalletManagerConfig = {
   ethereum: {
-    // network: "goerli",
-    // chainConfig: {
-    //   nodeUrl: 'https://eth.llamarpc.com',
-    //   tokenPollConcurrency: 1,
-    // },
-    // rebalance: {},
     wallets: [
       {
         address: "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
@@ -34,24 +27,49 @@ const allChainWallets = {
   }
 }
 
-const exporter = new WalletManager(allChainWallets, options);
+const manager = new WalletManager(allChainWallets, options);
 
-// Only one of the following is needed:
 
-// This will pull the balances and you'll need to implement the metrics server manually
-// exporter.start();
+// if metrics.enabled=true, metrics.serve=false, you can use:
+// exporter.getRegistry();
+// exporter.metrics();
 
-// This will pull balances and start a basic metrics server. port and path can be specified in the parameters
 
-exporter.getRegistry() // returns the registry used by the prometheus client
-
-exporter.metrics() // returns the metrics in prometheus format. syntax sugar over exporter.getRegistry().metrics()
-
-exporter.on('balances', (chainName, network, newBalances, lastBalances) => {
+manager.on('balances', (chainName, network, newBalances, lastBalances) => {
   console.log(`Received new balances for chain: ${chainName}-${network}`);
   console.log("Balances updated:", newBalances);
   console.log("Previous balance:", lastBalances);
 
-  console.log("All balances:", exporter.getBalances());
+  console.log("All Balances:", manager.getAllBalances());
+  console.log("Ethereum Balances:", manager.getChainBalances('ethereum'));
+});
+
+const allBalances: Record<string, WalletBalancesByAddress> = manager.getAllBalances();
+
+const ethereumBalances: WalletBalancesByAddress = manager.getChainBalances('ethereum');
+console.log(allBalances);
+console.log(ethereumBalances);
+
+// perform an action with any wallet available in the pool:
+const doSomethingWithWallet = async (wallet: WalletInterface) => {
+  // do what you need with the wallet
+  console.log(
+    wallet.provider,
+    wallet.address,
+    // wallet.privateKey,
+  );
+};
+
+// perform an action with any wallet available in the pool:
+manager.withWallet('ethereum', doSomethingWithWallet);
+
+// perform an action with one particular wallet:
+manager.withWallet('ethereum', doSomethingWithWallet, {
+  address: '0x80C67432656d59144cEFf962E8fAF8926599bCF8',
+});
+
+// configure the timeout for acquiring the wallet to use:
+manager.withWallet('ethereum', doSomethingWithWallet, {
+  blockTimeout: 10000,
 });
 

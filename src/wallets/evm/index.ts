@@ -177,4 +177,8 @@ export class EvmWalletToolbox extends WalletToolbox {
       };
     }, this.options.tokenPollConcurrency);
   }
+
+  public async transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<void> {
+
+  }
 }

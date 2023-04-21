@@ -165,13 +165,15 @@ export class SolanaWalletToolbox extends WalletToolbox {
   }
 
   async warmup() {
-    // 1. Get all distinct tokens among all addresses.
     const distinctTokens = [...new Set(Object.values(this.wallets).flatMap(({address, tokens}) => {
       return tokens
     }))]
-    // 2. gather information about that mint with mapConcurrent().
     await mapConcurrent(distinctTokens, async (token) => {
       this.tokenData[token] = await getMint(this.connection, new PublicKey(token))
     }, this.options.tokenPollConcurrency)
+  }
+
+  async transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<void> {
+    // TODO: implement
   }
 }

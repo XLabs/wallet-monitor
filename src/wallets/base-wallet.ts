@@ -1,6 +1,6 @@
 export interface WalletPool {
-  acquire(): Promise<string>;
-  // blockAndAquire(blockTimeout: number): Promise<WalletInterface>;
+  acquire(resourceId?: string): Promise<string>;
+  blockAndAquire(blockTimeout: number, resourceId?: string): Promise<string>;
   release(wallet: string): Promise<void>;
 }
 
@@ -28,6 +28,8 @@ function isValidLogger(logger: any): logger is Logger {
     isFunction(logger.warn) &&
     isFunction(logger.error);
 }
+
+const DEFAULT_WALLET_ACQUIRE_TIMEOUT = 5000;
 
 type WalletsMap = Record<string, WalletConfig>;
 
@@ -63,7 +65,7 @@ export abstract class WalletToolbox {
   // Should return balances for tokens in the list for the address specified
   abstract pullTokenBalances(address: string, tokens: string[]): Promise<WalletBalance[]>;
 
-  // abstract transferNativeBalance(sourceAddress: string, targetAddress: string, amount: string): Promise<void>;
+  abstract transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<void>;
 
   constructor(
     protected network: string,
@@ -156,8 +158,9 @@ export abstract class WalletToolbox {
     return balances;
   }
 
-  public async acquire(): Promise<WalletInterface> {
-    const walletAddress = await this.walletPool.acquire();
+  public async acquire(address?: string, blockTimeout?: number): Promise<WalletInterface> {
+    const timeout = blockTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
+    const walletAddress = await this.walletPool.blockAndAquire(timeout, address);
     return {
       address: walletAddress,
       provider: this.provider,
@@ -168,11 +171,16 @@ export abstract class WalletToolbox {
     await this.walletPool.release(wallet.address);
   }
 
-  public async transferBalance(sourceAddress: string, targetAddress: string, amount: string): Promise<void> {
-    // const wallet = this.pool.acquire();
+  public async transferBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<void> {
+    await this.walletPool.blockAndAquire(DEFAULT_WALLET_ACQUIRE_TIMEOUT, sourceAddress);
 
-    // this.transferNativeBalance(wallet);
+    try {
+      await this.transferNativeBalance(sourceAddress, targetAddress, amount);
+    } catch (error) {
+      await this.walletPool.release(sourceAddress);
+      throw error;
+    }
 
-    // this.pool.release(wallet);
+    await this.walletPool.release(sourceAddress);
   }
 }

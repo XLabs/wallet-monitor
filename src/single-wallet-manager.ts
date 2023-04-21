@@ -1,33 +1,46 @@
 import { EventEmitter } from 'stream';
 
-import { getSilentLogger, Logger } from './utils';
+import { getSilentLogger, Logger, mapConcurrent } from './utils';
 import { createWalletToolbox, WalletConfig, WalletOptions, Wallet, WalletBalance } from './wallets';
 import { WalletInterface } from './wallets/base-wallet';
+import { RebalanceInstruction, rebalanceStrategies, RebalanceStrategyName } from './rebalance-strategies';
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 
-export type WalletWatcherOptions = {
+export type WithWalletExecutor = (wallet: WalletInterface) => Promise<void>;
+
+export type SingleWalletManagerOptions = {
   logger?: Logger;
   network: string;
   chainName: string;
-  rebalance: any; // TODO: type this
+  rebalance: {
+    enabled: boolean;
+    strategy: RebalanceStrategyName;
+    interval: number; // ms
+  };
   balancePollInterval?: number;
   walletOptions?: WalletOptions;
 }
 
 export type WalletBalancesByAddress = Record<string, WalletBalance[]>;
 
+export type WalletExecuteOptions = {
+  address?: string;
+  blockTimeout?: number;
+}
+
 export class SingleWalletManager {
   private locked = false;
   protected logger: Logger;
   protected balancesByAddress: Record<string, WalletBalance[]> = {};
   private interval: ReturnType<typeof setInterval> | null = null;
-  private options: WalletWatcherOptions;
+  private rebalanceInterval: ReturnType<typeof setInterval> | null = null;
+  private options: SingleWalletManagerOptions;
   private emitter = new EventEmitter();
 
   public wallet: Wallet;
 
-  constructor(options: WalletWatcherOptions, private wallets: WalletConfig[]) {
+  constructor(options: any, private wallets: WalletConfig[]) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
 
@@ -39,26 +52,26 @@ export class SingleWalletManager {
       wallets,
       { ...options.walletOptions, logger: this.logger },
     );
-
-    if (options.rebalance) {
-      // create worker that calls executeRebalanceIfNeeded at intervals
-      // options.rebalance.strategy
-      // options.rebalance.rebalanceInterval
-      // options.rebalance.rebalanceThreshold?
-    }
   }
 
-  private validateOptions(monitorOptions: any): monitorOptions is WalletWatcherOptions {
-    if (!monitorOptions.network) throw new Error('Missing network option');
-    if (!monitorOptions.chainName) throw new Error('Missing chainName option');
-    if (monitorOptions.pollInterval && typeof monitorOptions.pollInterval !== 'number') throw new Error('Invalid pollInterval option');
+  private validateOptions(options: any): options is SingleWalletManagerOptions {
+    if (!options.network) throw new Error('Missing network option');
+    if (!options.chainName) throw new Error('Missing chainName option');
+    if (options.balancePollInterval && typeof options.balancePollInterval !== 'number') throw new Error('Invalid pollInterval option');
     return true;
   }
 
-  private parseOptions(monitorOptions: WalletWatcherOptions): WalletWatcherOptions {
+  private parseOptions(options: SingleWalletManagerOptions): SingleWalletManagerOptions {
+    const rebalanceOptions = {
+      enabled: options?.rebalance?.enabled || false,
+      strategy: options?.rebalance?.strategy || 'default',
+      interval: options?.rebalance?.interval || 60 * 1000,
+    };
+
     return {
-      ...monitorOptions,
-      balancePollInterval: monitorOptions.balancePollInterval || DEFAULT_POLL_INTERVAL,
+      ...options,
+      rebalance: rebalanceOptions,
+      balancePollInterval: options.balancePollInterval || DEFAULT_POLL_INTERVAL,
     };
   }
 
@@ -102,20 +115,27 @@ export class SingleWalletManager {
       this.run();
     }, DEFAULT_POLL_INTERVAL);
 
+    if (this.options?.rebalance?.enabled) {
+      this.rebalanceInterval = setInterval(() => {
+        this.executeRebalanceIfNeeded();
+      });
+    }
+
     this.run();
   }
 
   public stop() {
     if (this.interval) clearInterval(this.interval);
+    if (this.rebalanceInterval) clearInterval(this.rebalanceInterval);
   }
 
   public getBalances(): WalletBalancesByAddress {
     return this.balancesByAddress;
   }
 
-  public async withWallet(fn: (w: WalletInterface) => {}) {
-    const wallet = await this.wallet.acquire();
-    
+  public async withWallet(fn: (w: WalletInterface) => {}, opts?: WalletExecuteOptions) {
+    const wallet = await this.wallet.acquire(opts?.address, opts?.blockTimeout);
+
     let result: any;
     try {
       result = await fn(wallet);
@@ -132,7 +152,22 @@ export class SingleWalletManager {
 
   // Returns a boolean indicating if a rebalance was executed
   public async executeRebalanceIfNeeded(): Promise<Boolean> {
+    const rebalanceStrategy = rebalanceStrategies[this.options.rebalance.strategy];
 
-    return false;
+    const { shouldRebalance, instructions } = rebalanceStrategy(this.balancesByAddress);
+
+    if (!shouldRebalance) return shouldRebalance;
+
+    await mapConcurrent(instructions, async (instruction: RebalanceInstruction) => {
+      const { sourceAddress, targetAddress, amount } = instruction;
+
+      try {
+        await this.wallet.transferBalance(sourceAddress, targetAddress, amount);
+      } catch (error) {
+        this.logger.error(`Error while executing rebalance instruction: ${JSON.stringify(instruction)}. Error: ${error}`);
+      }
+    }, 1);
+
+    return shouldRebalance;
   }
 }
