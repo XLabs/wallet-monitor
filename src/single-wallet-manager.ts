@@ -31,6 +31,7 @@ export type WalletExecuteOptions = {
 
 export class SingleWalletManager {
   private locked = false;
+  private rebalanceLocked = false;
   protected logger: Logger;
   protected balancesByAddress: Record<string, WalletBalance[]> = {};
   private interval: ReturnType<typeof setInterval> | null = null;
@@ -152,21 +153,28 @@ export class SingleWalletManager {
 
   // Returns a boolean indicating if a rebalance was executed
   public async executeRebalanceIfNeeded(): Promise<Boolean> {
+    if (this.rebalanceLocked) {
+      this.logger.warn(`A rebalance is already in progress for ${this.options.chainName}. Will skip rebalance`);
+      return false;
+    }
+
     const rebalanceStrategy = rebalanceStrategies[this.options.rebalance.strategy];
-
     const { shouldRebalance, instructions } = rebalanceStrategy(this.balancesByAddress);
+    
+    if (shouldRebalance) {
+      this.rebalanceLocked = true;
+      await mapConcurrent(instructions, async (instruction: RebalanceInstruction) => {
+        const { sourceAddress, targetAddress, amount } = instruction;
+  
+        try {
+          await this.wallet.transferBalance(sourceAddress, targetAddress, amount);
+        } catch (error) {
+          this.logger.error(`Rebalance Instruction Failed: ${JSON.stringify(instruction)}. Error: ${error}`);
+        }
+      }, 1);
 
-    if (!shouldRebalance) return shouldRebalance;
-
-    await mapConcurrent(instructions, async (instruction: RebalanceInstruction) => {
-      const { sourceAddress, targetAddress, amount } = instruction;
-
-      try {
-        await this.wallet.transferBalance(sourceAddress, targetAddress, amount);
-      } catch (error) {
-        this.logger.error(`Error while executing rebalance instruction: ${JSON.stringify(instruction)}. Error: ${error}`);
-      }
-    }, 1);
+      this.rebalanceLocked = false;
+    }
 
     return shouldRebalance;
   }
