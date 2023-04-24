@@ -15,6 +15,8 @@ const allChainWallets: WalletManagerConfig = {
     rebalance: {
       enabled: false,
       strategy: 'default',
+      interval: 10000,
+      minBalanceThreshold: 0.1,
     },
     wallets: [
       {
@@ -37,8 +39,8 @@ const allChainWallets: WalletManagerConfig = {
 export const manager = new WalletManager(allChainWallets, options);
 
 // if metrics.enabled=true, metrics.serve=false, you can use:
-// exporter.getRegistry();
-// exporter.metrics();
+manager.getRegistry();
+manager.metrics();
 
 
 manager.on('balances', (chainName, network, newBalances, lastBalances) => {

@@ -85,7 +85,7 @@ export abstract class WalletToolbox {
       return Object.assign(acc, {
         [c.address]: {
           address: c.address,
-          tokens: this.parseTokensConfig(c.tokens),
+          tokens: this.parseTokensConfig(c.tokens || []),
         }
       });
     }, {});
@@ -96,17 +96,6 @@ export abstract class WalletToolbox {
   private getLogger(logger: any): Logger {
     if (logger && isValidLogger(logger)) return logger;
     return getSilentLogger();
-  }
-
-  protected parseConfig(config: WalletConfig): WalletConfig {
-    const walletConfig = {
-      address: config.address,
-      tokens: this.parseTokensConfig(config.tokens),
-    };
-
-    this.logger.debug(`Parsed config: ${JSON.stringify(walletConfig)}`);
-
-    return walletConfig;
   }
 
   public async pullBalances(): Promise<WalletBalance[]> {

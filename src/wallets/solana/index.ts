@@ -167,7 +167,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
 
   async warmup() {
     const distinctTokens = [...new Set(Object.values(this.wallets).flatMap(({address, tokens}) => {
-      return tokens
+      return tokens || [];
     }))]
     await mapConcurrent(distinctTokens, async (token) => {
       this.tokenData[token] = await getMint(this.connection, new PublicKey(token))

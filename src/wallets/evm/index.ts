@@ -27,7 +27,7 @@ type EvmChainConfig = {
 
 type EvmWalletConfig = {
   address: string;
-  tokens: string[];
+  tokens?: string[];
 }
 
 const EVM_CHAINS = {
@@ -69,7 +69,7 @@ export type EvmNetworks = EthereumNetwork | PolygonNetwork | BscNetwork | Avalan
 
 function getUniqueTokens(wallets: EvmWalletConfig[]): string[] {
   const tokens = wallets.reduce((acc, wallet) => {
-    return [...acc, ...wallet.tokens];
+    return wallet.tokens? [...acc, ...wallet.tokens] : acc;
   }, [] as string[]);
 
   return [...new Set(tokens)];
@@ -135,12 +135,12 @@ export class EvmWalletToolbox extends WalletToolbox {
   }
 
   public parseTokensConfig(tokens: EvmWalletConfig["tokens"]): string[] {
-    return tokens.map((token) => {
+    return tokens ? tokens.map((token) => {
       if (EVM_HEX_ADDRESS_REGEX.test(token)) {
         return token;  
       }
       return EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network][token.toUpperCase()];
-    });
+    }) : [];
   }
 
   public async warmup() {

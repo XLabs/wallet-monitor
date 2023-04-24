@@ -20,7 +20,6 @@ export type SingleWalletManagerOptions = {
     strategy: RebalanceStrategyName;
     interval: number; // ms
     minBalanceThreshold: number;
-    maxBalanceDifference: number;
   };
   balancePollInterval?: number;
   walletOptions?: WalletOptions;
@@ -43,7 +42,7 @@ export class SingleWalletManager {
   private options: SingleWalletManagerOptions;
   private emitter = new EventEmitter();
 
-  public wallet: Wallet;
+  public walletToolbox: Wallet;
 
   constructor(options: any, private wallets: WalletConfig[]) {
     this.validateOptions(options);
@@ -51,7 +50,7 @@ export class SingleWalletManager {
 
     this.logger = options.logger || getSilentLogger();
 
-    this.wallet = createWalletToolbox(
+    this.walletToolbox = createWalletToolbox(
       options.network,
       options.chainName,
       wallets,
@@ -72,7 +71,6 @@ export class SingleWalletManager {
       strategy: options?.rebalance?.strategy || DEFAULT_REBALANCE_STRATEGY,
       interval: options?.rebalance?.interval || DEFAULT_REBALANCE_INTERVAL,
       minBalanceThreshold: options?.rebalance?.minBalanceThreshold || 0,
-      maxBalanceDifference: options?.rebalance?.maxBalanceDifference || 100,
     };
 
     return {
@@ -92,7 +90,7 @@ export class SingleWalletManager {
     this.locked = true;
 
     try {
-      const balances = await this.wallet.pullBalances();
+      const balances = await this.walletToolbox.pullBalances();
       const lastBalance = this.balancesByAddress;
       this.balancesByAddress = this.mapBalances(balances);
       this.emitter.emit('balances', balances, this.balancesByAddress, lastBalance);
@@ -114,36 +112,6 @@ export class SingleWalletManager {
     }, {} as WalletBalancesByAddress);
   };
 
-  protected shouldRebalance(balances: WalletBalancesByAddress, minBalanceThreshold: number, maxBalanceDifference: number): boolean {
-    const addresses = Object.keys(balances);
-    const { minBalance, maxBalance } = Object.entries(balances).reduce((acc, [address, addressNativeBalance]) => {
-
-      let minBalance = acc.minBalance;
-      let maxBalance = acc.maxBalance;
-
-      const balance = +addressNativeBalance.rawBalance;
-
-      if (balance < acc.minBalance) {
-        minBalance = balance;
-      }
-
-      if (balance > acc.maxBalance) {
-        maxBalance = balance;
-      }
-
-      return { minBalance, maxBalance };
-    }, { minBalance: 0, maxBalance: 0 });
-
-    const balanceDifference = maxBalance - minBalance;
-
-    if (balanceDifference > maxBalanceDifference || minBalance < minBalanceThreshold) {
-      this.logger.info(`Rebalance needed for ${this.options.chainName}. Min balance: ${minBalance}, Max balance: ${maxBalance}, Difference: ${balanceDifference}`);
-      return true;
-    }
-
-    return false;
-  };
-
   public on(event: string, listener: (...args: any[]) => void) {
     this.emitter.on(event, listener);
   }
@@ -156,7 +124,7 @@ export class SingleWalletManager {
     if (this.options?.rebalance?.enabled) {
       this.rebalanceInterval = setInterval(() => {
         this.executeRebalanceIfNeeded();
-      });
+      }, this.options.rebalance.interval);
     }
 
     this.run();
@@ -172,44 +140,50 @@ export class SingleWalletManager {
   }
 
   public async withWallet(fn: (w: WalletInterface) => {}, opts?: WalletExecuteOptions) {
-    const wallet = await this.wallet.acquire(opts?.address, opts?.blockTimeout);
+    const wallet = await this.walletToolbox.acquire(opts?.address, opts?.blockTimeout);
 
     let result: any;
     try {
       result = await fn(wallet);
     } catch (error) {
       this.logger.error(`Error while executing wallet function: ${error}`);
-      await this.wallet.release(wallet);
+      await this.walletToolbox.release(wallet);
       throw error;
     }
 
-    await this.wallet.release(wallet);
+    await this.walletToolbox.release(wallet);
 
     return result;
   }
 
   // Returns a boolean indicating if a rebalance was executed
   public async executeRebalanceIfNeeded(): Promise<Boolean> {
-    const { rebalance } = this.options;
     if (this.rebalanceLocked) {
       this.logger.warn(`A rebalance is already in progress for ${this.options.chainName}. Will skip rebalance`);
       return false;
     }
+    
+    const { rebalance: { strategy, minBalanceThreshold } } = this.options;
 
-    const { minBalanceThreshold, maxBalanceDifference, strategy } = rebalance;
-
-    if (!this.shouldRebalance(this.balancesByAddress, minBalanceThreshold, maxBalanceDifference)) {
+    let instructions;
+    try {
+      instructions = rebalanceStrategies[strategy](this.balancesByAddress, minBalanceThreshold);
+    } catch (error) {
+      this.logger.error(`Rebalance strategy failed for ${this.options.chainName}: ${error}`);
       return false;
     }
 
-    const instructions = rebalanceStrategies[strategy](this.balancesByAddress);
+    this.logger.debug(`Rebalance instructions for ${this.options.chainName}: ${JSON.stringify(instructions)}`);
+
+    if (!instructions.length) return false;
 
     this.rebalanceLocked = true;
+
     await mapConcurrent(instructions, async (instruction: RebalanceInstruction) => {
       const { sourceAddress, targetAddress, amount } = instruction;
 
       try {
-        await this.wallet.transferBalance(sourceAddress, targetAddress, amount);
+        await this.walletToolbox.transferBalance(sourceAddress, targetAddress, amount);
       } catch (error) {
         this.logger.error(`Rebalance Instruction Failed: ${JSON.stringify(instruction)}. Error: ${error}`);
       }

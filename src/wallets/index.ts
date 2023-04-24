@@ -15,7 +15,8 @@ export type WalletOptions = EvmWalletOptions | SolanaWalletOptions;
 
 export type WalletConfig = {
   address: string;
-  tokens: string[];
+  tokens?: string[];
+  // privateKey: string;
 }
 
 export type Balance = {
@@ -33,16 +34,6 @@ export type TokenBalance = Balance & {
 export type WalletBalance = Balance & {
   tokens: TokenBalance[];
 }
-
-// export type WalletBalance = {
-//   address: string,
-//   isNative: boolean;
-//   symbol: string;
-//   rawBalance: string;
-//   formattedBalance: string;
-//   // only if isNative = false.
-//   tokenAddress?: string;
-// }
 
 export type AllNetworks = EvmNetworks | SolanaNetworks
 

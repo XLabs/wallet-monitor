@@ -15,7 +15,6 @@ type WalletManagerChainConfig = {
     strategy?: string;
     interval?: number;
     minBalanceThreshold?: number;
-    maxBalanceDifference?: number;
   };
   wallets: WalletConfig[];
 }

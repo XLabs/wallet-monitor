@@ -19,3 +19,12 @@ export function getSilentLogger () {
     error: () => {},
   };
 }
+
+export function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+export function omit(obj: any, key: string) {
+  const { [key]: _, ...rest } = obj;
+  return rest;
+}
