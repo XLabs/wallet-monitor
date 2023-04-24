@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 
-import { WalletConfig, WalletBalance } from '../';
+import { WalletConfig, WalletBalance, TokenBalance } from '../';
 import { mapConcurrent } from '../../utils';
 import { WalletToolbox, BaseWalletOptions } from '../base-wallet';
 import { pullEvmNativeBalance, EvmTokenData, pullEvmTokenData, pullEvmTokenBalance } from '../../balances/evm';
@@ -160,11 +160,12 @@ export class EvmWalletToolbox extends WalletToolbox {
       ...balance,
       address,
       formattedBalance,
+      tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
     }
   }
 
-  public async pullTokenBalances(address: string, tokens: string[]): Promise<WalletBalance[]> {
+  public async pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]> {
     return mapConcurrent(tokens, async (tokenAddress) => {
       const tokenData = this.tokenData[tokenAddress];
       const balance = await pullEvmTokenBalance(this.provider, tokenAddress, address);
@@ -172,6 +173,7 @@ export class EvmWalletToolbox extends WalletToolbox {
       return {
         ...balance,
         address,
+        tokenAddress,
         formattedBalance,
         symbol: tokenData.symbol,
       };

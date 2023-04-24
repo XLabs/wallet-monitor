@@ -50,6 +50,7 @@
     "@types/koa": "^2.13.6",
     "@types/koa-router": "^7.4.4",
     "@types/node": "^18.15.7",
+    "ganache": "^7.8.0",
     "ganache-cli": "^6.12.2",
     "prettier": "^2.8.7",
     "typescript": "^5.0.2"

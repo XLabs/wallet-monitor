@@ -18,15 +18,31 @@ export type WalletConfig = {
   tokens: string[];
 }
 
-export type WalletBalance = {
-  address: string,
-  isNative: boolean;
+export type Balance = {
   symbol: string;
+  address: string;
+  isNative: boolean;
   rawBalance: string;
   formattedBalance: string;
-  // only if isNative = false.
-  tokenAddress?: string;
 }
+
+export type TokenBalance = Balance & {
+  tokenAddress?: string; // Why can solana tokens not have a token address?
+}
+
+export type WalletBalance = Balance & {
+  tokens: TokenBalance[];
+}
+
+// export type WalletBalance = {
+//   address: string,
+//   isNative: boolean;
+//   symbol: string;
+//   rawBalance: string;
+//   formattedBalance: string;
+//   // only if isNative = false.
+//   tokenAddress?: string;
+// }
 
 export type AllNetworks = EvmNetworks | SolanaNetworks
 

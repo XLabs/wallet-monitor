@@ -12,6 +12,10 @@ const options: WalletManagerOptions = {
 
 const allChainWallets: WalletManagerConfig = {
   ethereum: {
+    rebalance: {
+      enabled: false,
+      strategy: 'default',
+    },
     wallets: [
       {
         address: "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
@@ -30,8 +34,7 @@ const allChainWallets: WalletManagerConfig = {
   }
 }
 
-const manager = new WalletManager(allChainWallets, options);
-
+export const manager = new WalletManager(allChainWallets, options);
 
 // if metrics.enabled=true, metrics.serve=false, you can use:
 // exporter.getRegistry();
@@ -40,27 +43,25 @@ const manager = new WalletManager(allChainWallets, options);
 
 manager.on('balances', (chainName, network, newBalances, lastBalances) => {
   console.log(`Received new balances for chain: ${chainName}-${network}`);
-  console.log("Balances updated:", newBalances);
-  console.log("Previous balance:", lastBalances);
+  // console.log("Balances updated:", newBalances);
+  // console.log("Previous balance:", lastBalances);
 
-  console.log("All Balances:", manager.getAllBalances());
-  console.log("Ethereum Balances:", manager.getChainBalances('ethereum'));
+  console.log("All Balances:", JSON.stringify(manager.getAllBalances()));
+  // console.log("Ethereum Balances:", manager.getChainBalances('ethereum'));
 });
 
 const allBalances: Record<string, WalletBalancesByAddress> = manager.getAllBalances();
 
 const ethereumBalances: WalletBalancesByAddress = manager.getChainBalances('ethereum');
-console.log(allBalances);
-console.log(ethereumBalances);
 
 // perform an action with any wallet available in the pool:
 const doSomethingWithWallet = async (wallet: WalletInterface) => {
   // do what you need with the wallet
-  console.log(
-    wallet.provider,
-    wallet.address,
+  // console.log(
+    // wallet.provider,
+    // wallet.address,
     // wallet.privateKey,
-  );
+  // );
 };
 
 // perform an action with any wallet available in the pool:
@@ -75,4 +76,3 @@ manager.withWallet('ethereum', doSomethingWithWallet, {
 manager.withWallet('ethereum', doSomethingWithWallet, {
   blockTimeout: 10000,
 });
-

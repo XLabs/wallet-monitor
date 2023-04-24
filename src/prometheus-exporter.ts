@@ -2,12 +2,13 @@ import Koa from 'koa';
 import Router from 'koa-router';
 import { Gauge, Registry } from 'prom-client';
 
-import { WalletBalance } from './wallets';
+import { WalletBalance, TokenBalance } from './wallets';
 
-export function updateExporterGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance) {
-  const { symbol, isNative, tokenAddress, address } = balance;
+export function updateExporterGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance | TokenBalance) {
+  const { symbol, address, isNative } = balance;
+  const tokenAddress = (balance as TokenBalance).tokenAddress || '';
   gauge
-    .labels(chainName, network, symbol, isNative.toString(), tokenAddress || '', address)
+    .labels(chainName, network, symbol, isNative.toString(), tokenAddress, address)
     .set(parseFloat(balance.formattedBalance));
 }
 
@@ -65,7 +66,13 @@ export class PrometheusExporter {
   }
 
   public updateBalances(chainName: string, network: string, balances: WalletBalance[]) {
-    balances.forEach(balance => updateExporterGauge(this.balancesGauge, chainName, network, balance));
+    balances.forEach(balance => {
+      updateExporterGauge(this.balancesGauge, chainName, network, balance);
+
+      balance.tokens?.forEach((tokenBalance: TokenBalance) => {
+        updateExporterGauge(this.balancesGauge, chainName, network, tokenBalance);
+      });
+    });
   }
 
   public async startMetricsServer(): Promise<void> {

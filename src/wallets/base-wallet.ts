@@ -4,7 +4,7 @@ export interface WalletPool {
   release(wallet: string): Promise<void>;
 }
 
-import { WalletBalance, WalletOptions, WalletConfig } from ".";
+import { WalletBalance, Balance, TokenBalance, WalletOptions, WalletConfig } from ".";
 import { getSilentLogger, Logger } from '../utils';
 import { LocalWalletPool } from "./wallet-pool";
 
@@ -63,7 +63,7 @@ export abstract class WalletToolbox {
   abstract pullNativeBalance(address: string): Promise<WalletBalance>;
 
   // Should return balances for tokens in the list for the address specified
-  abstract pullTokenBalances(address: string, tokens: string[]): Promise<WalletBalance[]>;
+  abstract pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]>;
 
   abstract transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<void>;
 
@@ -128,13 +128,16 @@ export abstract class WalletToolbox {
 
       this.logger.debug(`Pulling balances for ${address}...`);
 
+      let nativeBalance;
+
       try {
-        const nativeBalance = await this.pullNativeBalance(address);
+        nativeBalance = await this.pullNativeBalance(address);
         balances.push(nativeBalance);
 
         this.logger.debug(`Balances for ${address} pulled: ${JSON.stringify(nativeBalance)}`)
       } catch (error) {
         this.logger.error(`Error pulling native balance for ${address}: ${error}`);
+        continue;
       }
 
       if (!tokens || tokens.length === 0) {
@@ -149,7 +152,7 @@ export abstract class WalletToolbox {
 
         this.logger.debug(`Token balances for ${address} pulled: ${JSON.stringify(tokenBalances)}`);
 
-        balances.push(...tokenBalances);
+        nativeBalance.tokens.push(...tokenBalances);
       } catch (error) {
         this.logger.error(`Error pulling token balances for ${address}: ${error}`);
       }

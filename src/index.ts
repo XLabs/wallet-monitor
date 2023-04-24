@@ -7,8 +7,10 @@ import { EVM_CHAIN_CONFIGS  } from './wallets/evm';
 import {
     WalletManagerOptions as WMOptions,
     WalletManagerConfig as WMConfig,
-    WalletBalancesByAddress as WBBA,
 } from './wallet-manager';
+import {
+    WalletBalancesByAddress as WBBA,
+} from './single-wallet-manager';
 import {
     WalletInterface as WI,
 } from './wallets/base-wallet';

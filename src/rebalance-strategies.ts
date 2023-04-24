@@ -6,17 +6,19 @@ export type RebalanceInstruction = {
   amount: number;
 }
 
-export type RebalanceStrategy = (balances: WalletBalancesByAddress) => { shouldRebalance: boolean, instructions: RebalanceInstruction[] };
+export type RebalanceStrategy = (balances: WalletBalancesByAddress) => RebalanceInstruction[];
 
 export type RebalanceStrategyName = keyof typeof rebalanceStrategies;
 
-function defaultRebalanceStrategy(balances: WalletBalancesByAddress): { shouldRebalance: boolean, instructions: RebalanceInstruction[] } {
-  const shouldRebalance = false;
+function fillFromMaxRebalanceStrategy(balances: WalletBalancesByAddress) {
   const instructions: RebalanceInstruction[] = [];
 
-  return { shouldRebalance, instructions };
+
+
+
+  return instructions;
 }
 
 export const rebalanceStrategies: Record<string, RebalanceStrategy> = {
-  default: defaultRebalanceStrategy,
+  fillFromMax: fillFromMaxRebalanceStrategy,
 };

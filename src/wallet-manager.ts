@@ -4,17 +4,21 @@ import { Registry } from 'prom-client';
 
 import { getSilentLogger, Logger } from './utils';
 import { PrometheusExporter } from './prometheus-exporter';
-import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor } from "./single-wallet-manager";
+import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./single-wallet-manager";
 import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
 
 type WalletManagerChainConfig = {
   network?: string;
   chainConfig?: any;
-  rebalance?: { enabled: boolean; strategy?: string; };
+  rebalance?: {
+    enabled: boolean;
+    strategy?: string;
+    interval?: number;
+    minBalanceThreshold?: number;
+    maxBalanceDifference?: number;
+  };
   wallets: WalletConfig[];
 }
-
-export type WalletBalancesByAddress = Record<string, WalletBalance[]>;
 
 export type WalletManagerConfig = Record<string, WalletManagerChainConfig>;
 
@@ -71,6 +75,7 @@ export class WalletManager {
       });
 
       chainManager.on('balances', (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
+        this.logger.info(`Balances updated for ${chainName} ${network} -> ` + JSON.stringify(balances));
         this.exporter?.updateBalances(chainName, network, balances);
         
         this.emitter.emit('balances', chainName, network, balances, previousBalances);

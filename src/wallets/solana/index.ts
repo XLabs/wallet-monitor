@@ -2,7 +2,7 @@ import {Connection, LAMPORTS_PER_SOL, PublicKey} from "@solana/web3.js"
 import {SOLANA, SOLANA_CHAIN_CONFIG, SolanaNetworks} from "./solana.config";
 import {PYTHNET, PYTHNET_CHAIN_CONFIG} from "./pythnet.config";
 import {BaseWalletOptions, WalletToolbox} from "../base-wallet";
-import {WalletBalance, WalletConfig, WalletOptions} from "../index";
+import {WalletBalance, TokenBalance, WalletConfig, WalletOptions} from "../index";
 import {pullSolanaNativeBalance} from "../../balances/solana";
 import {getMint, Mint, TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import {mapConcurrent} from "../../utils";
@@ -85,11 +85,12 @@ export class SolanaWalletToolbox extends WalletToolbox {
       ...balance,
       address,
       formattedBalance,
+      tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol
     }
   }
 
-  async pullTokenBalances(address: string, tokens: string[]): Promise<WalletBalance[]> {
+  async pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]> {
     // Because one user account could be the owner of multiple token accounts with the same mint account,
     //  we need to aggregate data and sum over the distinct mint accounts.
     const tokenBalances = await this.connection.getParsedTokenAccountsByOwner(
