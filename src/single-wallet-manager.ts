@@ -2,12 +2,12 @@ import { EventEmitter } from 'stream';
 
 import { getSilentLogger, Logger, mapConcurrent } from './utils';
 import { createWalletToolbox, WalletConfig, WalletOptions, Wallet, WalletBalance } from './wallets';
-import { WalletInterface } from './wallets/base-wallet';
+import { TransferRecepit, WalletInterface } from './wallets/base-wallet';
 import { RebalanceInstruction, rebalanceStrategies, RebalanceStrategyName } from './rebalance-strategies';
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
-const DEFAULT_REBALANCE_STRATEGY = 'fillFromMax';
+const DEFAULT_REBALANCE_STRATEGY = 'pourOver';
 
 export type WithWalletExecutor = (wallet: WalletInterface) => Promise<void>;
 
@@ -20,6 +20,8 @@ export type SingleWalletManagerOptions = {
     strategy: RebalanceStrategyName;
     interval: number; // ms
     minBalanceThreshold: number;
+    maxGasPrice?: number;
+    gasLimit?: number;
   };
   balancePollInterval?: number;
   walletOptions?: WalletOptions;
@@ -48,6 +50,10 @@ export class SingleWalletManager {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
 
+    if (this.options.rebalance.enabled) {
+      this.validateRebalanceConfiguration(this.options.rebalance, wallets);
+    }
+
     this.logger = options.logger || getSilentLogger();
 
     this.walletToolbox = createWalletToolbox(
@@ -62,15 +68,18 @@ export class SingleWalletManager {
     if (!options.network) throw new Error('Missing network option');
     if (!options.chainName) throw new Error('Missing chainName option');
     if (options.balancePollInterval && typeof options.balancePollInterval !== 'number') throw new Error('Invalid pollInterval option');
+
     return true;
   }
 
   private parseOptions(options: SingleWalletManagerOptions): SingleWalletManagerOptions {
     const rebalanceOptions = {
-      enabled: options?.rebalance?.enabled || false,
-      strategy: options?.rebalance?.strategy || DEFAULT_REBALANCE_STRATEGY,
-      interval: options?.rebalance?.interval || DEFAULT_REBALANCE_INTERVAL,
-      minBalanceThreshold: options?.rebalance?.minBalanceThreshold || 0,
+      enabled: options.rebalance?.enabled || false,
+      strategy: options.rebalance?.strategy || DEFAULT_REBALANCE_STRATEGY,
+      interval: options.rebalance?.interval || DEFAULT_REBALANCE_INTERVAL,
+      minBalanceThreshold: options.rebalance?.minBalanceThreshold || 0,
+      maxGasPrice: options.rebalance?.maxGasPrice,
+      gasLimit: options.rebalance?.gasLimit,
     };
 
     return {
@@ -80,7 +89,42 @@ export class SingleWalletManager {
     };
   }
 
-  private async run() {
+  private validateRebalanceConfiguration(rebalanceConfig: any, wallets: WalletConfig[]) {
+    if (!rebalanceConfig.enabled) return true;
+
+    if (!rebalanceStrategies[rebalanceConfig.strategy])
+      throw new Error(`Invalid rebalance strategy ${rebalanceConfig.strategy}`);
+
+    if (typeof rebalanceConfig.minBalanceThreshold !== 'number')
+      throw new Error('Invalid minBalanceThreshold option');
+
+    if (typeof rebalanceConfig.interval !== 'number')
+      throw new Error('Invalid rebalance interval option');
+
+    if (rebalanceConfig.minBalanceThreshold < 0)
+      throw new Error('Invalid minBalanceThreshold option');
+    
+    if (rebalanceConfig.interval < 0)
+      throw new Error('Invalid rebalance interval option');
+
+    if (rebalanceConfig.enabled && wallets.length < 2)
+      throw new Error('Rebalance enabled but only one wallet configured');
+
+    if (rebalanceConfig.maxGasPrice && typeof rebalanceConfig.maxGasPrice !== 'number')
+      throw new Error('Invalid maxGasPrice option');
+
+    if (rebalanceConfig.gasLimit && typeof rebalanceConfig.gasLimit !== 'number')
+      throw new Error('Invalid gasLimit option');
+
+    const walletWithNoPk = wallets.find(w => !w.privateKey);
+
+    if (walletWithNoPk)
+      throw new Error(`Rebalance enabled but wallet ${walletWithNoPk.address} has no private key`);
+
+    return true;
+  }
+
+  private async refreshBalances() {
     if (this.locked) {
       console.warn(`A monitoring run is already in progress for ${this.options.chainName}. Will skip run`);
       this.emitter.emit('skipped', { chainName: this.options.chainName, rawConfig: this.wallets });
@@ -118,16 +162,16 @@ export class SingleWalletManager {
 
   public async start() {
     this.interval = setInterval(async () => {
-      this.run();
+      this.refreshBalances();
     }, DEFAULT_POLL_INTERVAL);
 
-    if (this.options?.rebalance?.enabled) {
+    if (this.options.rebalance.enabled) {
       this.rebalanceInterval = setInterval(() => {
         this.executeRebalanceIfNeeded();
       }, this.options.rebalance.interval);
     }
 
-    this.run();
+    this.refreshBalances();
   }
 
   public stop() {
@@ -163,7 +207,7 @@ export class SingleWalletManager {
       return false;
     }
     
-    const { rebalance: { strategy, minBalanceThreshold } } = this.options;
+    const { rebalance: { strategy, minBalanceThreshold, maxGasPrice, gasLimit } } = this.options;
 
     let instructions;
     try {
@@ -179,17 +223,30 @@ export class SingleWalletManager {
 
     this.rebalanceLocked = true;
 
-    await mapConcurrent(instructions, async (instruction: RebalanceInstruction) => {
+    this.emitter.emit('rebalance-started', instructions);
+
+    const receipts: TransferRecepit[] = [];
+
+    for (const instruction of instructions) {
       const { sourceAddress, targetAddress, amount } = instruction;
 
+      let receipt;
       try {
-        await this.walletToolbox.transferBalance(sourceAddress, targetAddress, amount);
+        receipt = await this.walletToolbox.transferBalance(sourceAddress, targetAddress, amount, maxGasPrice, gasLimit);
       } catch (error) {
         this.logger.error(`Rebalance Instruction Failed: ${JSON.stringify(instruction)}. Error: ${error}`);
+        this.emitter.emit('rebalance-error', instruction, error);
+        continue;
       }
-    }, 1);
-
+      
+      receipts.push(receipt);
+    };
+    
+    await this.refreshBalances();
+    
     this.rebalanceLocked = false;
+
+    this.emitter.emit('rebalance-finished', instructions);
 
     return true;
   }

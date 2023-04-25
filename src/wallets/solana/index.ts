@@ -1,7 +1,7 @@
 import {Connection, LAMPORTS_PER_SOL, PublicKey} from "@solana/web3.js"
 import {SOLANA, SOLANA_CHAIN_CONFIG, SolanaNetworks} from "./solana.config";
 import {PYTHNET, PYTHNET_CHAIN_CONFIG} from "./pythnet.config";
-import {BaseWalletOptions, WalletToolbox} from "../base-wallet";
+import {BaseWalletOptions, TransferRecepit, WalletToolbox} from "../base-wallet";
 import {WalletBalance, TokenBalance, WalletConfig, WalletOptions} from "../index";
 import {pullSolanaNativeBalance} from "../../balances/solana";
 import {getMint, Mint, TOKEN_PROGRAM_ID} from "@solana/spl-token";
@@ -174,7 +174,8 @@ export class SolanaWalletToolbox extends WalletToolbox {
     }, this.options.tokenPollConcurrency)
   }
 
-  async transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<void> {
+  async transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<TransferRecepit> {
     // TODO: implement
+    throw new Error('SolanaWalletToolbox.transferNativeBalance not implemented.');
   }
 }

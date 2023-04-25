@@ -14,7 +14,14 @@ export type BaseWalletOptions = {
 
 export type WalletInterface = {
   address: string;
+  privateKey?: string;
   provider: any; // TODO use providers union type
+}
+
+export type TransferRecepit = {
+  transactionHash: String,
+  gasUsed: String,
+  gasPrice: String,
 }
 
 function isFunction(fn: any) {
@@ -52,7 +59,7 @@ export abstract class WalletToolbox {
 
   // Should parse tokens received from the user.
   // The tokens returned should be a list of token addresses used by the chain client
-  // Example: ["ETH", "USDC"] => ["0x00000000", "0x00000001"];
+  // Example: ["DAI", "USDC"] => ["0x00000000", "0x00000001"];
   abstract parseTokensConfig(tokens: string[]): string[];
 
   // Should instantiate provider for the chain
@@ -65,7 +72,7 @@ export abstract class WalletToolbox {
   // Should return balances for tokens in the list for the address specified
   abstract pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]>;
 
-  abstract transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<void>;
+  abstract transferNativeBalance(privateKey: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number): Promise<TransferRecepit>;
 
   constructor(
     protected network: string,
@@ -85,6 +92,7 @@ export abstract class WalletToolbox {
       return Object.assign(acc, {
         [c.address]: {
           address: c.address,
+          privateKey: c.privateKey,
           tokens: this.parseTokensConfig(c.tokens || []),
         }
       });
@@ -153,7 +161,11 @@ export abstract class WalletToolbox {
   public async acquire(address?: string, blockTimeout?: number): Promise<WalletInterface> {
     const timeout = blockTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
     const walletAddress = await this.walletPool.blockAndAquire(timeout, address);
+
+    const privateKey = this.wallets[walletAddress].privateKey;
+
     return {
+      privateKey,
       address: walletAddress,
       provider: this.provider,
     }
@@ -163,16 +175,25 @@ export abstract class WalletToolbox {
     await this.walletPool.release(wallet.address);
   }
 
-  public async transferBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<void> {
+  public async transferBalance(sourceAddress: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number) {
+    const privateKey = this.wallets[sourceAddress].privateKey;
+
+    if (!privateKey) {
+      throw new Error(`Private key for ${sourceAddress} not found`);
+    }
+
     await this.walletPool.blockAndAquire(DEFAULT_WALLET_ACQUIRE_TIMEOUT, sourceAddress);
 
+    let receipt;
     try {
-      await this.transferNativeBalance(sourceAddress, targetAddress, amount);
+      receipt = await this.transferNativeBalance(privateKey, targetAddress, amount, maxGasPrice, gasLimit);
     } catch (error) {
       await this.walletPool.release(sourceAddress);
       throw error;
     }
 
     await this.walletPool.release(sourceAddress);
+
+    return receipt;
   }
 }

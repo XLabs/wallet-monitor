@@ -43,7 +43,7 @@ export class LocalWalletPool implements WalletPool {
           clearTimeout(timeoutTimerId);
           resolve(walletAddress);
         } catch (error) {
-          setTimeout(acquire, 10);
+          setTimeout(acquire, 5);
         }
       }
 

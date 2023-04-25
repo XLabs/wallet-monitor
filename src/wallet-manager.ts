@@ -6,6 +6,8 @@ import { getSilentLogger, Logger } from './utils';
 import { PrometheusExporter } from './prometheus-exporter';
 import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./single-wallet-manager";
 import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
+import { TransferRecepit } from './wallets/base-wallet';
+import { RebalanceInstruction } from './rebalance-strategies';
 
 type WalletManagerChainConfig = {
   network?: string;
@@ -15,6 +17,7 @@ type WalletManagerChainConfig = {
     strategy?: string;
     interval?: number;
     minBalanceThreshold?: number;
+    getPrivateKey?: (address: string) => Promise<string>;
   };
   wallets: WalletConfig[];
 }
@@ -74,10 +77,18 @@ export class WalletManager {
       });
 
       chainManager.on('balances', (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
-        this.logger.info(`Balances updated for ${chainName} ${network} -> ` + JSON.stringify(balances));
+        this.logger.debug(`Balances updated for ${chainName} (${network})`);
         this.exporter?.updateBalances(chainName, network, balances);
         
         this.emitter.emit('balances', chainName, network, balances, previousBalances);
+      });
+
+      chainManager.on('rebalance-finished', (instructions: RebalanceInstruction[]) => {
+        // this.exporter?.updateRebalanceSuccess(chainName, instructions);
+      });
+
+      chainManager.on('rebalance-started', (receipts: TransferRecepit[]) => {
+        // this.exporter?.updateRebalanceStarted(chainName, instructions);
       });
 
       this.managers[chainName] = chainManager;

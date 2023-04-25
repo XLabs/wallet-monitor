@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import { WalletConfig, WalletBalance, TokenBalance } from '../';
 import { mapConcurrent } from '../../utils';
 import { WalletToolbox, BaseWalletOptions } from '../base-wallet';
-import { pullEvmNativeBalance, EvmTokenData, pullEvmTokenData, pullEvmTokenBalance } from '../../balances/evm';
+import { pullEvmNativeBalance, EvmTokenData, pullEvmTokenData, pullEvmTokenBalance, EvmTransferTransactionDetails, transferEvmNativeBalance } from '../../balances/evm';
 
 import { EthereumNetwork, ETHEREUM_CHAIN_CONFIG, ETHEREUM } from './ethereum.config';
 import { PolygonNetwork, POLYGON, POLYGON_CHAIN_CONFIG } from './polygon.config';
@@ -69,7 +69,7 @@ export type EvmNetworks = EthereumNetwork | PolygonNetwork | BscNetwork | Avalan
 
 function getUniqueTokens(wallets: EvmWalletConfig[]): string[] {
   const tokens = wallets.reduce((acc, wallet) => {
-    return wallet.tokens? [...acc, ...wallet.tokens] : acc;
+    return wallet.tokens ? [...acc, ...wallet.tokens] : acc;
   }, [] as string[]);
 
   return [...new Set(tokens)];
@@ -81,7 +81,7 @@ export class EvmWalletToolbox extends WalletToolbox {
   private tokenData: Record<string, EvmTokenData> = {};
   public options: EvmWalletOptions;
 
-  constructor (
+  constructor(
     public network: string,
     public chainName: EVMChainName,
     public rawConfig: WalletConfig[],
@@ -137,7 +137,7 @@ export class EvmWalletToolbox extends WalletToolbox {
   public parseTokensConfig(tokens: EvmWalletConfig["tokens"]): string[] {
     return tokens ? tokens.map((token) => {
       if (EVM_HEX_ADDRESS_REGEX.test(token)) {
-        return token;  
+        return token;
       }
       return EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network][token.toUpperCase()];
     }) : [];
@@ -180,7 +180,10 @@ export class EvmWalletToolbox extends WalletToolbox {
     }, this.options.tokenPollConcurrency);
   }
 
-  public async transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<void> {
-
+  public async transferNativeBalance(
+    privateKey: string, targetAddress: string, amount: number, maxGasPrice: number, gasLimit: number
+  ) {
+    const txDetails = { targetAddress, amount, maxGasPrice, gasLimit };
+    return transferEvmNativeBalance(this.provider, privateKey, txDetails);
   }
 }

@@ -28,13 +28,13 @@ const getAddressWithMaxBalance = (balances: WalletBalancesByAddress) => {
 /**
  * 
  */
-function fillFromMaxRebalanceStrategy(balances: WalletBalancesByAddress, minBalance: number) {
+function pourOverRebalanceStrategy(balances: WalletBalancesByAddress, minBalance: number) {
   let sources = {} as WalletBalancesByAddress;
-  const targetAddresses = [];
+  const targets = {} as WalletBalancesByAddress;
 
   for (const [address, balance] of Object.entries(balances)) {
     if (+balance.formattedBalance < minBalance) {
-      targetAddresses.push(address);
+      targets[address] = deepClone(balance);
     }
 
     else {
@@ -42,11 +42,11 @@ function fillFromMaxRebalanceStrategy(balances: WalletBalancesByAddress, minBala
     }
   }
 
-  if (!targetAddresses.length) return [];
+  if (!Object.keys(targets).length) return [];
 
   const instructions: RebalanceInstruction[] = [];
 
-  for (const targetAddress of targetAddresses) {
+  for (const [targetAddress, target] of Object.entries(targets)) {
     if (!Object.keys(sources).length) throw new Error('No possible sources to rebalance from');
 
     const sourceAddress = getAddressWithMaxBalance(sources);
@@ -55,22 +55,33 @@ function fillFromMaxRebalanceStrategy(balances: WalletBalancesByAddress, minBala
 
     const amount = difference / 2;
 
-    instructions.push({ sourceAddress, targetAddress, amount });
+    instructions.push({ sourceAddress, targetAddress: targetAddress, amount });
 
-    const newWalletBalance = +sources[sourceAddress].formattedBalance - amount;
+    const newSourceBalance = +sources[sourceAddress].formattedBalance - amount;
 
-    if (newWalletBalance < minBalance) {
-      sources[sourceAddress].formattedBalance = String(minBalance);
-    }
-
-    else {
+    if (newSourceBalance < (minBalance * 2)) {
       sources = omit(sources, sourceAddress);
     }
+    
+    else {
+      sources[sourceAddress].formattedBalance = String(newSourceBalance);
+    }
+
+    const newTargetBalance = +targets[targetAddress].formattedBalance + amount;
+    targets[targetAddress].formattedBalance = String(newTargetBalance);
+
+    if (newTargetBalance > minBalance) {
+      sources[targetAddress] = targets[target.address];
+    }
   }
+
+  // console.log('instructions', instructions);
+
+  // console.log({ targets, sources })
 
   return instructions;
 }
 
 export const rebalanceStrategies: Record<string, RebalanceStrategy> = {
-  fillFromMax: fillFromMaxRebalanceStrategy,
+  pourOver: pourOverRebalanceStrategy,
 };
