@@ -24,7 +24,7 @@ function createRebalanceCounter (registry: Registry, name: string) {
 }
 
 function createRebalanceExpenditureCounter (registry: Registry, name: string) {
-  return new Gauge({
+  return new Counter({
     name,
     help: "Total native token cost of the rebalances performed",
     labelNames: ["chain_name", "strategy"],
@@ -35,7 +35,7 @@ function createRebalanceExpenditureCounter (registry: Registry, name: string) {
 function createRebalanceInstructionsCounter (registry: Registry, name: string) {
   return new Counter({
     name,
-    help: "",
+    help: "Total number of instructions executed during rebalances",
     labelNames: ['chain_name', 'strategy'],
     registers: [registry],
   });
@@ -44,7 +44,7 @@ function createRebalanceInstructionsCounter (registry: Registry, name: string) {
 function createRebalanceTransactionsCounter (registry: Registry, name: string) {
   return new Counter({
     name,
-    help: "",
+    help: "Total number of transactions executed during rebalances",
     labelNames: ['chain_name', 'strategy'],
     registers: [registry],
   });
@@ -99,9 +99,9 @@ export class PrometheusExporter {
 
     this.balancesGauge = createBalancesGauge(this.registry, 'wallet_monitor_balance');
     this.rebalanceCounter = createRebalanceCounter(this.registry, 'wallet_monitor_rebalance');
-    this.rebalanceExpenditureCounter = createRebalanceExpenditureCounter(this.registry, 'wallet_monitor_rebalance_cost');
-    this.rebalanceInstructionsCounter = createRebalanceInstructionsCounter(this.registry, 'wallet_monitor_rebalance_instructions');
-    this.rebalanceTransactionsCounter = createRebalanceTransactionsCounter(this.registry, 'wallet_monitor_rebalance_transactions');
+    this.rebalanceExpenditureCounter = createRebalanceExpenditureCounter(this.registry, 'wallet_monitor_rebalance_expenditure');
+    this.rebalanceInstructionsCounter = createRebalanceInstructionsCounter(this.registry, 'wallet_monitor_rebalance_instruction');
+    this.rebalanceTransactionsCounter = createRebalanceTransactionsCounter(this.registry, 'wallet_monitor_rebalance_transaction');
   }
 
   public getRegistry() {

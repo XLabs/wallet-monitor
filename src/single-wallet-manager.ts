@@ -246,7 +246,7 @@ export class SingleWalletManager {
     
     this.rebalanceLocked = false;
 
-    this.emitter.emit('rebalance-finished', strategy, instructions);
+    this.emitter.emit('rebalance-finished', strategy, receipts);
 
     return true;
   }

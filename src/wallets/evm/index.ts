@@ -184,6 +184,8 @@ export class EvmWalletToolbox extends WalletToolbox {
     privateKey: string, targetAddress: string, amount: number, maxGasPrice: number, gasLimit: number
   ) {
     const txDetails = { targetAddress, amount, maxGasPrice, gasLimit };
-    return transferEvmNativeBalance(this.provider, privateKey, txDetails);
+    const receipt = await transferEvmNativeBalance(this.provider, privateKey, txDetails);
+
+    return receipt;
   }
 }

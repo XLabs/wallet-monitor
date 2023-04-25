@@ -11,13 +11,12 @@ export type RebalanceStrategy = (balances: WalletBalancesByAddress, minBalance: 
 
 export type RebalanceStrategyName = keyof typeof rebalanceStrategies;
 
-
 const getAddressWithMaxBalance = (balances: WalletBalancesByAddress) => {
   let max = 0;
   let maxAddress = '';
   for (const balance of Object.values(balances)) {
-    if (!max || +balance.rawBalance > max) {
-      max = +balance.rawBalance;
+    if (!max || +balance.formattedBalance > max) {
+      max = +balance.formattedBalance;
       maxAddress = balance.address;
     }
   }
@@ -25,9 +24,6 @@ const getAddressWithMaxBalance = (balances: WalletBalancesByAddress) => {
   return maxAddress;
 };
 
-/**
- * 
- */
 function pourOverRebalanceStrategy(balances: WalletBalancesByAddress, minBalance: number) {
   let sources = {} as WalletBalancesByAddress;
   const targets = {} as WalletBalancesByAddress;
@@ -41,11 +37,11 @@ function pourOverRebalanceStrategy(balances: WalletBalancesByAddress, minBalance
       sources[address] = deepClone(balance);
     }
   }
-
+  
   if (!Object.keys(targets).length) return [];
-
+  
   const instructions: RebalanceInstruction[] = [];
-
+  
   for (const [targetAddress, target] of Object.entries(targets)) {
     if (!Object.keys(sources).length) throw new Error('No possible sources to rebalance from');
 
@@ -74,10 +70,6 @@ function pourOverRebalanceStrategy(balances: WalletBalancesByAddress, minBalance
       sources[targetAddress] = targets[target.address];
     }
   }
-
-  // console.log('instructions', instructions);
-
-  // console.log({ targets, sources })
 
   return instructions;
 }

@@ -31,7 +31,7 @@ const allChainWallets: WalletManagerConfig = {
     rebalance: {
       enabled: true,
       strategy: 'pourOver',
-      interval: 10000,
+      interval: 5000,
       minBalanceThreshold: 0.3,
       // maxGasPrice: 100000000000,
       // maxGasLimit: 1000000,
