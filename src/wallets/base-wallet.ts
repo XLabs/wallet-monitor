@@ -19,9 +19,9 @@ export type WalletInterface = {
 }
 
 export type TransferRecepit = {
-  transactionHash: String,
-  gasUsed: String,
-  gasPrice: String,
+  transactionHash: string,
+  gasUsed: string,
+  gasPrice: string,
 }
 
 function isFunction(fn: any) {

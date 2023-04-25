@@ -83,12 +83,12 @@ export class WalletManager {
         this.emitter.emit('balances', chainName, network, balances, previousBalances);
       });
 
-      chainManager.on('rebalance-finished', (instructions: RebalanceInstruction[]) => {
-        // this.exporter?.updateRebalanceSuccess(chainName, instructions);
+      chainManager.on('rebalance-started', (strategy: string, instructions: RebalanceInstruction[]) => {
+        this.exporter?.updateRebalanceStarted(chainName, strategy, instructions);
       });
 
-      chainManager.on('rebalance-started', (receipts: TransferRecepit[]) => {
-        // this.exporter?.updateRebalanceStarted(chainName, instructions);
+      chainManager.on('rebalance-finished', (strategy: string, receipts: TransferRecepit[]) => {
+        this.exporter?.updateRebalanceSuccess(chainName, strategy, receipts);
       });
 
       this.managers[chainName] = chainManager;

@@ -223,7 +223,7 @@ export class SingleWalletManager {
 
     this.rebalanceLocked = true;
 
-    this.emitter.emit('rebalance-started', instructions);
+    this.emitter.emit('rebalance-started', strategy, instructions);
 
     const receipts: TransferRecepit[] = [];
 
@@ -235,7 +235,7 @@ export class SingleWalletManager {
         receipt = await this.walletToolbox.transferBalance(sourceAddress, targetAddress, amount, maxGasPrice, gasLimit);
       } catch (error) {
         this.logger.error(`Rebalance Instruction Failed: ${JSON.stringify(instruction)}. Error: ${error}`);
-        this.emitter.emit('rebalance-error', instruction, error);
+        this.emitter.emit('rebalance-error', strategy, instruction, error);
         continue;
       }
       
@@ -246,7 +246,7 @@ export class SingleWalletManager {
     
     this.rebalanceLocked = false;
 
-    this.emitter.emit('rebalance-finished', instructions);
+    this.emitter.emit('rebalance-finished', strategy, instructions);
 
     return true;
   }
