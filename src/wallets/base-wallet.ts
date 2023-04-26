@@ -4,12 +4,13 @@ export interface WalletPool {
   release(wallet: string): Promise<void>;
 }
 
-import { WalletBalance, Balance, TokenBalance, WalletOptions, WalletConfig } from ".";
-import { getSilentLogger, Logger } from '../utils';
+import winston from 'winston';
+import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
 import { LocalWalletPool } from "./wallet-pool";
+import { createLogger } from '../utils';
 
 export type BaseWalletOptions = {
-  logger?: Logger;
+  logger: winston.Logger;
 }
 
 export type WalletInterface = {
@@ -25,18 +26,6 @@ export type TransferRecepit = {
   formattedCost: string,
 }
 
-function isFunction(fn: any) {
-  return fn && typeof fn === 'function';
-}
-
-function isValidLogger(logger: any): logger is Logger {
-  return logger &&
-    isFunction(logger.debug) &&
-    isFunction(logger.info) &&
-    isFunction(logger.warn) &&
-    isFunction(logger.error);
-}
-
 const DEFAULT_WALLET_ACQUIRE_TIMEOUT = 5000;
 
 type WalletsMap = Record<string, WalletConfig>;
@@ -47,7 +36,7 @@ export abstract class WalletToolbox {
   private walletPool: WalletPool;
   protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};
   protected wallets: WalletsMap;
-  protected logger: Logger;
+  protected logger: winston.Logger;
 
   abstract validateNetwork(network: string): boolean;
 
@@ -79,9 +68,9 @@ export abstract class WalletToolbox {
     protected network: string,
     protected chainName: string,
     protected rawConfig: WalletConfig[],
-    options?: WalletOptions,
+    options: WalletOptions,
   ) {
-    this.logger = this.getLogger(options?.logger);
+    this.logger = createLogger(options.logger, undefined);
 
     this.validateNetwork(network);
     this.validateChainName(chainName);
@@ -102,11 +91,6 @@ export abstract class WalletToolbox {
     this.walletPool = new LocalWalletPool(Object.keys(this.wallets)); // if HA: new DistributedWalletPool();
   }
 
-  private getLogger(logger: any): Logger {
-    if (logger && isValidLogger(logger)) return logger;
-    return getSilentLogger();
-  }
-
   public async pullBalances(): Promise<WalletBalance[]> {
     if (!this.warm) {
       this.logger.debug(`Warming up wallet toolbox for chain ${this.chainName}...`);
@@ -124,7 +108,7 @@ export abstract class WalletToolbox {
     for (const config of Object.values(this.wallets)) {
       const { address, tokens } = config;
 
-      this.logger.debug(`Pulling balances for ${address}...`);
+      this.logger.verbose(`Pulling balances for ${address}...`);
 
       let nativeBalance;
 
@@ -139,11 +123,11 @@ export abstract class WalletToolbox {
       }
 
       if (!tokens || tokens.length === 0) {
-        this.logger.debug(`No token balances to pull for ${address}`);
+        this.logger.verbose(`No token balances to pull for ${address}`);
         continue;
       }
 
-      this.logger.debug(`Pulling tokens (${tokens.join(', ')}) for ${address}...`);
+      this.logger.verbose(`Pulling tokens (${tokens.join(', ')}) for ${address}...`);
 
       try {
         const tokenBalances = await this.pullTokenBalances(address, tokens);

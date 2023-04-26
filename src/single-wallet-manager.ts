@@ -1,9 +1,9 @@
 import { EventEmitter } from 'stream';
-
-import { getSilentLogger, Logger, mapConcurrent } from './utils';
+import winston from 'winston';
+import { createLogger } from './utils';
 import { createWalletToolbox, WalletConfig, WalletOptions, Wallet, WalletBalance } from './wallets';
 import { TransferRecepit, WalletInterface } from './wallets/base-wallet';
-import { RebalanceInstruction, rebalanceStrategies, RebalanceStrategyName } from './rebalance-strategies';
+import { rebalanceStrategies, RebalanceStrategyName } from './rebalance-strategies';
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
@@ -12,7 +12,7 @@ const DEFAULT_REBALANCE_STRATEGY = 'pourOver';
 export type WithWalletExecutor = (wallet: WalletInterface) => Promise<void>;
 
 export type SingleWalletManagerOptions = {
-  logger?: Logger;
+  logger: winston.Logger;
   network: string;
   chainName: string;
   rebalance: {
@@ -37,7 +37,7 @@ export type WalletExecuteOptions = {
 export class SingleWalletManager {
   private locked = false;
   private rebalanceLocked = false;
-  protected logger: Logger;
+  protected logger: winston.Logger;
   protected balancesByAddress: WalletBalancesByAddress = {};
   private interval: ReturnType<typeof setInterval> | null = null;
   private rebalanceInterval: ReturnType<typeof setInterval> | null = null;
@@ -54,7 +54,7 @@ export class SingleWalletManager {
       this.validateRebalanceConfiguration(this.options.rebalance, wallets);
     }
 
-    this.logger = options.logger || getSilentLogger();
+    this.logger = createLogger(this.options.logger, undefined, { chainName: options.chainName });
 
     this.walletToolbox = createWalletToolbox(
       options.network,
@@ -144,6 +144,7 @@ export class SingleWalletManager {
       this.emitter.emit('error', error);
     }
 
+    this.logger.debug('Balances refreshed.');
     this.locked = false;
   }
 
@@ -161,11 +162,13 @@ export class SingleWalletManager {
   }
 
   public async start() {
+    this.logger.info(`Starting Manager for chain: ${this.options.chainName}`);
     this.interval = setInterval(async () => {
       this.refreshBalances();
     }, DEFAULT_POLL_INTERVAL);
 
     if (this.options.rebalance.enabled) {
+      this.logger.info(`Starting Rebalancing Cycle for chain: ${this.options.chainName}. Strategy: "${this.options.rebalance.strategy}"`);
       this.rebalanceInterval = setInterval(() => {
         this.executeRebalanceIfNeeded();
       }, this.options.rebalance.interval);
@@ -234,8 +237,7 @@ export class SingleWalletManager {
       try {
         receipt = await this.walletToolbox.transferBalance(sourceAddress, targetAddress, amount, maxGasPrice, gasLimit);
       } catch (error) {
-        this.logger.error(`Rebalance Instruction Failed: ${JSON.stringify(instruction)}. Error: ${error}`);
-        this.emitter.emit('rebalance-error', strategy, instruction, error);
+        this.emitter.emit('rebalance-error', error, instruction, strategy);
         continue;
       }
       

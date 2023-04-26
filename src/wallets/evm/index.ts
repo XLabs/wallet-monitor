@@ -85,7 +85,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     public network: string,
     public chainName: EVMChainName,
     public rawConfig: WalletConfig[],
-    options?: EvmWalletOptions,
+    options: EvmWalletOptions,
   ) {
     super(network, chainName, rawConfig, options);
     this.chainConfig = EVM_CHAIN_CONFIGS[this.chainName];

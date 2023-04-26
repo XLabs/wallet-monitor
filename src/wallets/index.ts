@@ -50,7 +50,7 @@ export function isSolanaChain(chainName: ChainName): chainName is SolanaChainNam
 }
 
 export function createWalletToolbox(
-  network: string, chainName: string, wallets: WalletConfig[], walletOptions?: WalletOptions
+  network: string, chainName: string, wallets: WalletConfig[], walletOptions: WalletOptions
 ): Wallet {
   if (!isChain(chainName)) throw new Error('Unknown chain name ' + chainName);
 

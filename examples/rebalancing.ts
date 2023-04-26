@@ -1,4 +1,4 @@
-import { WalletManager, WalletBalancesByAddress, WalletManagerOptions, WalletManagerConfig, WalletInterface } from 'wallet-monitor';
+import { WalletManager, WalletManagerOptions, WalletManagerConfig } from 'wallet-monitor';
 
 // npx ganache -i 5777 \
 //     --wallet.accounts=0xf9fdbcbcdb4c7c72642be9fe7c09ad5869a961a8ae3c3374841cb6ead5fd34b1,200000000000000000 \
@@ -14,8 +14,8 @@ import { WalletManager, WalletBalancesByAddress, WalletManagerOptions, WalletMan
 
 
 const options: WalletManagerOptions = {
-  // logger: console,
-  balancePollInterval: 10000,
+  logLevel: 'info',
+  balancePollInterval: 5000,
   metrics: {
     enabled: true,
     serve: true,
@@ -31,9 +31,9 @@ const allChainWallets: WalletManagerConfig = {
     rebalance: {
       enabled: true,
       strategy: 'pourOver',
-      interval: 5000,
+      interval: 10000,
       minBalanceThreshold: 0.3,
-      // maxGasPrice: 100000000000,
+      // maxGasPrice: 10000,
       gasLimit: 1000000,
     },
     wallets: [

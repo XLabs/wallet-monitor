@@ -51,7 +51,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     public network: string,
     public chainName: SolanaChainName,
     public rawConfig: WalletConfig[],
-    options?: WalletOptions,
+    options: WalletOptions,
   ) {
     super(network, chainName, rawConfig, options);
 
@@ -59,7 +59,6 @@ export class SolanaWalletToolbox extends WalletToolbox {
 
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
     this.options = { ...defaultOptions, ...options };
-    this.logger.debug(`Solana wallet options: ${JSON.stringify({ ...this.options, logger: undefined })}`);
 
     if (!this.options.nodeUrl)
       throw new Error(`No default node url provided.`)

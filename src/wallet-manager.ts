@@ -1,8 +1,8 @@
 import { EventEmitter } from 'stream';
 
+import winston from 'winston';
 import { Registry } from 'prom-client';
-
-import { getSilentLogger, Logger } from './utils';
+import { createLogger } from './utils';
 import { PrometheusExporter } from './prometheus-exporter';
 import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./single-wallet-manager";
 import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
@@ -26,7 +26,8 @@ type WalletManagerChainConfig = {
 export type WalletManagerConfig = Record<string, WalletManagerChainConfig>;
 
 export type WalletManagerOptions = {
-  logger?: Logger;
+  logger?: any;
+  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'verbose' |'silent';
   balancePollInterval?: number;
   metrics?: {
     enabled: boolean;
@@ -46,16 +47,19 @@ export class WalletManager {
   private managers: Record<ChainName, SingleWalletManager>;
   private exporter?: PrometheusExporter;
 
-  protected logger: Logger;
+  protected logger: winston.Logger;
 
   constructor(rawConfig: WalletManagerConfig, options?: WalletManagerOptions) {
-    this.logger = options?.logger || getSilentLogger();
+    this.logger = createLogger(options?.logger, options?.logLevel, { label: 'WalletManager' });
     this.managers = {} as Record<ChainName, SingleWalletManager>;
 
     if (options?.metrics?.enabled) {
         const { port, path, registry } = options.metrics;
         this.exporter = new PrometheusExporter(port, path, registry);
-        if (options.metrics?.serve) this.exporter.startMetricsServer();
+        if (options.metrics?.serve) {
+          this.logger.info('Starting metrics server.');
+          this.exporter.startMetricsServer();
+        }
     }
     
     for (const [chainName, config] of Object.entries(rawConfig)) {
@@ -73,23 +77,30 @@ export class WalletManager {
 
       const chainManager = new SingleWalletManager(chainManagerConfig, config.wallets);
 
-      chainManager.on('error', (...args: any[]) => {
-        this.emitter.emit('error', chainName, ...args);
+      chainManager.on('error', (error) => {
+        this.logger.error('Error in chain manager: ${error}');
+        this.emitter.emit('error', error, chainName);
       });
 
       chainManager.on('balances', (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
-        this.logger.debug(`Balances updated for ${chainName} (${network})`);
+        this.logger.verbose(`Balances updated for ${chainName} (${network})`);
         this.exporter?.updateBalances(chainName, network, balances);
         
         this.emitter.emit('balances', chainName, network, balances, previousBalances);
       });
 
       chainManager.on('rebalance-started', (strategy: string, instructions: RebalanceInstruction[]) => {
+        this.logger.info(`Rebalance Started. Instructions to execute: ${instructions.length}`);
         this.exporter?.updateRebalanceStarted(chainName, strategy, instructions);
       });
 
       chainManager.on('rebalance-finished', (strategy: string, receipts: TransferRecepit[]) => {
+        this.logger.info(`Rebalance Finished. Executed transactions: ${receipts.length}}`);
         this.exporter?.updateRebalanceSuccess(chainName, strategy, receipts);
+      });
+
+      chainManager.on('rebalance-error', (error) => {
+        this.logger.error(`Rebalance Error: ${error}`);
       });
 
       this.managers[chainName] = chainManager;
