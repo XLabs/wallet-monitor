@@ -14,7 +14,7 @@ export type Wallet = EvmWalletToolbox | SolanaWalletToolbox;
 export type WalletOptions = EvmWalletOptions | SolanaWalletOptions;
 
 export type WalletConfig = {
-  address: string;
+  address?: string;
   tokens?: string[];
   privateKey?: string;
 }

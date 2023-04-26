@@ -1,11 +1,11 @@
-import {Connection, LAMPORTS_PER_SOL, PublicKey} from "@solana/web3.js"
-import {SOLANA, SOLANA_CHAIN_CONFIG, SolanaNetworks} from "./solana.config";
-import {PYTHNET, PYTHNET_CHAIN_CONFIG} from "./pythnet.config";
-import {BaseWalletOptions, TransferRecepit, WalletToolbox} from "../base-wallet";
-import {WalletBalance, TokenBalance, WalletConfig, WalletOptions} from "../index";
-import {pullSolanaNativeBalance} from "../../balances/solana";
-import {getMint, Mint, TOKEN_PROGRAM_ID} from "@solana/spl-token";
-import {mapConcurrent} from "../../utils";
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js"
+import { SOLANA, SOLANA_CHAIN_CONFIG, SolanaNetworks } from "./solana.config";
+import { PYTHNET, PYTHNET_CHAIN_CONFIG } from "./pythnet.config";
+import { BaseWalletOptions, TransferRecepit, WalletToolbox } from "../base-wallet";
+import { WalletBalance, TokenBalance, WalletConfig, WalletOptions } from "../index";
+import { pullSolanaNativeBalance, getSolanaAddressFromPrivateKey } from "../../balances/solana";
+import { getMint, Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { mapConcurrent } from "../../utils";
 
 
 type SolanaChainConfig = {
@@ -110,7 +110,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
       const tokenData = this.tokenData[token];
       const tokenKnownInfo = Object
         .entries(this.chainConfig.knownTokens[this.network])
-        .find(([_,value]) => value === token)
+        .find(([_, value]) => value === token)
       const tokenKnownSymbol = tokenKnownInfo ? tokenKnownInfo[0] : undefined
 
       // We are choosing to show a balance of 0 for a token that is not owned by the address.
@@ -119,7 +119,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
         isNative: false,
         rawBalance: tokenBalance.toString(),
         address,
-        formattedBalance: (tokenBalance / 10**tokenData.decimals).toString(),
+        formattedBalance: (tokenBalance / 10 ** tokenData.decimals).toString(),
         symbol: tokenKnownSymbol ?? 'unknown',
       }
     })
@@ -130,33 +130,25 @@ export class SolanaWalletToolbox extends WalletToolbox {
     return true;
   }
 
-  validateConfig(rawConfig: any): rawConfig is SolanaWalletConfig {
-    if (!rawConfig.address) throw new Error(`Invalid config for chain: ${this.chainName}: Missing address`);
-    if (rawConfig.tokens && rawConfig.tokens.length) {
-      const chainConfig = SOLANA_CHAIN_CONFIGS[this.chainName];
+  validateTokenAddress(token: any) {
+    const chainConfig = SOLANA_CHAIN_CONFIGS[this.chainName];
 
-      rawConfig.tokens.forEach((token: any) => {
-        if (typeof token !== 'string')
-          throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
-        let admissibleAddress: boolean
-        try {
-          new PublicKey(token)
-          admissibleAddress = true
-        } catch (e) {
-          admissibleAddress = false
-        }
-        if (!(token.toUpperCase() in chainConfig.knownTokens[this.network]) &&
-        !admissibleAddress) {
-          throw new Error(`Invalid token config for chain: ${this.chainName}: Invalid token "${token}"`);
-        }
-      })
+    if (typeof token !== 'string')
+      throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
+
+    if ((token.toUpperCase() in chainConfig.knownTokens[this.network])) return true;
+
+    try {
+      new PublicKey(token)
+    } catch (e) {
+      throw new Error(`Invalid token config for chain: ${this.chainName}: Invalid token "${token}"`);
     }
 
     return true;
   }
 
   validateNetwork(network: string): network is SolanaNetworks {
-     if (!(network in SOLANA_CHAIN_CONFIGS[this.chainName].networks)) throw new Error(`Invalid network "${network}" for chain: ${this.chainName}`);
+    if (!(network in SOLANA_CHAIN_CONFIGS[this.chainName].networks)) throw new Error(`Invalid network "${network}" for chain: ${this.chainName}`);
     return true;
   }
 
@@ -165,7 +157,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
   }
 
   async warmup() {
-    const distinctTokens = [...new Set(Object.values(this.wallets).flatMap(({address, tokens}) => {
+    const distinctTokens = [...new Set(Object.values(this.wallets).flatMap(({ address, tokens }) => {
       return tokens || [];
     }))]
     await mapConcurrent(distinctTokens, async (token) => {
@@ -176,5 +168,9 @@ export class SolanaWalletToolbox extends WalletToolbox {
   async transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<TransferRecepit> {
     // TODO: implement
     throw new Error('SolanaWalletToolbox.transferNativeBalance not implemented.');
+  }
+
+  getAddressFromPrivateKey(privateKey: string): string {
+    return getSolanaAddressFromPrivateKey(privateKey);
   }
 }

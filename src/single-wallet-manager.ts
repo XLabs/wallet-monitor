@@ -54,7 +54,7 @@ export class SingleWalletManager {
       this.validateRebalanceConfiguration(this.options.rebalance, wallets);
     }
 
-    this.logger = createLogger(this.options.logger, undefined, { chainName: options.chainName });
+    this.logger = createLogger(this.options.logger);
 
     this.walletToolbox = createWalletToolbox(
       options.network,

@@ -58,8 +58,6 @@ export type EvmTransferTransactionDetails = {
   gasLimit?: number;
 }
 
-
-
 export async function transferEvmNativeBalance(
   provider: ethers.providers.JsonRpcProvider,
   privateKey: string,
@@ -104,4 +102,16 @@ export type EvmTokenData = {
   symbol: string;
   decimals: number;
 };
+
+export function getEvmAddressFromPrivateKey(privateKey: string): string {
+  let wallet;
+
+  try {
+    wallet = new ethers.Wallet(privateKey);
+  } catch(e) {
+    throw new Error('Invalid private key');
+  }
+
+  return wallet.address;
+}
 

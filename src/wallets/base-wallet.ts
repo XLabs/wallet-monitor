@@ -28,14 +28,18 @@ export type TransferRecepit = {
 
 const DEFAULT_WALLET_ACQUIRE_TIMEOUT = 5000;
 
-type WalletsMap = Record<string, WalletConfig>;
+export type WalletData = {
+  address: string;
+  privateKey?: string;
+  tokens: string[];
+}
 
 export abstract class WalletToolbox {
   protected provider: any;// TODO: reevaluate the best way to do this
   private warm = false;
   private walletPool: WalletPool;
   protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};
-  protected wallets: WalletsMap;
+  protected wallets: Record<string, WalletData>;
   protected logger: winston.Logger;
 
   abstract validateNetwork(network: string): boolean;
@@ -44,8 +48,8 @@ export abstract class WalletToolbox {
 
   abstract validateOptions(options: any): boolean;
 
-  // throw an error if the config is invalid
-  abstract validateConfig(rawConfig: any): boolean;
+  // throw an error if the token is invalid
+  abstract validateTokenAddress(token: string): boolean;
 
   // Should parse tokens received from the user.
   // The tokens returned should be a list of token addresses used by the chain client
@@ -55,6 +59,8 @@ export abstract class WalletToolbox {
   // Should instantiate provider for the chain
   // calculate data which could be re-utilized (for example token's local addresses, symbol and decimals in evm chains)
   abstract warmup(): Promise<void>;
+
+  abstract getAddressFromPrivateKey(privateKey: string): string;
 
   // Should return balances for a native address in the chain
   abstract pullNativeBalance(address: string): Promise<WalletBalance>;
@@ -70,23 +76,20 @@ export abstract class WalletToolbox {
     protected rawConfig: WalletConfig[],
     options: WalletOptions,
   ) {
-    this.logger = createLogger(options.logger, undefined);
+    this.logger = createLogger(options.logger);
 
     this.validateNetwork(network);
     this.validateChainName(chainName);
     this.validateOptions(options);
 
-    this.wallets = rawConfig.reduce((acc, c) => {
-      this.validateConfig(c);
+    const wallets = {} as Record<string, WalletData>;
+    
+    for (const raw of rawConfig) {
+      const config = this.buildWalletConfig(raw);
+      wallets[config.address] = config;
+    }
 
-      return Object.assign(acc, {
-        [c.address]: {
-          address: c.address,
-          privateKey: c.privateKey,
-          tokens: this.parseTokensConfig(c.tokens || []),
-        }
-      });
-    }, {});
+    this.wallets = wallets;
 
     this.walletPool = new LocalWalletPool(Object.keys(this.wallets)); // if HA: new DistributedWalletPool();
   }
@@ -180,5 +183,28 @@ export abstract class WalletToolbox {
     await this.walletPool.release(sourceAddress);
 
     return receipt;
+  }
+
+  private validateConfig(rawConfig: any) {
+    if (!rawConfig.address && !rawConfig.privateKey)
+      throw new Error(`Invalid config for chain: ${this.chainName}: Missing address`);
+
+    if (rawConfig.tokens?.length) {
+      rawConfig.tokens.forEach((token: any) => {
+        this.validateTokenAddress(token);
+      });
+    }
+
+    return true;
+  }
+
+  private buildWalletConfig(rawConfig: any): WalletData {
+    const privateKey = rawConfig.privateKey;
+
+    const address = rawConfig.address || this.getAddressFromPrivateKey(privateKey);
+
+    const tokens = rawConfig.tokens ? this.parseTokensConfig(rawConfig.tokens) : [];
+
+    return { address, privateKey, tokens };
   }
 }
