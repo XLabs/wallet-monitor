@@ -22,6 +22,7 @@ export type TransferRecepit = {
   transactionHash: string,
   gasUsed: string,
   gasPrice: string,
+  formattedCost: string,
 }
 
 function isFunction(fn: any) {

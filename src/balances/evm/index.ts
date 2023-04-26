@@ -96,6 +96,7 @@ export async function transferEvmNativeBalance(
     transactionHash: txReceipt.transactionHash,
     gasUsed: txReceipt.gasUsed.toString(),
     gasPrice: txReceipt.effectiveGasPrice.toString(),
+    formattedCost: ethers.utils.formatEther(txReceipt.gasUsed.mul(txReceipt.effectiveGasPrice)),
   }
 }
 

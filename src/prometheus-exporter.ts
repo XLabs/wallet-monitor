@@ -130,7 +130,7 @@ export class PrometheusExporter {
   public updateRebalanceSuccess(chainName: string, strategy: string, receipts: TransferRecepit[]) {
     this.rebalanceTransactionsCounter.labels(chainName, strategy).inc(receipts.length);
     const totalExpenditure = receipts.reduce((total, receipt) => {
-      return total + parseInt(receipt.gasPrice) * parseInt(receipt.gasUsed);
+      return total + parseFloat(receipt.formattedCost);
     }, 0);
     this.rebalanceExpenditureCounter.labels(chainName, strategy).inc(totalExpenditure);
   }

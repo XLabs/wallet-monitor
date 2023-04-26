@@ -17,7 +17,8 @@ type WalletManagerChainConfig = {
     strategy?: string;
     interval?: number;
     minBalanceThreshold?: number;
-    getPrivateKey?: (address: string) => Promise<string>;
+    maxGasPrice?: number;
+    gasLimit?: number;
   };
   wallets: WalletConfig[];
 }

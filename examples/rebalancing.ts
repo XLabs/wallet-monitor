@@ -10,7 +10,7 @@ import { WalletManager, WalletBalancesByAddress, WalletManagerOptions, WalletMan
 //     --wallet.accounts=0xb2868bd9090dcfbc9d6f3012c98039ee20d778f8ef2d8cb721c56b69578934f3,200000000000000000 \
 //     --wallet.accounts=0x50156cc51cb7ae4f5e6e2cb14a75fc177a1917fbab1a8675db25619567515ddd,200000000000000000 \
 //     --wallet.accounts=0x6790f27fec85575792c7d1fab8de9955aff171b24329eacf2a279defa596c5d3,200000000000000000 \
-//     --wallet.accounts=0xe94000d730b9655850afc8e39facb7058678f11e765075d4806d27ed619f258c,20000000000000000000
+//     --wallet.accounts=0xe94000d730b9655850afc8e39facb7058678f11e765075d4806d27ed619f258c,10000000000000000000
 
 
 const options: WalletManagerOptions = {
@@ -34,7 +34,7 @@ const allChainWallets: WalletManagerConfig = {
       interval: 5000,
       minBalanceThreshold: 0.3,
       // maxGasPrice: 100000000000,
-      // maxGasLimit: 1000000,
+      gasLimit: 1000000,
     },
     wallets: [
       { address: "0xFa6E597ca1c7E72838c850d1268dDf618D444712", privateKey: '0xf9fdbcbcdb4c7c72642be9fe7c09ad5869a961a8ae3c3374841cb6ead5fd34b1' },
