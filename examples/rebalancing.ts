@@ -14,7 +14,7 @@ import { WalletManager, WalletManagerOptions, WalletManagerConfig } from 'wallet
 
 
 const options: WalletManagerOptions = {
-  logLevel: 'debug',
+  logLevel: 'info',
   balancePollInterval: 5000,
   metrics: {
     enabled: true,
@@ -33,7 +33,7 @@ const allChainWallets: WalletManagerConfig = {
       strategy: 'pourOver',
       interval: 10000,
       minBalanceThreshold: 0.3,
-      // maxGasPrice: 10000,
+      maxGasPrice: 10000,
       gasLimit: 1000000,
     },
     wallets: [
