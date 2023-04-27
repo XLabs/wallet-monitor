@@ -31,7 +31,7 @@ export class LocalWalletPool implements WalletPool {
     return resource.id;
   }
 
-  public blockAndAquire(blockTimeout: number, resourceId?: string): Promise<string> {
+  public blockAndAcquire(blockTimeout: number, resourceId?: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const timeoutTimerId = setTimeout(() => {
         reject(new Error('Timed out waiting for resource'));
