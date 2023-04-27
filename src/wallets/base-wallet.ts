@@ -1,6 +1,6 @@
 export interface WalletPool {
   acquire(resourceId?: string): Promise<string>;
-  blockAndAquire(blockTimeout: number, resourceId?: string): Promise<string>;
+  blockAndAcquire(blockTimeout: number, resourceId?: string): Promise<string>;
   release(wallet: string): Promise<void>;
 }
 
@@ -148,8 +148,8 @@ export abstract class WalletToolbox {
 
   public async acquire(address?: string, blockTimeout?: number): Promise<WalletInterface> {
     const timeout = blockTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
-    // this.grpcClient.aquireWallet(address);
-    const walletAddress = await this.walletPool.blockAndAquire(timeout, address);
+    // this.grpcClient.acquireWallet(address);
+    const walletAddress = await this.walletPool.blockAndAcquire(timeout, address);
 
     const privateKey = this.wallets[walletAddress].privateKey;
 
@@ -171,7 +171,7 @@ export abstract class WalletToolbox {
       throw new Error(`Private key for ${sourceAddress} not found`);
     }
 
-    await this.walletPool.blockAndAquire(DEFAULT_WALLET_ACQUIRE_TIMEOUT, sourceAddress);
+    await this.walletPool.blockAndAcquire(DEFAULT_WALLET_ACQUIRE_TIMEOUT, sourceAddress);
 
     let receipt;
     try {
