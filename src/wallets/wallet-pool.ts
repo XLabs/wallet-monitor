@@ -31,19 +31,27 @@ export class LocalWalletPool implements WalletPool {
     return resource.id;
   }
 
+  /**
+   * @param blockTimeout Milliseconds until the operation is timed out.
+   */
   public blockAndAcquire(blockTimeout: number, resourceId?: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      const timeoutTimerId = setTimeout(() => {
-        reject(new Error('Timed out waiting for resource'));
-      }, blockTimeout);
+      // `process.hrtime` provides the closest we can get to a monotonically increasing clock.
+      const timeoutTimestamp = process.hrtime.bigint() + (BigInt(blockTimeout) * 10n ** 6n);
+      // We create an error here to get the stack trace up until this point and preserve it into the asynchronous events.
+      const errorWithCtx = new Error();
 
       const acquire = async () => {
         try {
           const walletAddress = await this.acquire(resourceId);
-          clearTimeout(timeoutTimerId);
           resolve(walletAddress);
         } catch (error) {
-          setTimeout(acquire, 5);
+          if (process.hrtime.bigint() < timeoutTimestamp) {
+            setTimeout(acquire, 5);
+          } else {
+            errorWithCtx.message = 'Timed out waiting for resource';
+            reject(errorWithCtx);
+          }
         }
       }
 
