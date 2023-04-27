@@ -24,7 +24,7 @@ export class LocalWalletPool implements WalletPool {
       ? this.resources[resourceId]
       : Object.values(this.resources).find((resource) => !resource.locked);
 
-    if (!resource) throw new Error('Resource not available');
+    if (!resource || resource.locked) throw new Error('Resource not available');
 
     resource.locked = true;
 
