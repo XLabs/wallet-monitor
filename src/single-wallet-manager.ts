@@ -31,7 +31,7 @@ export type WalletBalancesByAddress = Record<string, WalletBalance>;
 
 export type WalletExecuteOptions = {
   address?: string;
-  blockTimeout?: number;
+  leaseTimeout?: number;
 }
 
 export class SingleWalletManager {
@@ -187,7 +187,7 @@ export class SingleWalletManager {
   }
 
   public async withWallet(fn: (w: WalletInterface) => {}, opts?: WalletExecuteOptions) {
-    const wallet = await this.walletToolbox.acquire(opts?.address, opts?.blockTimeout);
+    const wallet = await this.walletToolbox.acquire(opts?.address, opts?.leaseTimeout);
 
     let result: any;
     try {
