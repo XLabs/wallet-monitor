@@ -160,8 +160,8 @@ export abstract class WalletToolbox {
     }
   }
 
-  public async release(wallet: WalletInterface) {
-    await this.walletPool.release(wallet.address);
+  public async release(address: string) {
+    await this.walletPool.release(address);
   }
 
   public async transferBalance(sourceAddress: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number) {

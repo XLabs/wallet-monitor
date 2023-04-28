@@ -8,6 +8,7 @@ import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBa
 import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
 import {TransferRecepit, WalletInterface} from './wallets/base-wallet';
 import { RebalanceInstruction } from './rebalance-strategies';
+import {subchannelAddressEqual} from "@grpc/grpc-js/build/src/subchannel-address";
 
 type WalletManagerChainConfig = {
   network?: string;
@@ -132,11 +133,11 @@ export class WalletManager {
     return chainManager.acquireLock(opts);
   }
 
-  public releaseLock(chainName: ChainName, wallet: WalletInterface) {
+  public releaseLock(chainName: ChainName, address: string) {
     const chainManager = this.managers[chainName];
     if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
 
-    return chainManager.releaseLock(wallet);
+    return chainManager.releaseLock(address);
   }
 
   public async withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void> {
@@ -148,7 +149,7 @@ export class WalletManager {
       this.logger.error(`Error while executing wallet function: ${error}`);
       throw error;
     } finally {
-      await this.releaseLock(chainName, wallet)
+      await this.releaseLock(chainName, wallet.address)
     }
   }
 

@@ -190,8 +190,8 @@ export class SingleWalletManager {
     return await this.walletToolbox.acquire(opts?.address, opts?.leaseTimeout)
   }
 
-  public async releaseLock(wallet: WalletInterface) {
-    return await this.walletToolbox.release(wallet)
+  public async releaseLock(address: string) {
+    return await this.walletToolbox.release(address)
   }
 
   // Returns a boolean indicating if a rebalance was executed
