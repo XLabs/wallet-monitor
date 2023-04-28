@@ -6,7 +6,7 @@ import { createLogger } from './utils';
 import { PrometheusExporter } from './prometheus-exporter';
 import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./single-wallet-manager";
 import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
-import { TransferRecepit } from './wallets/base-wallet';
+import {TransferRecepit, WalletInterface} from './wallets/base-wallet';
 import { RebalanceInstruction } from './rebalance-strategies';
 
 type WalletManagerChainConfig = {
@@ -125,11 +125,31 @@ export class WalletManager {
     return this.exporter?.getRegistry();
   }
 
-  public withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void> {
+  public acquireLock(chainName: ChainName, opts?: WalletExecuteOptions) {
     const chainManager = this.managers[chainName];
     if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
 
-    return chainManager.withWallet(fn, opts);
+    return chainManager.acquireLock(opts);
+  }
+
+  public releaseLock(chainName: ChainName, wallet: WalletInterface) {
+    const chainManager = this.managers[chainName];
+    if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
+
+    return chainManager.releaseLock(wallet);
+  }
+
+  public async withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void> {
+    const wallet = await this.acquireLock(chainName, opts);
+
+    try {
+      return await fn(wallet)
+    } catch (error) {
+      this.logger.error(`Error while executing wallet function: ${error}`);
+      throw error;
+    } finally {
+      await this.releaseLock(chainName, wallet)
+    }
   }
 
   public getAllBalances(): Record<string, WalletBalancesByAddress> {

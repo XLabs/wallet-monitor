@@ -186,21 +186,12 @@ export class SingleWalletManager {
     return this.balancesByAddress;
   }
 
-  public async withWallet(fn: (w: WalletInterface) => {}, opts?: WalletExecuteOptions) {
-    const wallet = await this.walletToolbox.acquire(opts?.address, opts?.leaseTimeout);
+  public async acquireLock(opts?: WalletExecuteOptions) {
+    return await this.walletToolbox.acquire(opts?.address, opts?.leaseTimeout)
+  }
 
-    let result: any;
-    try {
-      result = await fn(wallet);
-    } catch (error) {
-      this.logger.error(`Error while executing wallet function: ${error}`);
-      await this.walletToolbox.release(wallet);
-      throw error;
-    }
-
-    await this.walletToolbox.release(wallet);
-
-    return result;
+  public async releaseLock(wallet: WalletInterface) {
+    return await this.walletToolbox.release(wallet)
   }
 
   // Returns a boolean indicating if a rebalance was executed
