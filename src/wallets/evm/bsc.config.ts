@@ -34,7 +34,7 @@ export const BSC_DEFAULT_CONFIGS: EvmDefaultConfigs = {
         tokenPollConcurrency: BSC_DEFAULT_TOKEN_POLL_CONCURRENCY,
     },
     [DEVNET]: {
-        nodeUrl: 'https://localhost:8545',
+        nodeUrl: 'http://localhost:8545',
         tokenPollConcurrency: BSC_DEFAULT_TOKEN_POLL_CONCURRENCY,
     },
 };

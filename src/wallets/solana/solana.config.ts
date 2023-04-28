@@ -31,7 +31,7 @@ export const SOLANA_DEFAULT_CONFIGS = {
     tokenPollConcurrency: SOLANA_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
   [DEVNET]: {
-    nodeUrl: 'https://localhost:8899',
+    nodeUrl: 'http://localhost:8899',
     tokenPollConcurrency: SOLANA_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
 }
