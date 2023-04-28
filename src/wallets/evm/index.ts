@@ -96,7 +96,7 @@ export class EvmWalletToolbox extends WalletToolbox {
 
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
 
-    this.logger.debug(`EVM Wallet options: ${JSON.stringify(this.options)}`);
+    this.logger.debug(`EVM rpc url: ${this.options.nodeUrl}`);
     this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
   }
 
