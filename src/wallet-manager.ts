@@ -28,7 +28,7 @@ export type WalletManagerConfig = Record<string, WalletManagerChainConfig>;
 
 export type WalletManagerOptions = {
   logger?: any;
-  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'verbose' |'silent';
+  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'verbose' | 'silent';
   balancePollInterval?: number;
   metrics?: {
     enabled: boolean;
@@ -55,14 +55,14 @@ export class WalletManager {
     this.managers = {} as Record<ChainName, SingleWalletManager>;
 
     if (options?.metrics?.enabled) {
-        const { port, path, registry } = options.metrics;
-        this.exporter = new PrometheusExporter(port, path, registry);
-        if (options.metrics?.serve) {
-          this.logger.info('Starting metrics server.');
-          this.exporter.startMetricsServer();
-        }
+      const { port, path, registry } = options.metrics;
+      this.exporter = new PrometheusExporter(port, path, registry);
+      if (options.metrics?.serve) {
+        this.logger.info('Starting metrics server.');
+        this.exporter.startMetricsServer();
+      }
     }
-    
+
     for (const [chainName, config] of Object.entries(rawConfig)) {
       if (!isChain(chainName)) throw new Error(`Invalid chain name: ${chainName}`);
       const network = config.network || getDefaultNetwork(chainName);
@@ -86,7 +86,7 @@ export class WalletManager {
       chainManager.on('balances', (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
         this.logger.verbose(`Balances updated for ${chainName} (${network})`);
         this.exporter?.updateBalances(chainName, network, balances);
-        
+
         this.emitter.emit('balances', chainName, network, balances, previousBalances);
       });
 
