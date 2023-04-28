@@ -1,7 +1,7 @@
 import { WalletManager, WalletBalancesByAddress, WalletManagerOptions, WalletManagerConfig, WalletInterface } from 'wallet-monitor';
 
 const options: WalletManagerOptions = {
-  logger: console,
+  logLevel: 'debug',
   balancePollInterval: 10000,
   metrics: {
     enabled: true,
