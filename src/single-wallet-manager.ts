@@ -187,11 +187,11 @@ export class SingleWalletManager {
   }
 
   public async acquireLock(opts?: WalletExecuteOptions) {
-    return await this.walletToolbox.acquire(opts?.address, opts?.leaseTimeout)
+    return this.walletToolbox.acquire(opts?.address, opts?.leaseTimeout)
   }
 
   public async releaseLock(address: string) {
-    return await this.walletToolbox.release(address)
+    return this.walletToolbox.release(address)
   }
 
   // Returns a boolean indicating if a rebalance was executed

@@ -144,7 +144,7 @@ export class WalletManager {
     const wallet = await this.acquireLock(chainName, opts);
 
     try {
-      return await fn(wallet)
+      return fn(wallet)
     } catch (error) {
       this.logger.error(`Error while executing wallet function: ${error}`);
       throw error;
