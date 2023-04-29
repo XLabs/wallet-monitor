@@ -52,12 +52,13 @@ const allChainWallets: WalletManagerConfig = {
   sui: {
     chainConfig: {},
     wallets: [
-      { address: '0xf26e6963adfa776e3715b89f73afab068ee55876458ddc4fc690a6e35d652b9a' },
-      { address: '0x341ab296bbe653b426e996b17af33718db62af3c250c04fe186c9124db5bd8b7' },
-      { address: '0x7d20dcdb2bca4f508ea9613994683eb4e76e9c4ed371169677c1be02aaf0b58e' },
-      { address: '0x18337b4c5b964b7645506542589c5ed496e794af82f98b3789fed96f61a94c96' },
-      { address: '0x9ae846f88db3476d7c9f2d8fc49722f7085a3b46aad998120dd11ebeab83e021' },
-      { address: '0xcb39d897bf0561af7531d37db9781e54528269fed4761275931ce32f20352977' },
+      // { privateKey: '0x38357d5588b77929631165a6a5687cb3d9bf3f604d37153f569f23c000de36ec' },
+      { address: '0x934042d46762fadf9f61ef07aa265fc14d28525c7051224a5f1cba2409aef307' },
+      // { address: '0x341ab296bbe653b426e996b17af33718db62af3c250c04fe186c9124db5bd8b7' },
+      // { address: '0x7d20dcdb2bca4f508ea9613994683eb4e76e9c4ed371169677c1be02aaf0b58e' },
+      // { address: '0x18337b4c5b964b7645506542589c5ed496e794af82f98b3789fed96f61a94c96' },
+      // { address: '0x9ae846f88db3476d7c9f2d8fc49722f7085a3b46aad998120dd11ebeab83e021' },
+      // { address: '0xcb39d897bf0561af7531d37db9781e54528269fed4761275931ce32f20352977' },
     ]
   },
 }

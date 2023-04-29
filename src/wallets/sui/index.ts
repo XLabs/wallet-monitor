@@ -5,6 +5,7 @@ import { WalletToolbox, BaseWalletOptions, TransferRecepit } from '../base-walle
 import { pullSuiNativeBalance, pullSuiTokenBalance } from '../../balances/sui';
 
 import { SUI_CHAIN_CONFIG, SUI, SuiDefaultConfig } from './sui.config';
+import { getSuiAddressFromPrivateKey } from '../../balances/sui';
 
 export const SUI_CHAINS = {
   [SUI]: 1,
@@ -123,7 +124,7 @@ export class SuiWalletToolbox extends WalletToolbox {
   }
 
   public getAddressFromPrivateKey(privateKey: string): string {
-    throw new Error('getAddressFromPrivateKey is not yet implemented for SUI wallet');
+    return getSuiAddressFromPrivateKey(privateKey);
   }
 }
 
