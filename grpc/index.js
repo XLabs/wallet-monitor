@@ -9,7 +9,7 @@ const {
 const { WalletManagerService } = require('./wallet-manager_grpc_pb');
 
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
-const { WalletManager } = require('../../wallet-manager-service/service/wallet-monitor/src');
+const { WalletManager } = require('../lib/wallet-manager');
 
 // FIXME: Get starting arguments the same way that WalletManager does and then wrap
 //  this example in the example folder.
@@ -129,7 +129,7 @@ function main() {
         acquireLock,
         releaseLock,
       });
-  server.bindAsync('localhost:50051', ServerCredentials.createInsecure(), () => {
+  server.bindAsync('0.0.0.0:50051', ServerCredentials.createInsecure(), () => {
     server.start();
   });
 }
