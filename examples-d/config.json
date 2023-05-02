@@ -1,0 +1,39 @@
+{
+  "walletManagerOptions": {
+    "logLevel": "debug",
+    "balancePollInterval": 10000,
+    "metrics": {
+      "enabled": true,
+      "serve": true,
+      "port": 9091
+    }
+  },
+  "walletManagerConfig": {
+    "ethereum": {
+      "rebalance": {
+        "enabled": false,
+        "strategy": "default",
+        "interval": 10000,
+        "minBalanceThreshold": 0.1
+      },
+      "wallets": [
+        {
+          "address": "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
+          "tokens": ["USDC", "DAI"]
+        },
+        {
+          "address": "0x8d0d970225597085A59ADCcd7032113226C0419d",
+          "tokens": []
+        }
+      ]
+    },
+    "solana": {
+      "wallets": [
+        {
+          "address": "6VnfVsLdLwNuuCmooLTziQ99PFXZ5vc3yyqyb9tMDhhw",
+          "tokens": ["usdc"]
+        }
+      ]
+    }
+  }
+}

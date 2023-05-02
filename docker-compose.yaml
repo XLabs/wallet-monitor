@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  wallet-manager:
+    image: gcc/wallet-manager-d
+    ports:
+      - "50051:50051"
+    volumes:
+      - "./examples-d/:/etc/wallet-manager/"
+    restart: always

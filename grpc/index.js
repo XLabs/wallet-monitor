@@ -10,41 +10,24 @@ const { WalletManagerService } = require('./wallet-manager_grpc_pb');
 
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
 const { WalletManager } = require('../lib/wallet-manager');
+const fs = require("fs");
 
-// FIXME: Get starting arguments the same way that WalletManager does and then wrap
-//  this example in the example folder.
-const options = {
-  // logger: console,
-  logLevel: 'debug',
-  balancePollInterval: 10000,
-  metrics: {
-    enabled: true,
-    serve: true,
-    port: 9091,
-  }
-};
+function readConfig() {
+  const filePath = '/etc/wallet-manager/config.json'
+  // const filePath = '../examples-d/config.json'
+  const fileData = fs.readFileSync(filePath, 'utf-8')
 
-const allChainWallets = {
-  ethereum: {
-    wallets: [
-      {
-        address: "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
-        tokens: ["USDC", "DAI"]
-      },
-      {
-        address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
-        tokens: []
-      }
-    ]
-  },
-  solana: {
-    wallets: [
-      { address: "6VnfVsLdLwNuuCmooLTziQ99PFXZ5vc3yyqyb9tMDhhw", tokens: ['usdc'] },
-    ],
-  }
-};
+  const parsedData = JSON.parse(fileData)
 
-const walletManager = new WalletManager(allChainWallets, options);
+  if (!parsedData || !parsedData.walletManagerConfig)
+    throw new Error('')
+
+  return parsedData
+}
+
+const fileConfig = readConfig();
+
+const walletManager = new WalletManager(fileConfig.walletManagerConfig, fileConfig.walletManagerOptions);
 
 function __populateWalletBalanceByToken(chainBalances, wrappedAddressBalances) {
     Object.entries(chainBalances).forEach(([address, addressBalances]) => {
