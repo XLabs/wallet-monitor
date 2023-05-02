@@ -174,3 +174,6 @@ The return value of `getBalances()` for this example will look like this:
     }
 }
 ```
+
+## Wallet Monitor gRPC service
+- Remember to compile gRPC files with `npm run build-grpc`

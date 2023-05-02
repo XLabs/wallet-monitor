@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
+    "build-grpc": "npx grpc_tools_node_protoc --proto_path=./grpc/ --js_out=import_style=commonjs,binary:./grpc/ --grpc_out=grpc_js:./grpc/ ./grpc/wallet-manager.proto",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
