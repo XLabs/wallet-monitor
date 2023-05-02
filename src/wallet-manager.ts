@@ -38,7 +38,7 @@ export type WalletManagerOptions = {
   };
 };
 
-function getDefaultNetwork(chainName: ChainName) {
+export function getDefaultNetwork(chainName: ChainName) {
   return KNOWN_CHAINS[chainName].defaultNetwork;
 }
 
