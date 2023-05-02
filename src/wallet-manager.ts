@@ -8,7 +8,6 @@ import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBa
 import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
 import {TransferRecepit, WalletInterface} from './wallets/base-wallet';
 import { RebalanceInstruction } from './rebalance-strategies';
-import {subchannelAddressEqual} from "@grpc/grpc-js/build/src/subchannel-address";
 
 type WalletManagerChainConfig = {
   network?: string;
