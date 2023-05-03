@@ -2,9 +2,9 @@ version: "3"
 
 services:
   wallet-manager:
-    image: gcc/wallet-manager-d
+    image: giorgioxlabs/wallet-manager
     ports:
       - "50051:50051"
     volumes:
-      - "./examples-d/:/etc/wallet-manager/"
+      - "./config.json:/etc/wallet-manager/config.json"
     restart: always
