@@ -1,9 +1,16 @@
 import { ethers } from 'ethers';
 
-import { WalletConfig, WalletBalance } from '../';
+import { WalletConfig, WalletBalance, TokenBalance } from '../';
 import { mapConcurrent } from '../../utils';
 import { WalletToolbox, BaseWalletOptions } from '../base-wallet';
-import { pullEvmNativeBalance, EvmTokenData, pullEvmTokenData, pullEvmTokenBalance } from '../../balances/evm';
+import {
+  pullEvmNativeBalance,
+  EvmTokenData,
+  pullEvmTokenData,
+  pullEvmTokenBalance,
+  transferEvmNativeBalance,
+  getEvmAddressFromPrivateKey
+} from '../../balances/evm';
 
 import { EthereumNetwork, ETHEREUM_CHAIN_CONFIG, ETHEREUM } from './ethereum.config';
 import { PolygonNetwork, POLYGON, POLYGON_CHAIN_CONFIG } from './polygon.config';
@@ -23,11 +30,6 @@ type EvmChainConfig = {
   defaultConfigs: Record<string, { nodeUrl: string }>;
   networks: Record<string, number>;
   defaultNetwork: string;
-}
-
-type EvmWalletConfig = {
-  address: string;
-  tokens: string[];
 }
 
 const EVM_CHAINS = {
@@ -67,25 +69,25 @@ export type EvmWalletOptions = BaseWalletOptions & {
 export type EvmNetworks = EthereumNetwork | PolygonNetwork | BscNetwork | AvalancheNetwork
   | FantomNetwork | CeloNetwork | MoonbeamNetwork;
 
-function getUniqueTokens(wallets: EvmWalletConfig[]): string[] {
+function getUniqueTokens(wallets: WalletConfig[]): string[] {
   const tokens = wallets.reduce((acc, wallet) => {
-    return [...acc, ...wallet.tokens];
+    return wallet.tokens ? [...acc, ...wallet.tokens] : acc;
   }, [] as string[]);
 
   return [...new Set(tokens)];
 }
 
 export class EvmWalletToolbox extends WalletToolbox {
-  private provider: ethers.providers.JsonRpcProvider;
+  provider: ethers.providers.JsonRpcProvider;
   private chainConfig: EvmChainConfig;
   private tokenData: Record<string, EvmTokenData> = {};
   public options: EvmWalletOptions;
 
-  constructor (
+  constructor(
     public network: string,
     public chainName: EVMChainName,
     public rawConfig: WalletConfig[],
-    options?: EvmWalletOptions,
+    options: EvmWalletOptions,
   ) {
     super(network, chainName, rawConfig, options);
     this.chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
@@ -94,6 +96,7 @@ export class EvmWalletToolbox extends WalletToolbox {
 
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
 
+    this.logger.debug(`EVM rpc url: ${this.options.nodeUrl}`);
     this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
   }
 
@@ -114,37 +117,32 @@ export class EvmWalletToolbox extends WalletToolbox {
     return true;
   }
 
-  public validateConfig(rawConfig: any): rawConfig is EvmWalletConfig {
-    if (!rawConfig.address) throw new Error(`Invalid config for chain: ${this.chainName}: Missing address`);
-    if (rawConfig.tokens && rawConfig.tokens.length) {
-      const chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
+  public validateTokenAddress(token: any) {
+    const chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
 
-      rawConfig.tokens.forEach((token: any) => {
-        if (typeof token !== 'string')
-          throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
-        if (
-          !EVM_HEX_ADDRESS_REGEX.test(token) &&
-          !(token.toUpperCase() in chainConfig.knownTokens[this.network])
-        ) {
-          throw new Error(`Invalid token config for chain: ${this.chainName}: Invalid token "${token}"`);
-        }
-      });
-    }
+    if (typeof token !== 'string')
+      throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
+    if (
+      !EVM_HEX_ADDRESS_REGEX.test(token) &&
+      !(token.toUpperCase() in chainConfig.knownTokens[this.network])
+    ) {
+      throw new Error(`Invalid token config for chain: ${this.chainName}: Invalid token "${token}"`);
+    }    
 
     return true;
   }
 
-  public parseTokensConfig(tokens: EvmWalletConfig["tokens"]): string[] {
-    return tokens.map((token) => {
+  public parseTokensConfig(tokens: string[]): string[] {
+    return tokens ? tokens.map((token) => {
       if (EVM_HEX_ADDRESS_REGEX.test(token)) {
-        return token;  
+        return token;
       }
       return EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network][token.toUpperCase()];
-    });
+    }) : [];
   }
 
   public async warmup() {
-    const uniqueTokens = getUniqueTokens(this.configs);
+    const uniqueTokens = getUniqueTokens(Object.values(this.wallets));
 
     await mapConcurrent(uniqueTokens, async (tokenAddress) => {
       this.tokenData[tokenAddress] = await pullEvmTokenData(this.provider, tokenAddress);
@@ -160,11 +158,12 @@ export class EvmWalletToolbox extends WalletToolbox {
       ...balance,
       address,
       formattedBalance,
+      tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
     }
   }
 
-  public async pullTokenBalances(address: string, tokens: string[]): Promise<WalletBalance[]> {
+  public async pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]> {
     return mapConcurrent(tokens, async (tokenAddress) => {
       const tokenData = this.tokenData[tokenAddress];
       const balance = await pullEvmTokenBalance(this.provider, tokenAddress, address);
@@ -172,9 +171,23 @@ export class EvmWalletToolbox extends WalletToolbox {
       return {
         ...balance,
         address,
+        tokenAddress,
         formattedBalance,
         symbol: tokenData.symbol,
       };
     }, this.options.tokenPollConcurrency);
+  }
+
+  public async transferNativeBalance(
+    privateKey: string, targetAddress: string, amount: number, maxGasPrice: number, gasLimit: number
+  ) {
+    const txDetails = { targetAddress, amount, maxGasPrice, gasLimit };
+    const receipt = await transferEvmNativeBalance(this.provider, privateKey, txDetails);
+
+    return receipt;
+  }
+
+  public getAddressFromPrivateKey(privateKey: string): string {
+    return getEvmAddressFromPrivateKey(privateKey);
   }
 }

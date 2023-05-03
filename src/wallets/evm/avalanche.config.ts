@@ -31,7 +31,7 @@ export const AVALANCHE_DEFAULT_CONFIGS = {
     tokenPollConcurrency: AVALANCHE_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
   [DEVNET]: {
-    nodeUrl: "https://localhost:8545",
+    nodeUrl: "http://localhost:8545",
     tokenPollConcurrency: AVALANCHE_DEFAULT_TOKEN_POLL_CONCURRENCY,
   }
 };

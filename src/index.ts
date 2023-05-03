@@ -1,17 +1,24 @@
 
-export { WalletWatcher } from './wallet-watcher';
-export { WalletExporter } from './wallet-exporter';
-export { MultiWalletWatcher } from './multi-wallet-watcher';
-export { MultiWalletExporter } from './multi-wallet-exporter';
+export { WalletManager } from './wallet-manager';
 
 import { EVM_CHAIN_CONFIGS  } from './wallets/evm';
 // import { SOLANA_CHAINS } from './wallets/solana';
 
-import { MultiWalletWatcherConfig as MWWConfig } from './multi-wallet-watcher';
-import { MultiWalletExporterOptions as MWEOptions } from './multi-wallet-exporter';
+import {
+    WalletManagerOptions as WMOptions,
+    WalletManagerConfig as WMConfig,
+} from './wallet-manager';
+import {
+    WalletBalancesByAddress as WBBA,
+} from './single-wallet-manager';
+import {
+    WalletInterface as WI,
+} from './wallets/base-wallet';
 
-export type MultiWalletExporterOptions = MWEOptions;
-export type MultiWalletWatcherConfig = MWWConfig;
+export type WalletManagerOptions = WMOptions;
+export type WalletManagerConfig = WMConfig;
+export type WalletBalancesByAddress = WBBA;
+export type WalletInterface = WI;
 
 /**
  * A map of chain names to their available networks.
