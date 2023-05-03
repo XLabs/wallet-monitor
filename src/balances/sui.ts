@@ -34,10 +34,6 @@ function buildEd25519KeyPair(key: Buffer): Ed25519Keypair {
 export function getSuiAddressFromPrivateKey(privateKey: string) {
   let parsedKey = Buffer.from(privateKey, 'base64');
 
-  if (parsedKey.length !== PRIVATE_KEY_SIZE && parsedKey.length !== PRIVATE_KEY_SIZE+1) {
-    throw new Error(`Invalid Sui private key. Expected length: 32 or 34 bytes, actual length: ${parsedKey.length}`);
-  }
-
   let key, buildKeyPair;
   if (parsedKey.length === PRIVATE_KEY_SIZE+1) {
     key = parsedKey.slice(1);
