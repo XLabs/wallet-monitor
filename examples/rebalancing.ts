@@ -25,7 +25,9 @@ const options: WalletManagerOptions = {
 
 const allChainWallets: WalletManagerConfig = {
   ethereum: {
-    network: 'devnet',
+    chainConfig: {
+      nodeUrl: "http://localhost:8545",
+    },
     rebalance: {
       enabled: true,
       strategy: 'pourOver',
