@@ -42,9 +42,7 @@ export function getSuiAddressFromPrivateKey(privateKey: string) {
   if (parsedKey.length === PRIVATE_KEY_SIZE+1) {
     key = parsedKey.slice(1);
     const schemaPrefix =`0x${parsedKey.slice(0, 1).toString('hex')}`
-    console.log('scheme', schemaPrefix);
-    console.log('key', key.length);
-    // parsedKey.slice(0, 2).toString('hex')
+
     buildKeyPair = keyPairsByHexPrefix[
       schemaPrefix as keyof typeof keyPairsByHexPrefix
     ];
