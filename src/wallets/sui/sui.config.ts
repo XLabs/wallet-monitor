@@ -38,3 +38,5 @@ export const SUI_CHAIN_CONFIG = {
   networks: SUI_NETWORKS,
   defaultNetwork: SUI_TESTNET,
 };
+
+export const SUI_NATIVE_COIN_MODULE = "0x2::sui::SUI";

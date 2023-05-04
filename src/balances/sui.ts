@@ -19,8 +19,13 @@ const keyPairsByHexPrefix = {
   '0x01': buildSecp256k1KeyPair,
 }
 
-export function pullSuiTokenBalance() {
-  throw new Error('pullSuiTokenBalance is not yet implemented for SUI wallet');
+export async function pullSuiTokenBalances(
+    conn: Connection,
+    address: string
+): Promise<any> {
+  const provider = new JsonRpcProvider(conn);
+
+  return await provider.getAllBalances({ owner: address });
 }
 
 function buildSecp256k1KeyPair(key: Buffer): Secp256k1Keypair {
