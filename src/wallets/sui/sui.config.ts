@@ -4,6 +4,8 @@ export const SUI = 'sui';
 
 const SUI_TESTNET = 'testnet';
 
+const SUI_MAINNET = 'mainnet';
+
 export type SuiDefaultConfig = {
   nodeUrl: string;
 };
@@ -11,6 +13,7 @@ export type SuiDefaultConfig = {
 export const SUI_NETWORKS = {
   [DEVNET]: 1,
   [SUI_TESTNET]: 2,
+  [SUI_MAINNET]: 3,
 };
 
 export type SuiDefaultConfigs = Record<string, SuiDefaultConfig>;
@@ -21,6 +24,9 @@ const SUI_DEFAULT_CONFIGS: SuiDefaultConfigs = {
   },
   [SUI_TESTNET]: {
     nodeUrl: 'https://fullnode.testnet.sui.io'
+  },
+  [SUI_MAINNET]: {
+    nodeUrl: 'https://sui-mainnet-rpc.allthatnode.com',
   }
 };
 
