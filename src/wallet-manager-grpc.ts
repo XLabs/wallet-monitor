@@ -8,6 +8,12 @@ const { AcquireLockRequest, ReleaseLockRequest } = require('./wallet-manager_pb.
 const { WalletManagerClient } = require('./wallet-manager_grpc_pb');
 
 export class WalletManagerGrpc {
+    /**
+     * Class that is similar but not equivalent to a WalletManager.
+     * In this case where WalletManager is spawned within a separate service, we don't need to read
+     *  from events, expose balances, expose errors.
+     * This class basically just provides a way to get a locked wallet for a specific chain.
+     */
     private grpcClientStub: any;
     private managers;
 
