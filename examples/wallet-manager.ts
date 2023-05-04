@@ -76,5 +76,5 @@ manager.withWallet('ethereum', doSomethingWithWallet, {
 
 // configure the timeout for acquiring the wallet to use:
 manager.withWallet('ethereum', doSomethingWithWallet, {
-  blockTimeout: 10000,
+  leaseTimeout: 10_000,
 });
