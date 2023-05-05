@@ -142,7 +142,7 @@ export class SuiWalletToolbox extends WalletToolbox {
         balance: { coinType: string; totalBalance: string }
       ) => {
         if (
-          uniqueTokens.includes(balance.coinType) ||
+          uniqueTokens.includes(balance.coinType) &&
           balance.coinType !== SUI_NATIVE_COIN_MODULE
         ) {
           selectedBalances.push({
