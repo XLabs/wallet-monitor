@@ -1,13 +1,12 @@
 {
   "name": "@xlabs-xyz/wallet-monitor",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A set of utilities to monitor blockchain wallets and react to them",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "build-grpc": "npx grpc_tools_node_protoc --proto_path=./grpc/ --js_out=import_style=commonjs,binary:./grpc/ --grpc_out=grpc_js:./grpc/ ./grpc/wallet-manager.proto",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -49,6 +48,7 @@
     "koa": "^2.14.1",
     "koa-router": "^12.0.0",
     "prom-client": "^14.2.0",
+    "wallet-manager-grpc": "file:grpc-wrapper",
     "winston": "^3.8.2"
   },
   "devDependencies": {
@@ -58,7 +58,6 @@
     "@types/node": "^18.15.7",
     "ganache": "^7.8.0",
     "ganache-cli": "^6.12.2",
-    "grpc-tools": "^1.12.4",
     "prettier": "^2.8.7",
     "typescript": "^5.0.2"
   }

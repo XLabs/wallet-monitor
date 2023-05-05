@@ -8,12 +8,12 @@ COPY tsconfig.json tsconfig.json
 
 COPY src src
 
-COPY grpc grpc
+COPY grpc-wrapper grpc
 
 RUN npm install
 
-RUN npm run build-grpc
+RUN npm run build-grpc-wrapper
 
 RUN npm run build
 
-CMD [ "node", "./grpc/index.js" ]
+CMD [ "node", "./grpc/service.js" ]

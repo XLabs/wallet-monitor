@@ -1,5 +1,6 @@
 
 export { WalletManager } from './wallet-manager';
+export { WalletManagerGrpc } from './wallet-manager-grpc'
 
 import { EVM_CHAIN_CONFIGS  } from './wallets/evm';
 // import { SOLANA_CHAINS } from './wallets/solana';

@@ -9,7 +9,6 @@ const {
 const { WalletManagerService } = require('./wallet-manager_grpc_pb');
 
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
-const { WalletManager } = require('../lib/wallet-manager');
 const fs = require("fs");
 
 function readConfig() {
@@ -102,7 +101,7 @@ function getChainBalances(call, callback) {
   callback(null, reply)
 }
 
-function main() {
+function run_wallet_manager_grpc_service() {
   const server = new Server();
   server.addService(
       WalletManagerService,
@@ -117,6 +116,4 @@ function main() {
   });
 }
 
-process.on('SIGINT', function() { process.exit() })
-
-main();
+run_wallet_manager_grpc_service()
