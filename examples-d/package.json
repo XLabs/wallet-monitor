@@ -2,15 +2,13 @@
   "name": "examples-d",
   "version": "0.0.1",
   "scripts": {
+    "grpc-wallet-manager": "ts-node wallet-manager-grpc.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@xlabs-xyz/wallet-monitor": "file:..",
-    "wallet-manager-grpc": "file:../grpc-wrapper"
-  },
-  "devDependencies": {
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "wallet-monitor": "file:../"
   }
 }

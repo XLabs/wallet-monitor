@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { WalletInterface, WalletManagerGrpc } from "@xlabs-xyz/wallet-monitor";
+import { WalletInterface, WalletManagerGrpc } from "wallet-monitor";
 
 function readConfig() {
   const filePath = './wallet-manager-config.json'

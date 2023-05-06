@@ -1,6 +1,6 @@
 import {SingleWalletManager, WalletExecuteOptions, WithWalletExecutor} from "./single-wallet-manager";
 import {ChainName, isChain} from "./wallets";
-import { credentials } from '@grpc/grpc-js';
+import * as grpc from '@grpc/grpc-js';
 import {getDefaultNetwork, WalletManagerConfig, WalletManagerOptions} from "./wallet-manager";
 import winston from "winston";
 import {createLogger} from "./utils";
@@ -22,7 +22,7 @@ export class WalletManagerGrpc {
         this.logger = createLogger(options?.logger, options?.logLevel, { label: 'WalletManager' });
         this.managers = {} as Record<ChainName, SingleWalletManager>;
 
-        this.grpcClientStub = new WalletManagerClient(`${path}:${port}`, credentials.createInsecure())
+        this.grpcClientStub = new WalletManagerClient(`${path}:${port}`, grpc.credentials.createInsecure())
 
         // Constructing a record of manager for the only purpose of extracting the appropriate provider and private key
         //  to bundle together with the lock acquired from the grpc service.
