@@ -36,6 +36,6 @@ manager.withWallet('ethereum', doSomethingWithWallet, {
 });
 
 // configure the timeout for acquiring the wallet to use:
-manager.withWallet('ethereum', doSomethingWithWallet, {
+manager.withWallet('solana', doSomethingWithWallet, {
   leaseTimeout: 10_000,
 });
