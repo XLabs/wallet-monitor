@@ -7,13 +7,13 @@ const {
   Empty
 } = require('./wallet-manager_pb');
 const { WalletManagerService } = require('./wallet-manager_grpc_pb');
-
+const { WalletManager } = require('wallet-monitor')
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
 const fs = require("fs");
 
 function readConfig() {
   const filePath = '/etc/wallet-manager/config.json'
-  // const filePath = '../examples-d/config.json'
+  // const filePath = '../examples-d/wallet-manager-config.json'
   const fileData = fs.readFileSync(filePath, 'utf-8')
 
   const parsedData = JSON.parse(fileData)
