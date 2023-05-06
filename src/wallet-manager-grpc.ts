@@ -4,7 +4,6 @@ import { credentials } from '@grpc/grpc-js';
 import {getDefaultNetwork, WalletManagerConfig, WalletManagerOptions} from "./wallet-manager";
 import winston from "winston";
 import {createLogger} from "./utils";
-const { AcquireLockRequest, ReleaseLockRequest } = require('wallet-manager-grpc/wallet-manager_pb');
 const { WalletManagerClient } = require('wallet-manager-grpc');
 
 export class WalletManagerGrpc {
