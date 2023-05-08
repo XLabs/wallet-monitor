@@ -6,7 +6,7 @@ import {
   BaseWalletOptions,
   TransferRecepit, WalletData,
 } from "../base-wallet";
-import {pullSuiNativeBalance, pullSuiTokenBalances, pullSuiTokenData} from "../../balances/sui";
+import {formatUnits, pullSuiNativeBalance, pullSuiTokenBalances, pullSuiTokenData} from "../../balances/sui";
 
 import {
   SUI_CHAIN_CONFIG,
@@ -161,13 +161,19 @@ export class SuiWalletToolbox extends WalletToolbox {
           uniqueTokens.includes(balance.coinType) &&
           balance.coinType !== SUI_NATIVE_COIN_MODULE
         ) {
+          const tokenData = this.tokenData[balance.coinType];
+          const formattedBalance = formatUnits(
+              balance.totalBalance,
+              tokenData?.decimals ? tokenData.decimals : 9
+          );
+          const symbol: string = tokenData?.symbol ? tokenData.symbol : "";
           selectedBalances.push({
             tokenAddress: balance.coinType,
             address,
             isNative: false,
             rawBalance: balance.totalBalance,
-            formattedBalance: balance.totalBalance, // TODO format balance based on coin configuration
-            symbol: "", // TODO missing symbol, get symbol from coin config
+            formattedBalance,
+            symbol,
           });
         }
         return selectedBalances;

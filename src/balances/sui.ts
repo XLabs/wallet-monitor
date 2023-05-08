@@ -50,6 +50,10 @@ export async function pullSuiTokenBalances(
   return await provider.getAllBalances({ owner: address });
 }
 
+export function formatUnits(units: string, decimals: number): string {
+  return String(+units / 10 ** decimals);
+}
+
 function buildSecp256k1KeyPair(key: Buffer): Secp256k1Keypair {
   return Secp256k1Keypair.fromSecretKey(key);
 }
