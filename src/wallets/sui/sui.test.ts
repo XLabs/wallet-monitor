@@ -89,7 +89,7 @@ describe("sui wallet tests", () => {
                 "address": "0x0000000000000000000000000000000000000000000000000000000000000000",
                 "isNative": false,
                 "rawBalance": "100000000",
-                "formattedBalance": "100",
+                "formattedBalance": "100.0",
                 "symbol": "USDC",
             }
         ]);
