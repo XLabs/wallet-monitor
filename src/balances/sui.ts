@@ -47,7 +47,7 @@ export async function pullSuiTokenBalances(
 ): Promise<any> {
   const provider = new JsonRpcProvider(conn);
 
-  return await provider.getAllBalances({ owner: address });
+  return provider.getAllBalances({ owner: address });
 }
 
 export function formatUnits(units: string, decimals: number): string {
