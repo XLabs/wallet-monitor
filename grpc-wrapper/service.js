@@ -114,6 +114,14 @@ function run_wallet_manager_grpc_service() {
   server.bindAsync('0.0.0.0:50051', ServerCredentials.createInsecure(), () => {
     server.start();
   });
+
+  return server
 }
 
-run_wallet_manager_grpc_service()
+const server = run_wallet_manager_grpc_service()
+process.on('SIGTERM', function () {
+  console.log('Shutting down service...')
+  server.tryShutdown((error) => console.log(error));
+  console.log('Done shutting down')
+  process.exit(0)
+})

@@ -26,4 +26,4 @@ RUN npm install
 
 RUN npm run build
 
-CMD [ "node", "./service.js" ]
+CMD [ "npm", "run", "start" ]
