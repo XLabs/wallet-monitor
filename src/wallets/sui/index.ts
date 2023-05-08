@@ -6,7 +6,7 @@ import {
   BaseWalletOptions,
   TransferRecepit, WalletData,
 } from "../base-wallet";
-import {formatUnits, pullSuiNativeBalance, pullSuiTokenBalances, pullSuiTokenData} from "../../balances/sui";
+import { pullSuiNativeBalance, pullSuiTokenBalances, pullSuiTokenData } from "../../balances/sui";
 
 import {
   SUI_CHAIN_CONFIG,
@@ -16,6 +16,7 @@ import {
 } from "./sui.config";
 import { getSuiAddressFromPrivateKey } from "../../balances/sui";
 import {mapConcurrent} from "../../utils";
+import { formatRawUnits } from "../../balances";
 
 export const SUI_CHAINS = {
   [SUI]: 1,
@@ -162,7 +163,7 @@ export class SuiWalletToolbox extends WalletToolbox {
           balance.coinType !== SUI_NATIVE_COIN_MODULE
         ) {
           const tokenData = this.tokenData[balance.coinType];
-          const formattedBalance = formatUnits(
+          const formattedBalance = formatRawUnits(
               balance.totalBalance,
               tokenData?.decimals ? tokenData.decimals : 9
           );

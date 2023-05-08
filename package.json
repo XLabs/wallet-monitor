@@ -37,6 +37,7 @@
   },
   "homepage": "https://github.com/xlabs/wallet-monitor#readme",
   "dependencies": {
+    "@ethersproject/bignumber": "^5.7.0",
     "@mysten/sui.js": "^0.32.2",
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.74.0",
