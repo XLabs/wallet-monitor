@@ -4,9 +4,9 @@ import { WalletConfig, WalletBalance, TokenBalance } from "../";
 import {
   WalletToolbox,
   BaseWalletOptions,
-  TransferRecepit,
+  TransferRecepit, WalletData,
 } from "../base-wallet";
-import { pullSuiNativeBalance, pullSuiTokenBalances } from "../../balances/sui";
+import {pullSuiNativeBalance, pullSuiTokenBalances, pullSuiTokenData} from "../../balances/sui";
 
 import {
   SUI_CHAIN_CONFIG,
@@ -15,6 +15,7 @@ import {
   SuiDefaultConfig,
 } from "./sui.config";
 import { getSuiAddressFromPrivateKey } from "../../balances/sui";
+import {mapConcurrent} from "../../utils";
 
 export const SUI_CHAINS = {
   [SUI]: 1,
@@ -116,7 +117,22 @@ export class SuiWalletToolbox extends WalletToolbox {
       : [];
   }
 
-  public async warmup() {}
+  public async warmup() {
+    const tokens = this.walletTokens(this.wallets);
+    await mapConcurrent(tokens, async (tokenAddress: string): Promise<void> => {
+      this.tokenData[tokenAddress] = await pullSuiTokenData(this.provider, tokenAddress);
+    }, 1);
+
+    this.logger.debug(`Sui token data: ${JSON.stringify(this.tokenData)}`);
+  }
+
+  walletTokens(wallets: Record<string, WalletData>): string[] {
+    const walletData = Object.values(wallets);
+
+    return walletData.reduce((tokens: string[], wallet: WalletData): string[] => {
+      return wallet.tokens ? [...tokens, ...wallet.tokens] : [...tokens]
+    }, [] as string[]);
+  }
 
   public async pullNativeBalance(address: string): Promise<WalletBalance> {
     const balance = await pullSuiNativeBalance(this.provider, address);
