@@ -10,6 +10,7 @@ const { WalletManagerService } = require('./wallet-manager_grpc_pb');
 const { WalletManager } = require('wallet-monitor')
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
 const fs = require("fs");
+const timers = require("timers");
 
 function readConfig() {
   const filePath = '/etc/wallet-manager/config.json'
@@ -119,9 +120,18 @@ function run_wallet_manager_grpc_service() {
 }
 
 const server = run_wallet_manager_grpc_service()
+
 process.on('SIGTERM', function () {
   console.log('Shutting down service...')
-  server.tryShutdown((error) => console.log(error));
-  console.log('Done shutting down')
-  process.exit(0)
+  // Starting a graceful shutdown and a non-graceful shutdown with a timer.
+  setTimeout(function () {
+    server.tryShutdown((error) => console.log("Graceful shutdown was unsuccessful: ", error));
+    console.log('Done shutting down.')
+    process.exit()
+  })
+  setTimeout(function () {
+    server.forceShutdown()
+    console.log('Shutting down timed out (5 seconds).')
+    process.exit(1)
+  }, 5_000)
 })
