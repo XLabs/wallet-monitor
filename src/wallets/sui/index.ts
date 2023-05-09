@@ -6,7 +6,7 @@ import {
   BaseWalletOptions,
   TransferRecepit, WalletData,
 } from "../base-wallet";
-import { pullSuiNativeBalance, pullSuiTokenBalances, pullSuiTokenData } from "../../balances/sui";
+import { pullSuiNativeBalance, pullSuiTokenBalances, pullSuiTokenData, transferSuiNativeBalance } from "../../balances/sui";
 
 import {
   SUI_CHAIN_CONFIG,
@@ -190,7 +190,8 @@ export class SuiWalletToolbox extends WalletToolbox {
     maxGasPrice?: number,
     gasLimit?: number
   ): Promise<TransferRecepit> {
-    throw new Error("Balance transfer is not yet implemented for SUI wallet");
+    const txDetails = { targetAddress, amount, maxGasPrice, gasLimit };
+    return transferSuiNativeBalance(this.provider, privateKey, txDetails);
   }
 
   public getAddressFromPrivateKey(privateKey: string): string {
