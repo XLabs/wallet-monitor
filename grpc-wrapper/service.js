@@ -124,14 +124,15 @@ const server = run_wallet_manager_grpc_service()
 process.on('SIGTERM', function () {
   console.log('Shutting down service...')
   // Starting a graceful shutdown and a non-graceful shutdown with a timer.
-  setTimeout(function () {
-    server.tryShutdown((error) => console.log("Graceful shutdown was unsuccessful: ", error));
-    console.log('Done shutting down.')
-    process.exit()
-  })
+  // tryShutdown and forceShutdown are idempotent between themselves and each other.
+  // Therefore, it is correct if those function execute simultaneously.
   setTimeout(function () {
     server.forceShutdown()
     console.log('Shutting down timed out (5 seconds).')
     process.exit(1)
   }, 5_000)
+
+  server.tryShutdown((error) => console.log("Graceful shutdown was unsuccessful: ", error));
+  console.log('Done shutting down.')
+  process.exit()
 })
