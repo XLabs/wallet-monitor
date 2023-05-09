@@ -1,6 +1,11 @@
 import { Connection, JsonRpcProvider, Secp256k1Keypair, Ed25519Keypair, Keypair, PRIVATE_KEY_SIZE } from '@mysten/sui.js';
 import { WalletBalance } from '../wallets';
 
+export type SuiTokenData = {
+  symbol: string;
+  decimals: number;
+};
+
 export async function pullSuiNativeBalance(conn: Connection, address: string): Promise<WalletBalance> {
   const provider = new JsonRpcProvider(conn);
 
@@ -19,8 +24,30 @@ const keyPairsByHexPrefix = {
   '0x01': buildSecp256k1KeyPair,
 }
 
-export function pullSuiTokenBalance() {
-  throw new Error('pullSuiTokenBalance is not yet implemented for SUI wallet');
+export async function pullSuiTokenData(
+    conn: Connection,
+    address: string
+): Promise<SuiTokenData> {
+  const provider = new JsonRpcProvider(conn);
+  const coinData = await provider.getCoinMetadata({coinType: address});
+
+  if (!coinData) {
+    throw new Error(`Coin data not found for address: ${address}`);
+  }
+
+  return {
+    symbol: coinData.symbol,
+    decimals: coinData.decimals
+  };
+}
+
+export async function pullSuiTokenBalances(
+    conn: Connection,
+    address: string
+): Promise<any> {
+  const provider = new JsonRpcProvider(conn);
+
+  return provider.getAllBalances({ owner: address });
 }
 
 function buildSecp256k1KeyPair(key: Buffer): Secp256k1Keypair {

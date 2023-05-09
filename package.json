@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --silent=false"
   },
   "repository": {
     "type": "git",
@@ -37,6 +37,7 @@
   },
   "homepage": "https://github.com/xlabs/wallet-monitor#readme",
   "dependencies": {
+    "@ethersproject/bignumber": "^5.7.0",
     "@mysten/sui.js": "^0.32.2",
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.74.0",
@@ -50,12 +51,15 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.38",
+    "@types/jest": "^29.5.1",
     "@types/koa": "^2.13.6",
     "@types/koa-router": "^7.4.4",
     "@types/node": "^18.15.7",
     "ganache": "^7.8.0",
     "ganache-cli": "^6.12.2",
+    "jest": "^29.5.0",
     "prettier": "^2.8.7",
+    "ts-jest": "^29.1.0",
     "typescript": "^5.0.2"
   }
 }
