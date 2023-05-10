@@ -145,7 +145,7 @@ export function getSuiAddressFromPrivateKey(privateKey: string) {
   try {
     keyPair = buildSuiKeyPairFromPrivateKey(privateKey);
   } catch (error) {
-    throw new Error(`Invalid Sui private key. Error: ${error}`);
+    throw new Error(`Invalid Sui private key. Error: ${(error as Error)?.stack || error}`);
   }
 
   return keyPair.getPublicKey().toSuiAddress();
