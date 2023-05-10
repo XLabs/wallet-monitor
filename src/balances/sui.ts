@@ -81,7 +81,7 @@ export async function transferSuiNativeBalance(
       await provider.getTransactionBlock({digest: txBlock.digest, options: { showEffects: true }})
     );
   } catch (error) {
-    throw new Error(`Could not transfer native balance to address ${targetAddress}. Error: ${error}`);
+    throw new Error(`Could not transfer native balance to address ${targetAddress}. Error: ${(error as Error)?.stack || error}`);
   }
 }
 
