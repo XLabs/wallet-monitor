@@ -32,7 +32,7 @@ manager.withWallet('ethereum', doSomethingWithWallet);
 
 // perform an action with one particular wallet:
 manager.withWallet('ethereum', doSomethingWithWallet, {
-  address: '0x80C67432656d59144cEFf962E8fAF8926599bCF8',
+  // address: '0x80C67432656d59144cEFf962E8fAF8926599bCF8',
 });
 
 // configure the timeout for acquiring the wallet to use:

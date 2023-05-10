@@ -1,12 +1,13 @@
-import {SingleWalletManager, WalletExecuteOptions, WithWalletExecutor} from "./single-wallet-manager";
-import {ChainName, isChain} from "./wallets";
+import {SingleWalletManager, WalletExecuteOptions, WithWalletExecutor} from "../single-wallet-manager";
+import {ChainName, isChain} from "../wallets";
 import * as grpc from '@grpc/grpc-js';
-import {getDefaultNetwork, WalletManagerConfig, WalletManagerOptions} from "./wallet-manager";
+import {getDefaultNetwork, WalletManagerConfig, WalletManagerOptions} from "../wallet-manager";
 import winston from "winston";
-import {createLogger} from "./utils";
+import {createLogger} from "../utils";
 import * as util from "util";
-import {IClientWalletManager} from "./IWalletManager";
-const { WalletManagerClient, AcquireLockRequest, ReleaseLockRequest } = require('wallet-manager-grpc');
+import {IClientWalletManager} from "../i-wallet-manager";
+const { WalletManagerClient } = require('./out/wallet-manager_grpc_pb');
+const { AcquireLockRequest, ReleaseLockRequest } = require('./out/wallet-manager_pb')
 
 export class ClientWalletManager implements IClientWalletManager {
     private grpcClientStub: any;

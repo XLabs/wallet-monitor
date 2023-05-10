@@ -5,12 +5,14 @@ const {
   Balance,
   AcquireLockResponse,
   Empty
-} = require('./wallet-manager_pb');
-const { WalletManagerService } = require('./wallet-manager_grpc_pb');
-const { WalletManager } = require('wallet-monitor')
+} = require('./out/wallet-manager_pb');
+
+const { WalletManagerService } = require('./out/wallet-manager_grpc_pb');
+const { WalletManager } = require('../wallet-manager')
+import { IServiceWalletManager } from '../i-wallet-manager';
+import { WalletBalancesByAddress } from '../single-wallet-manager';
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
 const fs = require("fs");
-const timers = require("timers");
 
 function readConfig() {
   const filePath = '/etc/wallet-manager/config.json'
@@ -27,9 +29,9 @@ function readConfig() {
 
 const fileConfig = readConfig();
 
-const walletManager = new WalletManager(fileConfig.walletManagerConfig, fileConfig.walletManagerOptions);
+const walletManager: IServiceWalletManager = new WalletManager(fileConfig.walletManagerConfig, fileConfig.walletManagerOptions);
 
-function __populateWalletBalanceByToken(chainBalances, wrappedAddressBalances) {
+function __populateWalletBalanceByToken(chainBalances: WalletBalancesByAddress, wrappedAddressBalances: any) {
     Object.entries(chainBalances).forEach(([address, addressBalances]) => {
       const wrappedTokenBalances = new WalletBalanceByToken();
       const nativeBalance = new Balance();
@@ -58,7 +60,7 @@ function __populateWalletBalanceByToken(chainBalances, wrappedAddressBalances) {
     })
   }
 
-function getAllBalances(call, callback) {
+function getAllBalances(call: any, callback: any) {
   const unwrappedReply = walletManager.getAllBalances();
   const reply = new GetAllBalancesResponse();
 
@@ -72,7 +74,7 @@ function getAllBalances(call, callback) {
   callback(null, reply);
 }
 
-async function acquireLock(call, callback) {
+async function acquireLock(call: any, callback: any) {
   const chainName = call.request.getChainName()
   const address = call.request.hasAddress() ? call.request.getAddress() : undefined
   const leaseTimeout = call.request.hasLeaseTimeout() ? call.request.getLeaseTimeout() : undefined
@@ -84,7 +86,7 @@ async function acquireLock(call, callback) {
   callback(null, reply)
 }
 
-async function releaseLock(call, callback) {
+async function releaseLock(call: any, callback: any) {
   const [chainName, address] = [call.request.getChainName(), call.request.getAddress()]
 
   await walletManager.releaseLock(chainName, address)
@@ -94,7 +96,7 @@ async function releaseLock(call, callback) {
   callback(null, reply)
 }
 
-function getChainBalances(call, callback) {
+function getChainBalances(call: any, callback: any) {
   const unwrappedReply = walletManager.getChainBalances(call.request.getChainName());
   const reply = new WalletBalanceByAddress();
   __populateWalletBalanceByToken(unwrappedReply, reply);
@@ -132,7 +134,7 @@ process.on('SIGTERM', function () {
     process.exit(1)
   }, 5_000)
 
-  server.tryShutdown((error) => console.log("Graceful shutdown was unsuccessful: ", error));
+  server.tryShutdown((error: any) => console.log("Graceful shutdown was unsuccessful: ", error));
   console.log('Done shutting down.')
   process.exit()
 })

@@ -5,10 +5,12 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
+    "build-grpc": "npx grpc_tools_node_protoc --proto_path=./src/grpc/proto/ --js_out=import_style=commonjs,binary:./src/grpc/out/ --grpc_out=grpc_js:./src/grpc/out/ ./src/grpc/proto/wallet-manager.proto",
     "build": "tsc",
     "watch": "tsc -w",
     "build-docker-image": "docker build . -t giorgioxlabs/wallet-manager:latest",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-service": "ts-node src/grpc/service.ts"
   },
   "repository": {
     "type": "git",
@@ -49,7 +51,7 @@
     "koa": "^2.14.1",
     "koa-router": "^12.0.0",
     "prom-client": "^14.2.0",
-    "wallet-manager-grpc": "file:grpc-wrapper/",
+    "ts-node": "^10.9.1",
     "winston": "^3.8.2"
   },
   "devDependencies": {
@@ -59,6 +61,7 @@
     "@types/node": "^18.15.7",
     "ganache": "^7.8.0",
     "ganache-cli": "^6.12.2",
+    "grpc-tools": "^1.12.4",
     "prettier": "^2.8.7",
     "typescript": "^5.0.2"
   }
