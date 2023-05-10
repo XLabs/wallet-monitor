@@ -5,15 +5,10 @@ import {getDefaultNetwork, WalletManagerConfig, WalletManagerOptions} from "./wa
 import winston from "winston";
 import {createLogger} from "./utils";
 import * as util from "util";
+import {IClientWalletManager} from "./IWalletManager";
 const { WalletManagerClient, AcquireLockRequest, ReleaseLockRequest } = require('wallet-manager-grpc');
 
-export class WalletManagerGrpc {
-    /**
-     * Class that is similar but not equivalent to a WalletManager.
-     * In this case where WalletManager is spawned within a separate service, we don't need to read
-     *  from events, expose balances, expose errors.
-     * This class basically just provides a way to get a locked wallet for a specific chain.
-     */
+export class ClientWalletManager implements IClientWalletManager {
     private grpcClientStub: any;
     private managers;
 
@@ -45,16 +40,16 @@ export class WalletManagerGrpc {
 
     public async withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void> {
         const chainManager = this.managers[chainName];
-        if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`)
+        if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
 
-        const acquireRequest = new AcquireLockRequest()
+        const acquireRequest = new AcquireLockRequest();
         acquireRequest.setChainName(chainName);
         opts?.address ? acquireRequest.setAddress(opts.address) : acquireRequest.clearAddress();
         opts?.leaseTimeout ? acquireRequest.setLeaseTimeout(opts.leaseTimeout) : acquireRequest.clearLeaseTimeout();
 
-        const promiseAcquireLock = util.promisify(this.grpcClientStub.acquireLock).bind(this.grpcClientStub)
-        const acquireResponse = await promiseAcquireLock(acquireRequest)
-        const acquiredAddress = acquireResponse.getAddress()
+        const promiseAcquireLock = util.promisify(this.grpcClientStub.acquireLock).bind(this.grpcClientStub);
+        const acquireResponse = await promiseAcquireLock(acquireRequest);
+        const acquiredAddress = acquireResponse.getAddress();
 
         // FIXME
         // Dirty solution. We are doing as little work as possible to get the same expected WalletInterface after
@@ -62,7 +57,7 @@ export class WalletManagerGrpc {
         // Unfortunately this is not only inefficient (we lock 2 times) but also nonsense because, if we successfully
         //  locked a particular address in the wallet manager service, it's impossible that we have it locked here.
         // Nevertheless, this should allow us to just make it work right now.
-        const acquiredWallet = await this.managers[chainName].acquireLock({...opts, address: acquiredAddress})
+        const acquiredWallet = await this.managers[chainName].acquireLock({...opts, address: acquiredAddress});
 
         try {
             return fn(acquiredWallet);
@@ -70,10 +65,16 @@ export class WalletManagerGrpc {
             console.log(error);
             throw error;
         } finally {
+            const releaseRequest = new ReleaseLockRequest();
+            releaseRequest.setChainName(chainName);
+            releaseRequest.setAddress(acquiredAddress);
+
+            const promiseReleaseLock = util.promisify(this.grpcClientStub.releaseLock).bind(this.grpcClientStub);
+
             await Promise.all([
-                this.grpcClientStub.releaseLock({chainName, address: acquiredAddress}),
+                promiseReleaseLock(releaseRequest),
                 this.managers[chainName].releaseLock(acquiredAddress)
-            ])
+            ]);
         }
     }
 }

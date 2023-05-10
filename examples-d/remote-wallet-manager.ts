@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { WalletInterface, WalletManagerGrpc } from "wallet-monitor";
+import { WalletInterface, ClientWalletManager } from "wallet-monitor";
 
 function readConfig() {
   const filePath = './wallet-manager-config.json'
@@ -15,7 +15,7 @@ function readConfig() {
 
 const fileConfig = readConfig()
 
-const manager = new WalletManagerGrpc('localhost', 50051, fileConfig.walletManagerConfig, fileConfig.walletManagerOptions)
+const manager = new ClientWalletManager('localhost', 50051, fileConfig.walletManagerConfig, fileConfig.walletManagerOptions)
 
 // perform an action with any wallet available in the pool:
 const doSomethingWithWallet = async (wallet: WalletInterface) => {

@@ -1,4 +1,4 @@
-import { WalletManager, WalletManagerOptions, WalletManagerConfig } from 'wallet-monitor';
+import { ILocalWalletManager, WalletManager, WalletManagerOptions, WalletManagerConfig } from 'wallet-monitor';
 
 // npx ganache -i 5777 \
 //     --wallet.accounts=0xf9fdbcbcdb4c7c72642be9fe7c09ad5869a961a8ae3c3374841cb6ead5fd34b1,200000000000000000 \
@@ -64,4 +64,4 @@ const allChainWallets: WalletManagerConfig = {
 }
 
 
-export const manager = new WalletManager(allChainWallets, options);
+export const manager: ILocalWalletManager = new WalletManager(allChainWallets, options);
