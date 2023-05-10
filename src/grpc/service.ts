@@ -1,3 +1,5 @@
+import {buildWalletManager} from "../utils";
+
 const {
   GetAllBalancesResponse,
   WalletBalanceByAddress,
@@ -29,7 +31,8 @@ function readConfig() {
 
 const fileConfig = readConfig();
 
-const walletManager: IServiceWalletManager = new WalletManager(fileConfig.walletManagerConfig, fileConfig.walletManagerOptions);
+// const walletManager: IServiceWalletManager = new WalletManager(fileConfig.walletManagerConfig, fileConfig.walletManagerOptions);
+const walletManager = buildWalletManager('service', fileConfig.walletManagerConfig, fileConfig.walletManagerOptions)
 
 function __populateWalletBalanceByToken(chainBalances: WalletBalancesByAddress, wrappedAddressBalances: any) {
     Object.entries(chainBalances).forEach(([address, addressBalances]) => {

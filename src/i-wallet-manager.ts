@@ -75,7 +75,7 @@ interface IWMLocksLocal {
 }
 interface IWMLocksRemote {
     acquireLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<WalletInterface>
-    releaseLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<void>
+    releaseLock(chainName: ChainName, address: string): Promise<void>
 }
 
 export interface ILocalWalletManager extends IWMBaseWalletManager, IWMBalanceMonitor, IWMBalanceExporter, IWMRebalancer, IWMLocksLocal {}

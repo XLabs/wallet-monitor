@@ -1,5 +1,9 @@
 import { map } from 'bluebird';
 import winston from 'winston';
+import {IClientWalletManager, ILocalWalletManager, IServiceWalletManager} from "./i-wallet-manager";
+import {WalletManager, WalletManagerConfig, WalletManagerOptions} from "./wallet-manager";
+import {ClientWalletManager} from "./grpc/client";
+import {Wallet} from "ethers";
 
 export function mapConcurrent<T>(iterable: T[], mapper: (x: T, i: number, s: number) => any, concurrency = 1): Promise<any[]> {
   return map(iterable, mapper, { concurrency });
@@ -40,4 +44,18 @@ export function createLogger(logger?: winston.Logger, logLevel?: string, meta?: 
   });
 
   return _logger;
+}
+
+
+// WalletManager factory stuff loosely based on this stack overflow.
+// https://stackoverflow.com/a/73737543
+interface WMMap {
+  local: ILocalWalletManager,
+  service: IServiceWalletManager
+}
+export function buildWalletManager<K extends keyof WMMap>(type: K, config: WalletManagerConfig, options?: WalletManagerOptions): WMMap[K] {
+  return new WalletManager(config, options)
+}
+export function buildClientWalletManager(path: string, port: number, config: WalletManagerConfig, options?: WalletManagerOptions): IClientWalletManager {
+  return new ClientWalletManager(path, port, config, options)
 }
