@@ -7,7 +7,7 @@ services:
     ports:
       - "50051:50051"
     volumes:
-      - "./wallet-manager-config.json:/etc/wallet-manager/config.json"
+      - "./config.json:/etc/wallet-manager/config.json"
     restart: always
 
   grafana:

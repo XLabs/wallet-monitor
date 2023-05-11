@@ -3,7 +3,7 @@ import { WalletInterface } from "wallet-monitor";
 import {buildClientWalletManager} from "../src/utils";
 
 function readConfig() {
-  const filePath = './wallet-manager-config.json'
+  const filePath = './config.json'
   const fileData = fs.readFileSync(filePath, 'utf-8')
 
   const parsedData = JSON.parse(fileData)
