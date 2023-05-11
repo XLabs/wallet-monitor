@@ -141,8 +141,7 @@ process.on('SIGTERM', function () {
     if (error) {
       console.log("Graceful shutdown was unsuccessful: ", error);
       process.exit(1);
-    }
-    else {
+    } else {
       console.log('Done shutting down.');
       process.exit();
     }
