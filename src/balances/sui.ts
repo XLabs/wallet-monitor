@@ -1,4 +1,4 @@
-import { Connection, JsonRpcProvider, Secp256k1Keypair, Ed25519Keypair, Keypair, PRIVATE_KEY_SIZE, RawSigner, TransactionBlock, SuiTransactionBlockResponse } from '@mysten/sui.js';
+import { Connection, JsonRpcProvider, Secp256k1Keypair, Ed25519Keypair, PRIVATE_KEY_SIZE, RawSigner, TransactionBlock, SuiTransactionBlockResponse } from '@mysten/sui.js';
 import { WalletBalance } from '../wallets';
 import { parseFixed } from '@ethersproject/bignumber';
 
