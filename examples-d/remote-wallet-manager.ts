@@ -1,22 +1,26 @@
 import * as fs from 'fs';
 import { WalletInterface } from "wallet-monitor";
 import {buildClientWalletManager} from "../src/utils";
+import {z} from "zod";
+import {WalletManagerConfig, WalletManagerOptions} from "../src/wallet-manager";
 
+// FIXME: Bit of code duplication going on here. We should probably have a single place where we read the config.
 function readConfig() {
   const filePath = './config.json'
   const fileData = fs.readFileSync(filePath, 'utf-8')
-
   const parsedData = JSON.parse(fileData)
 
-  if (!parsedData || !parsedData.walletManagerConfig)
-    throw new Error('')
+  const schema = z.object({
+    config: WalletManagerConfig,
+    options: WalletManagerOptions.optional(),
+  })
 
-  return parsedData
+  return schema.parse(parsedData)
 }
 
 const fileConfig = readConfig()
 
-const manager = buildClientWalletManager('localhost', 50051, fileConfig.walletManagerConfig, fileConfig.walletmanagerOptions)
+const manager = buildClientWalletManager('localhost', 50051, fileConfig.config, fileConfig.options)
 
 // perform an action with any wallet available in the pool:
 const doSomethingWithWallet = async (wallet: WalletInterface) => {
