@@ -12,6 +12,7 @@ import { RebalanceInstruction } from './rebalance-strategies';
 
 export const WalletManagerChainConfig = z.object({
   network: z.string().optional(),
+  // FIXME: This should be a zod schema
   chainConfig: z.any().optional(),
   rebalance: z.object({
     enabled: z.boolean(),

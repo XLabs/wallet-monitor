@@ -17,6 +17,7 @@ export type ChainName = EVMChainName | SolanaChainName | SuiChainName;
 export type Wallet = EvmWalletToolbox | SolanaWalletToolbox | SuiWalletToolbox;
 export type WalletOptions = EvmWalletOptions | SolanaWalletOptions | SuiWalletOptions;
 
+// TODO: Consider writing a custom validator for an address?
 export const WalletConfig = z.object({
   address: z.string().optional(),
   tokens: z.array(z.string()).optional(),
