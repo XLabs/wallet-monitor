@@ -31,6 +31,7 @@ export type WalletBalancesByAddress = Record<string, WalletBalance>;
 
 export type WalletExecuteOptions = {
   address?: string;
+  waitToAcquireTimeout?: number,
   leaseTimeout?: number;
 }
 
