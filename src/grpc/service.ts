@@ -1,4 +1,5 @@
 import {buildWalletManager} from "../utils";
+import { z } from 'zod';
 
 const {
   GetAllBalancesResponse,
@@ -10,9 +11,8 @@ const {
 } = require('./out/wallet-manager_pb');
 
 const { WalletManagerService } = require('./out/wallet-manager_grpc_pb');
-const { WalletManager } = require('../wallet-manager')
-import { IServiceWalletManager } from '../i-wallet-manager';
 import { WalletBalancesByAddress } from '../single-wallet-manager';
+import {WalletManagerConfig, WalletManagerOptions} from "../wallet-manager";
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
 const fs = require("fs");
 
@@ -20,21 +20,21 @@ const fs = require("fs");
 //  (and check that the validation transpiles to js as well so we can basically forget about it everywhere).
 function readConfig() {
   const filePath = '/etc/wallet-manager/config.json'
-  // const filePath = '../examples-d/wallet-manager-config.json'
   const fileData = fs.readFileSync(filePath, 'utf-8')
-
   const parsedData = JSON.parse(fileData)
 
-  if (!parsedData || !parsedData.walletManagerConfig)
-    throw new Error('')
+  const schema = z.object({
+    config: WalletManagerConfig,
+    options: WalletManagerOptions.optional(),
+  })
 
-  return parsedData
+  return schema.parse(parsedData)
 }
 
 const fileConfig = readConfig();
 
 // const walletManager: IServiceWalletManager = new WalletManager(fileConfig.walletManagerConfig, fileConfig.walletManagerOptions);
-const walletManager = buildWalletManager('service', fileConfig.walletManagerConfig, fileConfig.walletManagerOptions)
+const walletManager = buildWalletManager('service', fileConfig.config, fileConfig.options)
 
 function __populateWalletBalanceByToken(chainBalances: WalletBalancesByAddress, wrappedAddressBalances: any) {
     Object.entries(chainBalances).forEach(([address, addressBalances]) => {

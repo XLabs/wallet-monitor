@@ -1,14 +1,5 @@
 {
-  "walletManagerOptions": {
-    "logLevel": "debug",
-    "balancePollInterval": 10000,
-    "metrics": {
-      "enabled": true,
-      "serve": true,
-      "port": 9091
-    }
-  },
-  "walletManagerConfig": {
+  "config": {
     "ethereum": {
       "rebalance": {
         "enabled": false,
@@ -34,6 +25,15 @@
           "tokens": ["usdc"]
         }
       ]
+    }
+  },
+  "options": {
+    "logLevel": "debug",
+    "balancePollInterval": 10000,
+    "metrics": {
+      "enabled": true,
+      "serve": true,
+      "port": 9091
     }
   }
 }

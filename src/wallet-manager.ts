@@ -1,42 +1,53 @@
 import { EventEmitter } from 'stream';
 
+import { z } from 'zod';
 import winston from 'winston';
 import { Registry } from 'prom-client';
 import { createLogger } from './utils';
 import { PrometheusExporter } from './prometheus-exporter';
 import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./single-wallet-manager";
 import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
-import {TransferRecepit, WalletInterface} from './wallets/base-wallet';
+import {TransferRecepit} from './wallets/base-wallet';
 import { RebalanceInstruction } from './rebalance-strategies';
 
-type WalletManagerChainConfig = {
-  network?: string;
-  chainConfig?: any;
-  rebalance?: {
-    enabled: boolean;
-    strategy?: string;
-    interval?: number;
-    minBalanceThreshold?: number;
-    maxGasPrice?: number;
-    gasLimit?: number;
-  };
-  wallets: WalletConfig[];
-}
+export const WalletManagerChainConfig = z.object({
+  network: z.string().optional(),
+  chainConfig: z.any().optional(),
+  rebalance: z.object({
+    enabled: z.boolean(),
+    strategy: z.string().optional(),
+    interval: z.number().optional(),
+    minBalanceThreshold: z.number().optional(),
+    maxGasPrice: z.number().optional(),
+    gasLimit: z.number().optional(),
+  }).optional(),
+  wallets: z.array(WalletConfig),
+})
 
-export type WalletManagerConfig = Record<string, WalletManagerChainConfig>;
+export const WalletManagerConfig = z.record(z.string(), WalletManagerChainConfig)
+export type WalletManagerConfig = z.infer<typeof WalletManagerConfig>;
 
-export type WalletManagerOptions = {
-  logger?: any;
-  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'verbose' | 'silent';
-  balancePollInterval?: number;
-  metrics?: {
-    enabled: boolean;
-    port?: number;
-    path?: string;
-    registry?: Registry
-    serve?: boolean;
-  };
-};
+export const WalletManagerOptions = z.object({
+  logger: z.any().optional(),
+  logLevel: z.union([
+      z.literal('error'),
+      z.literal('warn'),
+      z.literal('info'),
+      z.literal('debug'),
+      z.literal('verbose'),
+      z.literal('silent'),
+  ]).optional(),
+  balancePollInterval: z.number().optional(),
+  metrics: z.object({
+    enabled: z.boolean(),
+    port: z.number().optional(),
+    path: z.string().optional(),
+    registry: z.any().optional(),
+    serve: z.boolean().optional(),
+  }).optional(),
+});
+export type WalletManagerOptions = z.infer<typeof WalletManagerOptions>;
+
 
 export function getDefaultNetwork(chainName: ChainName) {
   return KNOWN_CHAINS[chainName].defaultNetwork;
