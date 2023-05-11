@@ -1,6 +1,6 @@
 import { Connection, JsonRpcProvider, Secp256k1Keypair, Ed25519Keypair, Keypair, PRIVATE_KEY_SIZE, RawSigner, TransactionBlock, SuiTransactionBlockResponse } from '@mysten/sui.js';
 import { WalletBalance } from '../wallets';
-import { parseRawUnits } from '.';
+import { parseFixed } from '@ethersproject/bignumber';
 
 export type SuiTokenData = {
   symbol: string;
@@ -78,7 +78,7 @@ export async function transferSuiNativeBalance(
     });
 
     return makeTxReceipt(
-      await provider.getTransactionBlock({digest: txBlock.digest, options: { showEffects: true }})
+      await provider.getTransactionBlock({digest: txBlock.digest, options: { showEffects: true, showInput: true }})
     );
   } catch (error) {
     throw new Error(`Could not transfer native balance to address ${targetAddress}. Error: ${(error as Error)?.stack || error}`);
@@ -86,20 +86,32 @@ export async function transferSuiNativeBalance(
 }
 
 function makeTxReceipt(txn: SuiTransactionBlockResponse) {
-  const { digest, effects } = txn;
+  const { digest, effects, transaction } = txn;
   if (!effects) {
     return { transactionHash: digest };
   }
 
-  const { gasUsed } = effects;
+  const { gasUsed: gasConsumed } = effects;
 
-  const totalGasUsed = parseRawUnits(gasUsed.computationCost, 0)
-    .add(parseRawUnits(gasUsed.storageCost, 0))
-    .sub(parseRawUnits(gasUsed.storageRebate, 0));
+  // from: https://docs.sui.io/build/sui-gas-charges#transaction-output-gascostsummary
+  const totalGasUsed = parseFixed(gasConsumed.computationCost, 0)
+    .add(parseFixed(gasConsumed.storageCost, 0))
+    .sub(parseFixed(gasConsumed.storageRebate, 0));
 
+  let gasUsed = '0';
+  let gasPrice = '0';
+
+  if (transaction) {
+    gasPrice = transaction.data.gasData.price;
+    gasUsed = totalGasUsed.div(gasPrice).toString();
+  }
+
+  // Gas price and formattedCost are in mist
   return {
     transactionHash: digest,
-    gasUsed: totalGasUsed.toString(),
+    gasUsed, // gas price referenced from: https://docs.sui.io/build/sui-gas-charges#transaction-output-gascostsummary
+    gasPrice,
+    formattedCost: parseFixed(totalGasUsed.toString(), 0).toString(),
   }
 }
 

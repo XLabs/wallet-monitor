@@ -16,7 +16,7 @@ import {
 } from "./sui.config";
 import { getSuiAddressFromPrivateKey } from "../../balances/sui";
 import {mapConcurrent} from "../../utils";
-import { formatRawUnits } from "../../balances";
+import { formatFixed } from "@ethersproject/bignumber";
 
 export const SUI_CHAINS = {
   [SUI]: 1,
@@ -163,7 +163,7 @@ export class SuiWalletToolbox extends WalletToolbox {
           balance.coinType !== SUI_NATIVE_COIN_MODULE
         ) {
           const tokenData = this.tokenData[balance.coinType];
-          const formattedBalance = formatRawUnits(
+          const formattedBalance = formatFixed(
               balance.totalBalance,
               tokenData?.decimals ? tokenData.decimals : 9
           );
