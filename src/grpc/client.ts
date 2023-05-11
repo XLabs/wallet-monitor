@@ -39,6 +39,8 @@ export class ClientWalletManager implements IClientWalletManager {
         }
     }
 
+    // FIXME: Too much promisifying in this code. It would be better to do it only once or, ideally, generate
+    //  code that is using async syntax out of the box.
     public async withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void> {
         const chainManager = this.managers[chainName];
         if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);

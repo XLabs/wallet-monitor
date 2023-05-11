@@ -16,6 +16,8 @@ import { WalletBalancesByAddress } from '../single-wallet-manager';
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
 const fs = require("fs");
 
+// FIXME: Yeet all code related to importing config/options in favor of a schema validation library
+//  (and check that the validation transpiles to js as well so we can basically forget about it everywhere).
 function readConfig() {
   const filePath = '/etc/wallet-manager/config.json'
   // const filePath = '../examples-d/wallet-manager-config.json'
@@ -117,6 +119,7 @@ function run_wallet_manager_grpc_service() {
         acquireLock,
         releaseLock,
       });
+  // FIXME: Get this host and port from config/env vars
   server.bindAsync('0.0.0.0:50051', ServerCredentials.createInsecure(), () => {
     server.start();
   });
