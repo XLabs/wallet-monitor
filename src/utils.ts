@@ -56,6 +56,6 @@ interface WMMap {
 export function buildWalletManager<K extends keyof WMMap>(type: K, config: WalletManagerConfig, options?: WalletManagerOptions): WMMap[K] {
   return new WalletManager(config, options)
 }
-export function buildClientWalletManager(path: string, port: number, config: WalletManagerConfig, options?: WalletManagerOptions): IClientWalletManager {
-  return new ClientWalletManager(path, port, config, options)
+export function buildClientWalletManager(host: string, port: number, config: WalletManagerConfig, options?: WalletManagerOptions): IClientWalletManager {
+  return new ClientWalletManager(host, port, config, options)
 }

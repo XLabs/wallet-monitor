@@ -15,11 +15,11 @@ export class ClientWalletManager implements IClientWalletManager {
 
     protected logger: winston.Logger;
 
-    constructor(private path: string, private port: number, rawConfig: WalletManagerConfig, options?: WalletManagerOptions) {
+    constructor(private host: string, private port: number, rawConfig: WalletManagerConfig, options?: WalletManagerOptions) {
         this.logger = createLogger(options?.logger, options?.logLevel, { label: 'WalletManager' });
         this.managers = {} as Record<ChainName, SingleWalletManager>;
 
-        this.grpcClientStub = new WalletManagerClient(`${path}:${port}`, grpc.credentials.createInsecure())
+        this.grpcClientStub = new WalletManagerClient(`${host}:${port}`, grpc.credentials.createInsecure())
 
         // Constructing a record of manager for the only purpose of extracting the appropriate provider and private key
         //  to bundle together with the lock acquired from the grpc service.
