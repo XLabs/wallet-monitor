@@ -1,10 +1,18 @@
-import { Connection, JsonRpcProvider, Secp256k1Keypair, Ed25519Keypair, Keypair, PRIVATE_KEY_SIZE } from '@mysten/sui.js';
+import { Connection, JsonRpcProvider, Secp256k1Keypair, Ed25519Keypair, PRIVATE_KEY_SIZE, RawSigner, TransactionBlock, SuiTransactionBlockResponse } from '@mysten/sui.js';
 import { WalletBalance } from '../wallets';
+import { parseFixed } from '@ethersproject/bignumber';
 
 export type SuiTokenData = {
   symbol: string;
   decimals: number;
 };
+
+export interface SuiTransactionDetails {
+  targetAddress: string;
+  amount: number;
+  maxGasPrice?: number;
+  gasLimit?: number;
+}
 
 export async function pullSuiNativeBalance(conn: Connection, address: string): Promise<WalletBalance> {
   const provider = new JsonRpcProvider(conn);
@@ -50,6 +58,63 @@ export async function pullSuiTokenBalances(
   return provider.getAllBalances({ owner: address });
 }
 
+export async function transferSuiNativeBalance(
+    conn: Connection,
+    privateKey: string,
+    txDetails: SuiTransactionDetails,
+): Promise<any> {
+  const provider = new JsonRpcProvider(conn);
+  const { targetAddress, amount } = txDetails;
+
+  try {
+    const keyPair = buildSuiKeyPairFromPrivateKey(privateKey);
+    const signer = new RawSigner(keyPair, provider);
+    const tx = new TransactionBlock();
+    const [coin] = tx.splitCoins(tx.gas, [tx.pure(amount)]);
+
+    tx.transferObjects([coin], tx.pure(targetAddress));
+    const txBlock = await signer.signAndExecuteTransactionBlock({
+      transactionBlock: tx,
+    });
+
+    return makeTxReceipt(
+      await provider.getTransactionBlock({digest: txBlock.digest, options: { showEffects: true, showInput: true }})
+    );
+  } catch (error) {
+    throw new Error(`Could not transfer native balance to address ${targetAddress}. Error: ${(error as Error)?.stack || error}`);
+  }
+}
+
+function makeTxReceipt(txn: SuiTransactionBlockResponse) {
+  const { digest, effects, transaction } = txn;
+  if (!effects) {
+    return { transactionHash: digest };
+  }
+
+  const { gasUsed: gasConsumed } = effects;
+
+  // from: https://docs.sui.io/build/sui-gas-charges#transaction-output-gascostsummary
+  const totalGasUsed = parseFixed(gasConsumed.computationCost, 0)
+    .add(parseFixed(gasConsumed.storageCost, 0))
+    .sub(parseFixed(gasConsumed.storageRebate, 0));
+
+  let gasUsed = '0';
+  let gasPrice = '0';
+
+  if (transaction) {
+    gasPrice = transaction.data.gasData.price;
+    gasUsed = totalGasUsed.div(gasPrice).toString();
+  }
+
+  // Gas price and formattedCost are in mist
+  return {
+    transactionHash: digest,
+    gasUsed, // gas price referenced from: https://docs.sui.io/build/sui-gas-charges#transaction-output-gascostsummary
+    gasPrice,
+    formattedCost: parseFixed(totalGasUsed.toString(), 0).toString(),
+  }
+}
+
 function buildSecp256k1KeyPair(key: Buffer): Secp256k1Keypair {
   return Secp256k1Keypair.fromSecretKey(key);
 }
@@ -58,7 +123,7 @@ function buildEd25519KeyPair(key: Buffer): Ed25519Keypair {
   return Ed25519Keypair.fromSecretKey(key);
 }
 
-export function getSuiAddressFromPrivateKey(privateKey: string) {
+function buildSuiKeyPairFromPrivateKey(privateKey: string): Secp256k1Keypair | Ed25519Keypair {
   let parsedKey = Buffer.from(privateKey, 'base64');
 
   let key, buildKeyPair;
@@ -84,12 +149,15 @@ export function getSuiAddressFromPrivateKey(privateKey: string) {
     throw new Error(`Invalid Sui private key. Expected length: 32 or 33 bytes, actual length: ${parsedKey.length}`);
   }
 
+  return buildKeyPair(key);
+}
 
+export function getSuiAddressFromPrivateKey(privateKey: string) {
   let keyPair;
   try {
-    keyPair = buildKeyPair(key);
+    keyPair = buildSuiKeyPairFromPrivateKey(privateKey);
   } catch (error) {
-    throw new Error(`Invalid Sui private key. Error: ${error}`);
+    throw new Error(`Invalid Sui private key. Error: ${(error as Error)?.stack || error}`);
   }
 
   return keyPair.getPublicKey().toSuiAddress();
