@@ -13,7 +13,7 @@ import {
 } from './wallet-manager';
 import {
     WalletBalancesByAddress as WBBA,
-} from './single-wallet-manager';
+} from './chain-wallet-manager';
 import {
     WalletInterface as WI,
 } from './wallets/base-wallet';

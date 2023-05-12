@@ -1,4 +1,4 @@
-import {SingleWalletManager, WalletExecuteOptions, WithWalletExecutor} from "../single-wallet-manager";
+import {ChainWalletManager, WalletExecuteOptions, WithWalletExecutor} from "../chain-wallet-manager";
 import {ChainName, isChain} from "../wallets";
 import * as grpc from '@grpc/grpc-js';
 import {getDefaultNetwork, WalletManagerConfig, WalletManagerOptions} from "../wallet-manager";
@@ -17,7 +17,7 @@ export class ClientWalletManager implements IClientWalletManager {
 
     constructor(private host: string, private port: number, rawConfig: WalletManagerConfig, options?: WalletManagerOptions) {
         this.logger = createLogger(options?.logger, options?.logLevel, { label: 'WalletManager' });
-        this.managers = {} as Record<ChainName, SingleWalletManager>;
+        this.managers = {} as Record<ChainName, ChainWalletManager>;
 
         this.grpcClient = new WalletManagerProtocol(`${host}:${port}`, grpc.credentials.createInsecure())
 
@@ -35,7 +35,7 @@ export class ClientWalletManager implements IClientWalletManager {
                 walletOptions: config.chainConfig,
             };
 
-            this.managers[chainName] = new SingleWalletManager(chainManagerConfig, config.wallets);
+            this.managers[chainName] = new ChainWalletManager(chainManagerConfig, config.wallets);
         }
     }
 

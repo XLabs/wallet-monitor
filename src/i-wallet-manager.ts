@@ -1,4 +1,4 @@
-import {WalletBalancesByAddress, WalletExecuteOptions, WithWalletExecutor} from "./single-wallet-manager";
+import {WalletBalancesByAddress, WalletExecuteOptions, WithWalletExecutor} from "./chain-wallet-manager";
 import {ChainName} from "./wallets";
 import {WalletInterface} from "./wallets/base-wallet";
 import {Registry} from "prom-client";
