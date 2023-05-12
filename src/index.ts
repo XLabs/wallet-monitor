@@ -1,5 +1,5 @@
 
-export type { ILocalWalletManager, IServiceWalletManager, IClientWalletManager } from './i-wallet-manager'
+export type { ILibraryWalletManager, IServiceWalletManager, IClientWalletManager } from './i-wallet-manager'
 export { WalletManager } from './wallet-manager';
 export { ClientWalletManager } from './grpc/client'
 export { buildWalletManager } from './utils'

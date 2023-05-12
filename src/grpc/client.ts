@@ -6,11 +6,11 @@ import winston from "winston";
 import {createLogger} from "../utils";
 import * as util from "util";
 import {IClientWalletManager} from "../i-wallet-manager";
-const { WalletManagerClient } = require('./out/wallet-manager_grpc_pb');
+const { WalletManagerClient: WalletManagerProtocol } = require('./out/wallet-manager_grpc_pb');
 const { AcquireLockRequest, ReleaseLockRequest } = require('./out/wallet-manager_pb')
 
 export class ClientWalletManager implements IClientWalletManager {
-    private grpcClientStub: any;
+    private grpcClient;
     private managers;
 
     protected logger: winston.Logger;
@@ -19,7 +19,7 @@ export class ClientWalletManager implements IClientWalletManager {
         this.logger = createLogger(options?.logger, options?.logLevel, { label: 'WalletManager' });
         this.managers = {} as Record<ChainName, SingleWalletManager>;
 
-        this.grpcClientStub = new WalletManagerClient(`${host}:${port}`, grpc.credentials.createInsecure())
+        this.grpcClient = new WalletManagerProtocol(`${host}:${port}`, grpc.credentials.createInsecure())
 
         // Constructing a record of manager for the only purpose of extracting the appropriate provider and private key
         //  to bundle together with the lock acquired from the grpc service.
@@ -50,7 +50,7 @@ export class ClientWalletManager implements IClientWalletManager {
         opts?.address ? acquireRequest.setAddress(opts.address) : acquireRequest.clearAddress();
         opts?.leaseTimeout ? acquireRequest.setLeaseTimeout(opts.leaseTimeout) : acquireRequest.clearLeaseTimeout();
 
-        const promiseAcquireLock = util.promisify(this.grpcClientStub.acquireLock).bind(this.grpcClientStub);
+        const promiseAcquireLock = util.promisify(this.grpcClient.acquireLock).bind(this.grpcClient);
         const acquireResponse = await promiseAcquireLock(acquireRequest);
         const acquiredAddress = acquireResponse.getAddress();
 
@@ -72,7 +72,7 @@ export class ClientWalletManager implements IClientWalletManager {
             releaseRequest.setChainName(chainName);
             releaseRequest.setAddress(acquiredAddress);
 
-            const promiseReleaseLock = util.promisify(this.grpcClientStub.releaseLock).bind(this.grpcClientStub);
+            const promiseReleaseLock = util.promisify(this.grpcClient.releaseLock).bind(this.grpcClient);
 
             await Promise.all([
                 promiseReleaseLock(releaseRequest),

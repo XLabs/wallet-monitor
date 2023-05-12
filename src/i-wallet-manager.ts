@@ -70,14 +70,14 @@ interface IWMBalanceExporter {
     metrics(): Promise<string> | undefined
     getRegistry(): Registry | undefined
 }
-interface IWMLocksLocal {
+interface IWMContextManagedLocks {
     withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void>
 }
-interface IWMLocksRemote {
+interface IWMBareLocks {
     acquireLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<WalletInterface>
     releaseLock(chainName: ChainName, address: string): Promise<void>
 }
 
-export interface ILocalWalletManager extends IWMBaseWalletManager, IWMBalanceMonitor, IWMBalanceExporter, IWMRebalancer, IWMLocksLocal {}
-export interface IServiceWalletManager extends IWMBaseWalletManager, IWMBalanceMonitor, IWMBalanceExporter, IWMRebalancer, IWMLocksRemote {}
-export interface IClientWalletManager extends IWMLocksLocal {}
+export interface ILibraryWalletManager extends IWMBaseWalletManager, IWMBalanceMonitor, IWMBalanceExporter, IWMRebalancer, IWMContextManagedLocks {}
+export interface IServiceWalletManager extends IWMBaseWalletManager, IWMBalanceMonitor, IWMBalanceExporter, IWMRebalancer, IWMBareLocks {}
+export interface IClientWalletManager extends IWMContextManagedLocks {}
