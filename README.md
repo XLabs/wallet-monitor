@@ -213,8 +213,6 @@ While you can pass any token address to the wallet monitor, for simplicity a lis
 
 #### Polygon
 
-Here's the markdown table with the information you provided:
-
 | Symbol | Address |
 |--------|---------|
 | [WETH](https://polygonscan.com/token/0x11CD37bb86F65419713f30673A480EA33c826872) | 0x11CD37bb86F65419713f30673A480EA33c826872 |
@@ -230,8 +228,6 @@ Here's the markdown table with the information you provided:
 | [WSUI](https://polygonscan.com/token/0x34bE049fEbfc6C64Ffd82Da08a8931A9a45f2cc8) | 0x34bE049fEbfc6C64Ffd82Da08a8931A9a45f2cc8 |
 
 #### Avalanche
-
-Apologies for the mistake. Here's the corrected markdown table with links on the symbol column:
 
 | Symbol | Address |
 | ------ | ------- |
@@ -249,8 +245,6 @@ Apologies for the mistake. Here's the corrected markdown table with links on the
 
 #### Fantom
 
-Sure! Here's the markdown table:
-
 | Symbol | Address                                          |
 |--------|--------------------------------------------------|
 | [WETH](https://ftmscan.com/token/0x2A126f043BDEBe5A0A9841c51915E562D9B07289) | 0x2A126f043BDEBe5A0A9841c51915E562D9B07289 |
@@ -267,8 +261,6 @@ Sure! Here's the markdown table:
 
 #### Celo
 
-Here's the markdown table with the requested information:
-
 | Symbol | Address |
 | ------ | ------- |
 | [WETH](https://explorer.celo.org/mainnet/token/0x66803FB87aBd4aaC3cbB3fAd7C3aa01f6F3FB207) | 0x66803FB87aBd4aaC3cbB3fAd7C3aa01f6F3FB207 |
@@ -284,8 +276,6 @@ Here's the markdown table with the requested information:
 | [WSUI](https://explorer.celo.org/mainnet/token/0x1Cb9859B1A16A67ef83A0c7b9A21eeC17d9a97Dc) | 0x1Cb9859B1A16A67ef83A0c7b9A21eeC17d9a97Dc |
 
 #### Moonbeam
-
-You're right, my apologies for the confusion. Here's the corrected markdown table with the links in the first column:
 
 | Symbol | Address                                    |
 |--------|--------------------------------------------|
