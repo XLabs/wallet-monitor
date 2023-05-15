@@ -38,7 +38,7 @@ const allChainWallets: WalletManagerConfig = {
 }
 
 // export const manager: ILocalWalletManager = new WalletManager(allChainWallets, options);
-export const manager = buildWalletManager('local', allChainWallets, options)
+export const manager = buildWalletManager('library', allChainWallets, options)
 
 // if metrics.enabled=true, metrics.serve=false, you can use:
 manager.getRegistry();

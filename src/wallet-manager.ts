@@ -5,7 +5,7 @@ import winston from 'winston';
 import { Registry } from 'prom-client';
 import { createLogger } from './utils';
 import { PrometheusExporter } from './prometheus-exporter';
-import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./single-wallet-manager";
+import { ChainWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./chain-wallet-manager";
 import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
 import {TransferRecepit} from './wallets/base-wallet';
 import { RebalanceInstruction } from './rebalance-strategies';
@@ -56,14 +56,14 @@ export function getDefaultNetwork(chainName: ChainName) {
 
 export class WalletManager {
   private emitter: EventEmitter = new EventEmitter();
-  private managers: Record<ChainName, SingleWalletManager>;
+  private managers: Record<ChainName, ChainWalletManager>;
   private exporter?: PrometheusExporter;
 
   protected logger: winston.Logger;
 
-  constructor(rawConfig: WalletManagerConfig, options?: WalletManagerOptions) {
+  constructor(config: WalletManagerConfig, options?: WalletManagerOptions) {
     this.logger = createLogger(options?.logger, options?.logLevel, { label: 'WalletManager' });
-    this.managers = {} as Record<ChainName, SingleWalletManager>;
+    this.managers = {} as Record<ChainName, ChainWalletManager>;
 
     if (options?.metrics?.enabled) {
       const { port, path, registry } = options.metrics;
@@ -74,20 +74,20 @@ export class WalletManager {
       }
     }
 
-    for (const [chainName, config] of Object.entries(rawConfig)) {
+    for (const [chainName, chainConfig] of Object.entries(config)) {
       if (!isChain(chainName)) throw new Error(`Invalid chain name: ${chainName}`);
-      const network = config.network || getDefaultNetwork(chainName);
+      const network = chainConfig.network || getDefaultNetwork(chainName);
 
       const chainManagerConfig = {
         network,
         chainName,
         logger: this.logger,
-        rebalance: config.rebalance,
-        walletOptions: config.chainConfig,
+        rebalance: chainConfig.rebalance,
+        walletOptions: chainConfig.chainConfig,
         balancePollInterval: options?.balancePollInterval,
       };
 
-      const chainManager = new SingleWalletManager(chainManagerConfig, config.wallets);
+      const chainManager = new ChainWalletManager(chainManagerConfig, chainConfig.wallets);
 
       chainManager.on('error', (error) => {
         this.logger.error('Error in chain manager: ${error}');

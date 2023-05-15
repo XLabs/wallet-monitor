@@ -7,6 +7,3 @@ npm-debug.log
 .env
 .DS_Store
 examples/logs/*
-
-# gRPC build artifacts
-src/grpc/out/

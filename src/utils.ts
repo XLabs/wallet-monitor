@@ -1,6 +1,6 @@
 import { map } from 'bluebird';
 import winston from 'winston';
-import {IClientWalletManager, ILocalWalletManager, IServiceWalletManager} from "./i-wallet-manager";
+import {IClientWalletManager, ILibraryWalletManager, IServiceWalletManager} from "./i-wallet-manager";
 import {WalletManager, WalletManagerConfig, WalletManagerOptions} from "./wallet-manager";
 import {ClientWalletManager} from "./grpc/client";
 import {Wallet} from "ethers";
@@ -50,12 +50,23 @@ export function createLogger(logger?: winston.Logger, logLevel?: string, meta?: 
 // WalletManager factory stuff loosely based on this stack overflow.
 // https://stackoverflow.com/a/73737543
 interface WMMap {
-  local: ILocalWalletManager,
-  service: IServiceWalletManager
+  'library': ILibraryWalletManager,
+  'service': IServiceWalletManager
 }
-export function buildWalletManager<K extends keyof WMMap>(type: K, config: WalletManagerConfig, options?: WalletManagerOptions): WMMap[K] {
+// This function will return the same object with the minimal set of methods required to work for the
+//  requested context.
+export function buildWalletManager<K extends keyof WMMap>(
+    type: K,
+    config: WalletManagerConfig,
+    options?: WalletManagerOptions
+): WMMap[K] {
   return new WalletManager(config, options)
 }
-export function buildClientWalletManager(host: string, port: number, config: WalletManagerConfig, options?: WalletManagerOptions): IClientWalletManager {
+export function buildClientWalletManager(
+    host: string,
+    port: number,
+    config: WalletManagerConfig,
+    options?: WalletManagerOptions
+): IClientWalletManager {
   return new ClientWalletManager(host, port, config, options)
 }

@@ -35,7 +35,7 @@ export type WalletExecuteOptions = {
   leaseTimeout?: number;
 }
 
-export class SingleWalletManager {
+export class ChainWalletManager {
   private locked = false;
   private rebalanceLocked = false;
   protected logger: winston.Logger;

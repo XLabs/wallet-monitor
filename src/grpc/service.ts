@@ -11,7 +11,7 @@ const {
 } = require('./out/wallet-manager_pb');
 
 const { WalletManagerService } = require('./out/wallet-manager_grpc_pb');
-import { WalletBalancesByAddress } from '../single-wallet-manager';
+import { WalletBalancesByAddress } from '../chain-wallet-manager';
 import {WalletManagerConfig, WalletManagerOptions} from "../wallet-manager";
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
 const fs = require("fs");

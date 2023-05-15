@@ -1,0 +1,4 @@
+# This file will tell git to ignore build artifacts but not the .gitignore itself.
+# It allows us to commit an empty directory for build artifacts without the build artifacts.
+*
+!.gitignore
