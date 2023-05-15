@@ -129,6 +129,7 @@ function run_wallet_manager_grpc_service() {
 
 const server = run_wallet_manager_grpc_service()
 
+// FIXME: This only handles the signal sent by docker. It does not handle keyboard interrupts.
 process.on('SIGTERM', function () {
   console.log('Shutting down service...')
   // Starting a graceful shutdown and a non-graceful shutdown with a timer.
