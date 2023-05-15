@@ -295,14 +295,14 @@ While you can pass any token address to the wallet monitor, for simplicity a lis
 
 | Symbol | Address |
 |--------|---------|
-| [WETH](https://suiexplorer.com/object/0xaf8cd5edc19c4512f4259f0bee101a40d41ebed738ade5874359610ef8eeced5?module=coin) | 0xaf8cd5edc19c4512f4259f0bee101a40d41ebed738ade5874359610ef8eeced5::coin::COIN |
-| [USDC](https://suiexplorer.com/object/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf?module=coin) | 0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN |
-| [USDT](https://suiexplorer.com/object/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c?module=coin) | 0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c::coin::COIN |
-| [WBTC](https://suiexplorer.com/object/0x27792d9fed7f9844eb4839566001bb6f6cb4804f66aa2da6fe1ee242d896881?module=coin) | 0x27792d9fed7f9844eb4839566001bb6f6cb4804f66aa2da6fe1ee242d896881::coin::COIN |
-| [WBNB](https://suiexplorer.com/object/0xb848cce11ef3a8f62eccea6eb5b35a12c4c2b1ee1af7755d02d7bd6218e8226f?module=coin) | 0xb848cce11ef3a8f62eccea6eb5b35a12c4c2b1ee1af7755d02d7bd6218e8226f::coin::COIN |
-| [WMATIC](https://suiexplorer.com/object/0xdbe380b13a6d0f5cdedd58de8f04625263f113b3f9db32b3e1983f49e2841676?module=coin) | 0xdbe380b13a6d0f5cdedd58de8f04625263f113b3f9db32b3e1983f49e2841676::coin::COIN |
-| [WAVAX](https://suiexplorer.com/object/0x1e8b532cca6569cab9f9b9ebc73f8c13885012ade714729aa3b450e0339ac766?module=coin) | 0x1e8b532cca6569cab9f9b9ebc73f8c13885012ade714729aa3b450e0339ac766::coin::COIN |
-| [WFTM](https://suiexplorer.com/object/0x6081300950a4f1e2081580e919c210436a1bed49080502834950d31ee55a2396?module=coin) | 0x6081300950a4f1e2081580e919c210436a1bed49080502834950d31ee55a2396::coin::COIN |
-| [WCELO](https://suiexplorer.com/object/0xa198f3be41cda8c07b3bf3fee02263526e535d682499806979a111e88a5a8d0f?module=coin) | 0xa198f3be41cda8c07b3bf3fee02263526e535d682499806979a111e88a5a8d0f::coin::COIN |
-| [WGLMR](https://suiexplorer.com/object/0x66f87084e49c38f76502d17f87d17f943f183bb94117561eb573e075fdc5ff75?module=coin) | 0x66f87084e49c38f76502d17f87d17f943f183bb94117561eb573e075fdc5ff75::coin::COIN |
+| [WETH](https://suiexplorer.com/object/0xaf8cd5edc19c4512f4259f0bee101a40d41ebed738ade5874359610ef8eeced5?module=coin) | `0xaf8cd5edc19c4512f4259f0bee101a40d41ebed738ade5874359610ef8eeced5::coin::COIN` |
+| [USDC](https://suiexplorer.com/object/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf?module=coin) | `0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN` |
+| [USDT](https://suiexplorer.com/object/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c?module=coin) | `0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c::coin::COIN` |
+| [WBTC](https://suiexplorer.com/object/0x27792d9fed7f9844eb4839566001bb6f6cb4804f66aa2da6fe1ee242d896881?module=coin) | `0x27792d9fed7f9844eb4839566001bb6f6cb4804f66aa2da6fe1ee242d896881::coin::COIN` |
+| [WBNB](https://suiexplorer.com/object/0xb848cce11ef3a8f62eccea6eb5b35a12c4c2b1ee1af7755d02d7bd6218e8226f?module=coin) | `0xb848cce11ef3a8f62eccea6eb5b35a12c4c2b1ee1af7755d02d7bd6218e8226f::coin::COIN` |
+| [WMATIC](https://suiexplorer.com/object/0xdbe380b13a6d0f5cdedd58de8f04625263f113b3f9db32b3e1983f49e2841676?module=coin) | `0xdbe380b13a6d0f5cdedd58de8f04625263f113b3f9db32b3e1983f49e2841676::coin::COIN` |
+| [WAVAX](https://suiexplorer.com/object/0x1e8b532cca6569cab9f9b9ebc73f8c13885012ade714729aa3b450e0339ac766?module=coin) | `0x1e8b532cca6569cab9f9b9ebc73f8c13885012ade714729aa3b450e0339ac766::coin::COIN` |
+| [WFTM](https://suiexplorer.com/object/0x6081300950a4f1e2081580e919c210436a1bed49080502834950d31ee55a2396?module=coin) | `0x6081300950a4f1e2081580e919c210436a1bed49080502834950d31ee55a2396::coin::COIN` |
+| [WCELO](https://suiexplorer.com/object/0xa198f3be41cda8c07b3bf3fee02263526e535d682499806979a111e88a5a8d0f?module=coin) | `0xa198f3be41cda8c07b3bf3fee02263526e535d682499806979a111e88a5a8d0f::coin::COIN` |
+| [WGLMR](https://suiexplorer.com/object/0x66f87084e49c38f76502d17f87d17f943f183bb94117561eb573e075fdc5ff75?module=coin) | `0x66f87084e49c38f76502d17f87d17f943f183bb94117561eb573e075fdc5ff75::coin::COIN` |
 | [SUI](https://suiexplorer.com/object/0x0000000000000000000000000000000000000000000000000000000000000002?module=coin) | 0x2::sui::SUI |
