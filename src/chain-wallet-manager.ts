@@ -11,8 +11,9 @@ const DEFAULT_REBALANCE_STRATEGY = 'pourOver';
 
 export type WithWalletExecutor = (wallet: WalletInterface) => Promise<void>;
 
-export type SingleWalletManagerOptions = {
+export type ChainWalletManagerOptions = {
   logger: winston.Logger;
+
   network: string;
   chainName: string;
   rebalance: {
@@ -42,7 +43,7 @@ export class ChainWalletManager {
   protected balancesByAddress: WalletBalancesByAddress = {};
   private interval: ReturnType<typeof setInterval> | null = null;
   private rebalanceInterval: ReturnType<typeof setInterval> | null = null;
-  private options: SingleWalletManagerOptions;
+  private options: ChainWalletManagerOptions;
   private emitter = new EventEmitter();
 
   public walletToolbox: Wallet;
@@ -65,7 +66,7 @@ export class ChainWalletManager {
     );
   }
 
-  private validateOptions(options: any): options is SingleWalletManagerOptions {
+  private validateOptions(options: any): options is ChainWalletManagerOptions {
     if (!options.network) throw new Error('Missing network option');
     if (!options.chainName) throw new Error('Missing chainName option');
     if (options.balancePollInterval && typeof options.balancePollInterval !== 'number') throw new Error('Invalid pollInterval option');
@@ -73,7 +74,7 @@ export class ChainWalletManager {
     return true;
   }
 
-  private parseOptions(options: SingleWalletManagerOptions): SingleWalletManagerOptions {
+  private parseOptions(options: ChainWalletManagerOptions): ChainWalletManagerOptions {
     const rebalanceOptions = {
       enabled: options.rebalance?.enabled || false,
       strategy: options.rebalance?.strategy || DEFAULT_REBALANCE_STRATEGY,
