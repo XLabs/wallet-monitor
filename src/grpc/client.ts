@@ -65,7 +65,7 @@ export class ClientWalletManager implements IClientWalletManager {
         try {
             return fn(acquiredWallet);
         } catch (error) {
-            console.log(error);
+            this.logger.error('The workflow function failed to run within the context of the acquired wallet.', error);
             throw error;
         } finally {
             const releaseRequest = new ReleaseLockRequest();
