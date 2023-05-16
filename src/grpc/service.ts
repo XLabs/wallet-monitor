@@ -8,7 +8,7 @@ const {
 
 const { WalletManagerService } = require('./out/wallet-manager_grpc_pb');
 import { WalletBalancesByAddress } from '../chain-wallet-manager';
-import {WalletManagerConfig, WalletManagerOptions} from "../wallet-manager";
+import {WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../wallet-manager";
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
 const fs = require("fs");
 
@@ -20,8 +20,8 @@ function readConfig() {
   const parsedData = JSON.parse(fileData)
 
   const schema = z.object({
-    config: WalletManagerConfig,
-    options: WalletManagerOptions.optional(),
+    config: WalletManagerConfigSchema,
+    options: WalletManagerOptionsSchema.optional(),
   })
 
   return schema.parse(parsedData)

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { WalletInterface } from "wallet-monitor";
 import {buildClientWalletManager} from "../src/utils";
 import {z} from "zod";
-import {WalletManagerConfig, WalletManagerOptions} from "../src/wallet-manager";
+import {WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../src/wallet-manager";
 
 // FIXME: Bit of code duplication going on here. We should probably have a single place where we read the config.
 function readConfig() {
@@ -11,8 +11,8 @@ function readConfig() {
   const parsedData = JSON.parse(fileData)
 
   const schema = z.object({
-    config: WalletManagerConfig,
-    options: WalletManagerOptions.optional(),
+    config: WalletManagerConfigSchema,
+    options: WalletManagerOptionsSchema.optional(),
   })
 
   return schema.parse(parsedData)

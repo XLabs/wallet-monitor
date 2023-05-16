@@ -18,12 +18,12 @@ export type Wallet = EvmWalletToolbox | SolanaWalletToolbox | SuiWalletToolbox;
 export type WalletOptions = EvmWalletOptions | SolanaWalletOptions | SuiWalletOptions;
 
 // TODO: Consider writing a custom validator for an address?
-export const WalletConfig = z.object({
+export const WalletConfigSchema = z.object({
   address: z.string().optional(),
   tokens: z.array(z.string()).optional(),
   privateKey: z.string().optional(),
 });
-export type WalletConfig = z.infer<typeof WalletConfig>;
+export type WalletConfig = z.infer<typeof WalletConfigSchema>;
 
 export type Balance = {
   symbol: string;

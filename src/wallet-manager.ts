@@ -6,11 +6,11 @@ import { Registry } from 'prom-client';
 import { createLogger } from './utils';
 import { PrometheusExporter } from './prometheus-exporter';
 import { ChainWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./chain-wallet-manager";
-import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
+import {ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfigSchema} from './wallets';
 import {TransferRecepit} from './wallets/base-wallet';
 import { RebalanceInstruction } from './rebalance-strategies';
 
-export const WalletManagerChainConfig = z.object({
+export const WalletManagerChainConfigSchema = z.object({
   network: z.string().optional(),
   // FIXME: This should be a zod schema
   chainConfig: z.any().optional(),
@@ -22,13 +22,13 @@ export const WalletManagerChainConfig = z.object({
     maxGasPrice: z.number().optional(),
     gasLimit: z.number().optional(),
   }).optional(),
-  wallets: z.array(WalletConfig),
+  wallets: z.array(WalletConfigSchema),
 })
 
-export const WalletManagerConfig = z.record(z.string(), WalletManagerChainConfig)
-export type WalletManagerConfig = z.infer<typeof WalletManagerConfig>;
+export const WalletManagerConfigSchema = z.record(z.string(), WalletManagerChainConfigSchema)
+export type WalletManagerConfig = z.infer<typeof WalletManagerConfigSchema>;
 
-export const WalletManagerOptions = z.object({
+export const WalletManagerOptionsSchema = z.object({
   logger: z.any().optional(),
   logLevel: z.union([
       z.literal('error'),
@@ -47,7 +47,7 @@ export const WalletManagerOptions = z.object({
     serve: z.boolean().optional(),
   }).optional(),
 });
-export type WalletManagerOptions = z.infer<typeof WalletManagerOptions>;
+export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
 
 
 export function getDefaultNetwork(chainName: ChainName) {
