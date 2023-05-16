@@ -35,5 +35,8 @@
       "serve": true,
       "port": 9091
     }
+  },
+  "grpc": {
+    "connectingAddress": "localhost"
   }
 }

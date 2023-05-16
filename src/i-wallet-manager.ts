@@ -3,6 +3,7 @@ import {ChainName} from "./wallets";
 import {WalletInterface} from "./wallets/base-wallet";
 import {Registry} from "prom-client";
 
+// TODO: Remove all comments about this because it changed a lot since then.
 /*
 Goals for this interface file:
 - In the docker image for WalletMonitor, we should be able to instantiate a WalletManager which will do monitoring,
@@ -21,7 +22,6 @@ Goals for this interface file:
    the appropriate class is used in each circumstance.
 */
 
-
 /*
 NOTES ON THIS INTERFACE INHERITANCE HIERARCHY:
 - Ideally, there would be different .on() methods to register as a listener depending on the 3 categories that
@@ -34,22 +34,7 @@ NOTES ON THIS INTERFACE INHERITANCE HIERARCHY:
    final interface. We choose to leave them this way because, along this note, is a reminder that in the future
    we would want to actually make 3 separate .on() methods.
 */
-interface IWMBaseWalletManager {
-    stop(): void
-    on(event: string, listener: (...args: any[]) => void): void
-}
-interface IWMBalanceMonitor {
-    getAllBalances(): Record<string, WalletBalancesByAddress>
-    getChainBalances(chainName: ChainName): WalletBalancesByAddress
-    on(event: string, listener: (...args: any[]) => void): void
-}
-interface IWMRebalancer {
-    on(event: string, listener: (...args: any[]) => void): void
-}
-interface IWMBalanceExporter {
-    metrics(): Promise<string> | undefined
-    getRegistry(): Registry | undefined
-}
+
 interface IWMContextManagedLocks {
     withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void>
 }
@@ -58,6 +43,6 @@ interface IWMBareLocks {
     releaseLock(chainName: ChainName, address: string): Promise<void>
 }
 
-export interface ILibraryWalletManager extends IWMBaseWalletManager, IWMBalanceMonitor, IWMBalanceExporter, IWMRebalancer, IWMContextManagedLocks {}
-export interface IServiceWalletManager extends IWMBaseWalletManager, IWMBalanceMonitor, IWMBalanceExporter, IWMRebalancer, IWMBareLocks {}
-export interface IClientWalletManager extends IWMContextManagedLocks {}
+export type ILibraryWalletManager = IWMContextManagedLocks
+export type IClientWalletManager = IWMContextManagedLocks
+export type IServiceWalletManager = IWMBareLocks

@@ -1,4 +1,3 @@
-import {buildWalletManager} from "../utils";
 import { z } from 'zod';
 
 const {
@@ -7,10 +6,17 @@ const {
 } = require('./out/wallet-manager_pb');
 
 const { WalletManagerService } = require('./out/wallet-manager_grpc_pb');
-import { WalletBalancesByAddress } from '../chain-wallet-manager';
-import {WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../wallet-manager";
+import {WalletManager, WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../wallet-manager";
+import {IServiceWalletManager} from "../i-wallet-manager";
 const { Server, ServerCredentials } = require('@grpc/grpc-js');
 const fs = require("fs");
+
+const haSchema = z.object({
+  listeningAddress: z.string().default('0.0.0.0'),
+  listeningPort: z.number().default(50051),
+  connectingAddress: z.string(),
+  connectingPort: z.number().default(50051),
+})
 
 // FIXME: Yeet all code related to importing config/options in favor of a schema validation library
 //  (and check that the validation transpiles to js as well so we can basically forget about it everywhere).
@@ -22,6 +28,7 @@ function readConfig() {
   const schema = z.object({
     config: WalletManagerConfigSchema,
     options: WalletManagerOptionsSchema.optional(),
+    grpc: haSchema
   })
 
   return schema.parse(parsedData)
@@ -29,7 +36,7 @@ function readConfig() {
 
 const fileConfig = readConfig();
 
-const walletManager = buildWalletManager('service', fileConfig.config, fileConfig.options)
+const walletManager = new WalletManager(fileConfig.config, fileConfig.options)
 
 async function acquireLock(call: any, callback: any) {
   const chainName = call.request.getChainName()
@@ -62,9 +69,11 @@ function run_wallet_manager_grpc_service() {
         releaseLock,
       });
   // FIXME: Get this host and port from config/env vars
-  server.bindAsync('0.0.0.0:50051', ServerCredentials.createInsecure(), () => {
-    server.start();
-  });
+  server.bindAsync(
+      fileConfig.grpc.listeningAddress + ':' + fileConfig.grpc.listeningPort,
+      ServerCredentials.createInsecure(), () => {
+        server.start();
+      });
 
   return server
 }

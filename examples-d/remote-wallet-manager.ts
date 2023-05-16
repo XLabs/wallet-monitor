@@ -1,8 +1,16 @@
 import * as fs from 'fs';
 import { WalletInterface } from "wallet-monitor";
-import {buildClientWalletManager} from "../src/utils";
 import {z} from "zod";
 import {WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../src/wallet-manager";
+import {ClientWalletManager} from "../src";
+
+// FIXME: Remove this duplications
+const haSchema = z.object({
+  listeningAddress: z.string().default('0.0.0.0'),
+  listeningPort: z.number().default(50051),
+  connectingAddress: z.string(),
+  connectingPort: z.number().default(50051),
+})
 
 // FIXME: Bit of code duplication going on here. We should probably have a single place where we read the config.
 function readConfig() {
@@ -13,6 +21,7 @@ function readConfig() {
   const schema = z.object({
     config: WalletManagerConfigSchema,
     options: WalletManagerOptionsSchema.optional(),
+    grpc: haSchema
   })
 
   return schema.parse(parsedData)
@@ -20,7 +29,12 @@ function readConfig() {
 
 const fileConfig = readConfig()
 
-const manager = buildClientWalletManager('localhost', 50051, fileConfig.config, fileConfig.options)
+const manager = new ClientWalletManager(
+    fileConfig.grpc.connectingAddress,
+    fileConfig.grpc.connectingPort,
+    fileConfig.config,
+    fileConfig.options
+)
 
 // perform an action with any wallet available in the pool:
 const doSomethingWithWallet = async (wallet: WalletInterface) => {
