@@ -2,10 +2,6 @@ import {buildWalletManager} from "../utils";
 import { z } from 'zod';
 
 const {
-  GetAllBalancesResponse,
-  WalletBalanceByAddress,
-  WalletBalanceByToken,
-  Balance,
   AcquireLockResponse,
   Empty
 } = require('./out/wallet-manager_pb');
@@ -33,51 +29,7 @@ function readConfig() {
 
 const fileConfig = readConfig();
 
-// const walletManager: IServiceWalletManager = new WalletManager(fileConfig.walletManagerConfig, fileConfig.walletManagerOptions);
 const walletManager = buildWalletManager('service', fileConfig.config, fileConfig.options)
-
-function __populateWalletBalanceByToken(chainBalances: WalletBalancesByAddress, wrappedAddressBalances: any) {
-    Object.entries(chainBalances).forEach(([address, addressBalances]) => {
-      const wrappedTokenBalances = new WalletBalanceByToken();
-      const nativeBalance = new Balance();
-      nativeBalance.setAddress(addressBalances.address);
-      nativeBalance.setIsNative(true);
-      nativeBalance.setSymbol(addressBalances.symbol);
-      nativeBalance.setRawBalance(addressBalances.rawBalance);
-      nativeBalance.setFormattedBalance(addressBalances.formattedBalance);
-      wrappedTokenBalances.setNativeBalance(nativeBalance);
-      addressBalances.tokens.forEach((tokenBalance) => {
-        const wrappedBalance = new Balance();
-        wrappedBalance.setAddress(tokenBalance.address);
-        wrappedBalance.setIsNative(tokenBalance.isNative);
-        wrappedBalance.setSymbol(tokenBalance.symbol);
-        wrappedBalance.setRawBalance(tokenBalance.rawBalance);
-        wrappedBalance.setFormattedBalance(tokenBalance.formattedBalance);
-        if (!tokenBalance.tokenAddress)
-          wrappedBalance.setTokenAddress(tokenBalance.tokenAddress);
-        wrappedTokenBalances
-            .getTokenBalancesMap(false)
-            .set(tokenBalance.address, wrappedBalance);
-      })
-      wrappedAddressBalances
-          .getBalancesMap(false)
-          .set(address, wrappedTokenBalances);
-    })
-  }
-
-function getAllBalances(call: any, callback: any) {
-  const unwrappedReply = walletManager.getAllBalances();
-  const reply = new GetAllBalancesResponse();
-
-  Object.entries(unwrappedReply).forEach(([chainName, chainBalances]) => {
-    const wrappedAddressBalances = new WalletBalanceByAddress();
-    __populateWalletBalanceByToken(chainBalances, wrappedAddressBalances);
-    reply
-        .getAllBalancesMap(false)
-        .set(chainName, wrappedAddressBalances);
-  })
-  callback(null, reply);
-}
 
 async function acquireLock(call: any, callback: any) {
   const chainName = call.request.getChainName()
@@ -101,21 +53,11 @@ async function releaseLock(call: any, callback: any) {
   callback(null, reply)
 }
 
-function getChainBalances(call: any, callback: any) {
-  const unwrappedReply = walletManager.getChainBalances(call.request.getChainName());
-  const reply = new WalletBalanceByAddress();
-  __populateWalletBalanceByToken(unwrappedReply, reply);
-
-  callback(null, reply)
-}
-
 function run_wallet_manager_grpc_service() {
   const server = new Server();
   server.addService(
       WalletManagerService,
       {
-        getAllBalances,
-        getChainBalances,
         acquireLock,
         releaseLock,
       });
