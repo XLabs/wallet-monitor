@@ -20,7 +20,6 @@ export class ClientWalletManager implements IClientWalletManager {
         this.logger = createLogger(options?.logger, options?.logLevel, { label: 'WalletManager' });
         this.managers = {} as Record<ChainName, ChainWalletManager>;
 
-        // this.walletManagerGRPCClient = new WalletManagerProtocol(`${host}:${port}`, grpc.credentials.createInsecure())
         this.walletManagerGRPCChannel = createChannel(`${host}:${port}`)
         this.walletManagerGRPCClient = createClient(WalletManagerGRPCServiceDefinition, this.walletManagerGRPCChannel)
 
