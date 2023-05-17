@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build-grpc": "grpc_tools_node_protoc --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./src/grpc/out/ --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false,esModuleInterop=true --proto_path=./src/grpc/proto/ ./src/grpc/proto/wallet-manager.proto",
+    "build-grpc": "grpc_tools_node_protoc --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./src/grpc/out/ --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false,esModuleInterop=true --proto_path=./src/grpc/proto/ src/grpc/proto/wallet-manager-grpc-service.proto",
     "build": "tsc",
     "watch": "tsc -w",
     "build-docker-image": "docker build . -t giorgioxlabs/wallet-manager:latest",

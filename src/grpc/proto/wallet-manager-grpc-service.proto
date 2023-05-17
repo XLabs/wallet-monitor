@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-service WalletManager {
+service WalletManagerGRPCService {
   rpc AcquireLock (AcquireLockRequest) returns (AcquireLockResponse);
   rpc ReleaseLock (ReleaseLockRequest) returns (google.protobuf.Empty);
 }
