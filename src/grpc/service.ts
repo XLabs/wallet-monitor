@@ -5,11 +5,9 @@ import {WalletManagerGRPCServiceDefinition} from "./out/wallet-manager-grpc-serv
 import * as fs from "fs";
 import {WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../wallet-manager";
 
-const haSchema = z.object({
+const grpcServerSchema = z.object({
   listeningAddress: z.string().default('0.0.0.0'),
   listeningPort: z.number().default(50051),
-  connectingAddress: z.string(),
-  connectingPort: z.number().default(50051),
 })
 
 // FIXME: Yeet all code related to importing config/options in favor of a schema validation library
@@ -22,7 +20,7 @@ function readConfig() {
   const schema = z.object({
     config: WalletManagerConfigSchema,
     options: WalletManagerOptionsSchema.optional(),
-    grpc: haSchema
+    grpcServer: grpcServerSchema
   })
 
   return schema.parse(parsedData)
@@ -34,7 +32,7 @@ const walletManagerGRPCService = new WalletManagerGRPCService(fileConfig.config,
 
 const server = createServer();
 server.add(WalletManagerGRPCServiceDefinition, walletManagerGRPCService);
-server.listen(fileConfig.grpc.listeningAddress + ':' + fileConfig.grpc.listeningPort);
+server.listen(fileConfig.grpcServer.listeningAddress + ':' + fileConfig.grpcServer.listeningPort);
 
 // FIXME: This only handles the signal sent by docker. It does not handle keyboard interrupts.
 process.on('SIGTERM', function () {
