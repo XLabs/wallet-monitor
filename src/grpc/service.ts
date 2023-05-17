@@ -15,8 +15,7 @@ const haSchema = z.object({
 // FIXME: Yeet all code related to importing config/options in favor of a schema validation library
 //  (and check that the validation transpiles to js as well so we can basically forget about it everywhere).
 function readConfig() {
-  // const filePath = '/etc/wallet-manager/config.json'
-  const filePath = './examples-d/config.json'
+  const filePath = '/etc/wallet-manager/config.json'
   const fileData = fs.readFileSync(filePath, 'utf-8')
   const parsedData = JSON.parse(fileData)
 
