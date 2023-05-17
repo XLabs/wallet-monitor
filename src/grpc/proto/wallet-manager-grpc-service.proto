@@ -10,6 +10,7 @@ service WalletManagerGRPCService {
 message AcquireLockRequest {
   string chain_name = 1;
   optional string address = 2;
+  // FIXME: We are missing waitToAcquireTimeout.
   optional uint64 lease_timeout = 3;
 }
 message AcquireLockResponse {

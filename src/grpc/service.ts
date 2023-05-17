@@ -1,15 +1,9 @@
 import { z } from 'zod';
-
-const {
-  AcquireLockResponse,
-  Empty
-} = require('./out/wallet-manager_pb');
-
-const { WalletManagerService } = require('./out/wallet-manager_grpc_pb');
-import {WalletManager, WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../wallet-manager";
-import {IServiceWalletManager} from "../i-wallet-manager";
-const { Server, ServerCredentials } = require('@grpc/grpc-js');
-const fs = require("fs");
+import {WalletManagerGRPCService} from "./service-impl";
+import {createServer} from "nice-grpc";
+import {WalletManagerGRPCServiceDefinition} from "./out/wallet-manager-grpc-service";
+import * as fs from "fs";
+import {WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../wallet-manager";
 
 const haSchema = z.object({
   listeningAddress: z.string().default('0.0.0.0'),
@@ -21,7 +15,8 @@ const haSchema = z.object({
 // FIXME: Yeet all code related to importing config/options in favor of a schema validation library
 //  (and check that the validation transpiles to js as well so we can basically forget about it everywhere).
 function readConfig() {
-  const filePath = '/etc/wallet-manager/config.json'
+  // const filePath = '/etc/wallet-manager/config.json'
+  const filePath = './examples-d/config.json'
   const fileData = fs.readFileSync(filePath, 'utf-8')
   const parsedData = JSON.parse(fileData)
 
@@ -36,49 +31,11 @@ function readConfig() {
 
 const fileConfig = readConfig();
 
-const walletManager = new WalletManager(fileConfig.config, fileConfig.options)
+const walletManagerGRPCService = new WalletManagerGRPCService(fileConfig.config, fileConfig.options);
 
-async function acquireLock(call: any, callback: any) {
-  const chainName = call.request.getChainName()
-  const address = call.request.hasAddress() ? call.request.getAddress() : undefined
-  const leaseTimeout = call.request.hasLeaseTimeout() ? call.request.getLeaseTimeout() : undefined
-  const acquiredWallet = await walletManager.acquireLock(chainName, {address, leaseTimeout})
-
-  const reply = new AcquireLockResponse()
-  reply.setAddress(acquiredWallet.address)
-
-  callback(null, reply)
-}
-
-async function releaseLock(call: any, callback: any) {
-  const [chainName, address] = [call.request.getChainName(), call.request.getAddress()]
-
-  await walletManager.releaseLock(chainName, address)
-
-  const reply = new Empty()
-
-  callback(null, reply)
-}
-
-function run_wallet_manager_grpc_service() {
-  const server = new Server();
-  server.addService(
-      WalletManagerService,
-      {
-        acquireLock,
-        releaseLock,
-      });
-  // FIXME: Get this host and port from config/env vars
-  server.bindAsync(
-      fileConfig.grpc.listeningAddress + ':' + fileConfig.grpc.listeningPort,
-      ServerCredentials.createInsecure(), () => {
-        server.start();
-      });
-
-  return server
-}
-
-const server = run_wallet_manager_grpc_service()
+const server = createServer();
+server.add(WalletManagerGRPCServiceDefinition, walletManagerGRPCService);
+server.listen(fileConfig.grpc.listeningAddress + ':' + fileConfig.grpc.listeningPort);
 
 // FIXME: This only handles the signal sent by docker. It does not handle keyboard interrupts.
 process.on('SIGTERM', function () {
@@ -88,17 +45,15 @@ process.on('SIGTERM', function () {
   // Therefore, it is correct if those function execute simultaneously.
   setTimeout(function () {
     server.forceShutdown()
-    console.log('Shutting down timed out (5 seconds).')
+    console.log('Shutting down timed out (5 seconds). Forcing shutdown.')
     process.exit(1)
   }, 5_000)
 
-  server.tryShutdown((error?: any) => {
-    if (error) {
-      console.log("Graceful shutdown was unsuccessful: ", error);
-      process.exit(1);
-    } else {
-      console.log('Done shutting down.');
-      process.exit();
-    }
+  server.shutdown().then(() => {
+    console.log('Done shutting down gracefully.');
+    process.exit();
+  }).catch((error) => {
+    console.log("Graceful shutdown was unsuccessful: ", error);
+    process.exit(1);
   });
 })
