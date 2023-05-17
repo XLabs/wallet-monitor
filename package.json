@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build-grpc": "npx grpc_tools_node_protoc --proto_path=./src/grpc/proto/ --js_out=import_style=commonjs,binary:./src/grpc/out/ --grpc_out=grpc_js:./src/grpc/out/ ./src/grpc/proto/wallet-manager.proto",
+    "build-grpc": "grpc_tools_node_protoc --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./src/grpc/out/ --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false,esModuleInterop=true --proto_path=./src/grpc/proto/ src/grpc/proto/wallet-manager-grpc-service.proto",
     "build": "tsc",
     "watch": "tsc -w",
     "build-docker-image": "docker build . -t giorgioxlabs/wallet-manager:latest",
@@ -40,7 +40,6 @@
   },
   "homepage": "https://github.com/xlabs/wallet-monitor#readme",
   "dependencies": {
-    "@grpc/grpc-js": "^1.8.14",
     "@mysten/sui.js": "^0.32.2",
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.74.0",
@@ -50,8 +49,10 @@
     "google-protobuf": "^3.21.2",
     "koa": "^2.14.1",
     "koa-router": "^12.0.0",
+    "nice-grpc": "^2.1.4",
     "prom-client": "^14.2.0",
     "ts-node": "^10.9.1",
+    "ts-proto": "^1.147.3",
     "winston": "^3.8.2",
     "zod": "^3.21.4"
   },

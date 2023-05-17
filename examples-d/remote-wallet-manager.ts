@@ -4,10 +4,7 @@ import {z} from "zod";
 import {WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../src/wallet-manager";
 import {ClientWalletManager} from "../src";
 
-// FIXME: Remove this duplications
-const haSchema = z.object({
-  listeningAddress: z.string().default('0.0.0.0'),
-  listeningPort: z.number().default(50051),
+const grpcClientSchema = z.object({
   connectingAddress: z.string(),
   connectingPort: z.number().default(50051),
 })
@@ -21,7 +18,7 @@ function readConfig() {
   const schema = z.object({
     config: WalletManagerConfigSchema,
     options: WalletManagerOptionsSchema.optional(),
-    grpc: haSchema
+    grpcClient: grpcClientSchema
   })
 
   return schema.parse(parsedData)
@@ -30,8 +27,8 @@ function readConfig() {
 const fileConfig = readConfig()
 
 const manager = new ClientWalletManager(
-    fileConfig.grpc.connectingAddress,
-    fileConfig.grpc.connectingPort,
+    fileConfig.grpcClient.connectingAddress,
+    fileConfig.grpcClient.connectingPort,
     fileConfig.config,
     fileConfig.options
 )
