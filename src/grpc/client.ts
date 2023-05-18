@@ -16,7 +16,7 @@ export class ClientWalletManager implements IClientWalletManager {
 
     protected logger: winston.Logger;
 
-    constructor(private host: string, private port: number, rawConfig: WalletManagerConfig, options?: WalletManagerOptions) {
+    constructor(private host: string, private port: number, config: WalletManagerConfig, options?: WalletManagerOptions) {
         this.logger = createLogger(options?.logger, options?.logLevel, { label: 'WalletManager' });
         this.managers = {} as Record<ChainName, ChainWalletManager>;
 
@@ -25,19 +25,19 @@ export class ClientWalletManager implements IClientWalletManager {
 
         // Constructing a record of manager for the only purpose of extracting the appropriate provider and private key
         //  to bundle together with the lock acquired from the grpc service.
-        for (const [chainName, config] of Object.entries(rawConfig)) {
+        for (const [chainName, chainConfig] of Object.entries(config)) {
             if (!isChain(chainName)) throw new Error(`Invalid chain name: ${chainName}`);
-            const network = config.network || getDefaultNetwork(chainName);
+            const network = chainConfig.network || getDefaultNetwork(chainName);
 
             const chainManagerConfig = {
                 network,
                 chainName,
                 logger: this.logger,
-                rebalance: {...config.rebalance, enabled: false},
-                walletOptions: config.chainConfig,
+                rebalance: {...chainConfig.rebalance, enabled: false},
+                walletOptions: chainConfig.chainConfig,
             };
 
-            this.managers[chainName] = new ChainWalletManager(chainManagerConfig, config.wallets);
+            this.managers[chainName] = new ChainWalletManager(chainManagerConfig, chainConfig.wallets);
         }
     }
 

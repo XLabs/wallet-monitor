@@ -36,8 +36,7 @@
       "port": 9091
     }
   },
-  "grpcServer": {},
-  "grpcClient": {
-    "connectingAddress": "localhost"
+  "grpc": {
+    "connectAddress": "localhost"
   }
 }

@@ -1,37 +1,18 @@
 import * as fs from 'fs';
 import { WalletInterface } from "wallet-monitor";
-import {z} from "zod";
-import {WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../src/wallet-manager";
-import {ClientWalletManager} from "../src";
-
-const grpcClientSchema = z.object({
-  connectingAddress: z.string(),
-  connectingPort: z.number().default(50051),
-})
+import {buildWalletManager} from "../src";
 
 // FIXME: Bit of code duplication going on here. We should probably have a single place where we read the config.
 function readConfig() {
   const filePath = './config.json'
   const fileData = fs.readFileSync(filePath, 'utf-8')
-  const parsedData = JSON.parse(fileData)
 
-  const schema = z.object({
-    config: WalletManagerConfigSchema,
-    options: WalletManagerOptionsSchema.optional(),
-    grpcClient: grpcClientSchema
-  })
-
-  return schema.parse(parsedData)
+  return JSON.parse(fileData)
 }
 
 const fileConfig = readConfig()
 
-const manager = new ClientWalletManager(
-    fileConfig.grpcClient.connectingAddress,
-    fileConfig.grpcClient.connectingPort,
-    fileConfig.config,
-    fileConfig.options
-)
+const walletManager = buildWalletManager(fileConfig)
 
 // perform an action with any wallet available in the pool:
 const doSomethingWithWallet = async (wallet: WalletInterface) => {
@@ -44,14 +25,14 @@ const doSomethingWithWallet = async (wallet: WalletInterface) => {
 };
 
 // perform an action with any wallet available in the pool:
-manager.withWallet('ethereum', doSomethingWithWallet);
+walletManager.withWallet('ethereum', doSomethingWithWallet);
 
 // perform an action with one particular wallet:
-manager.withWallet('ethereum', doSomethingWithWallet, {
+walletManager.withWallet('ethereum', doSomethingWithWallet, {
   // address: '0x80C67432656d59144cEFf962E8fAF8926599bCF8',
 });
 
 // configure the timeout for acquiring the wallet to use:
-manager.withWallet('solana', doSomethingWithWallet, {
+walletManager.withWallet('solana', doSomethingWithWallet, {
   leaseTimeout: 10_000,
 });

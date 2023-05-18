@@ -1,6 +1,10 @@
 import { map } from 'bluebird';
 import winston from 'winston';
-import {WalletManager, WalletManagerConfig, WalletManagerOptions} from "./wallet-manager";
+import {
+  WalletManager, WalletManagerFullConfigSchema
+} from "./wallet-manager";
+import {ClientWalletManager} from "./grpc/client";
+import {IClientWalletManager, ILibraryWalletManager} from "./i-wallet-manager";
 
 export function mapConcurrent<T>(iterable: T[], mapper: (x: T, i: number, s: number) => any, concurrency = 1): Promise<any[]> {
   return map(iterable, mapper, { concurrency });
@@ -45,11 +49,12 @@ export function createLogger(logger?: winston.Logger, logLevel?: string, meta?: 
 
 // This function will return the same object with the minimal set of methods required to work for the
 //  requested context.
-// TODO:
-//  - Add the grpc configs to the schema that is read from the file/env
-//  - Add in that schema listening port and host for the grpc server
-//  - Add in the schema the host and port for the grpc client
-//  - This next function should then be able to read the config and return the correct object
-export function buildWalletManager(config: WalletManagerConfig, options?: WalletManagerOptions) {
-  return new WalletManager(config, options)
+export function buildWalletManager(rawWMFullConfig: any): IClientWalletManager | ILibraryWalletManager {
+  const { config, options, grpc } = WalletManagerFullConfigSchema.parse(rawWMFullConfig)
+
+  if (grpc) {
+    return new ClientWalletManager(grpc.connectAddress, grpc.connectPort, config, options) as IClientWalletManager
+  } else {
+    return new WalletManager(config, options) as ILibraryWalletManager
+  }
 }

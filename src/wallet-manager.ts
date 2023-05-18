@@ -2,7 +2,6 @@ import { EventEmitter } from 'stream';
 
 import { z } from 'zod';
 import winston from 'winston';
-import { Registry } from 'prom-client';
 import { createLogger } from './utils';
 import { PrometheusExporter } from './prometheus-exporter';
 import { ChainWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./chain-wallet-manager";
@@ -48,6 +47,19 @@ export const WalletManagerOptionsSchema = z.object({
   }).optional(),
 });
 export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
+
+export const WalletManagerGRPCConfigSchema = z.object({
+  listenAddress: z.string().default('0.0.0.0'),
+  listenPort: z.number().default(50051),
+  connectAddress: z.string(),
+  connectPort: z.number().default(50051),
+});
+
+export const WalletManagerFullConfigSchema = z.object({
+  config: WalletManagerConfigSchema,
+  options: WalletManagerOptionsSchema.optional(),
+  grpc: WalletManagerGRPCConfigSchema.optional(),
+})
 
 
 export function getDefaultNetwork(chainName: ChainName) {

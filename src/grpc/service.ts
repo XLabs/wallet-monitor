@@ -3,15 +3,16 @@ import {WalletManagerGRPCService} from "./service-impl";
 import {createServer} from "nice-grpc";
 import {WalletManagerGRPCServiceDefinition} from "./out/wallet-manager-grpc-service";
 import * as fs from "fs";
-import {WalletManager, WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../wallet-manager";
+import {
+  WalletManager, WalletManagerConfigSchema,
+  WalletManagerGRPCConfigSchema, WalletManagerOptionsSchema,
+} from "../wallet-manager";
 
 const grpcServerSchema = z.object({
   listeningAddress: z.string().default('0.0.0.0'),
   listeningPort: z.number().default(50051),
 })
 
-// FIXME: Yeet all code related to importing config/options in favor of a schema validation library
-//  (and check that the validation transpiles to js as well so we can basically forget about it everywhere).
 function readConfig() {
   const filePath = '/etc/wallet-manager/config.json'
   const fileData = fs.readFileSync(filePath, 'utf-8')
@@ -20,7 +21,7 @@ function readConfig() {
   const schema = z.object({
     config: WalletManagerConfigSchema,
     options: WalletManagerOptionsSchema.optional(),
-    grpcServer: grpcServerSchema
+    grpc: WalletManagerGRPCConfigSchema
   })
 
   return schema.parse(parsedData)
@@ -34,7 +35,7 @@ const walletManagerGRPCService = new WalletManagerGRPCService(walletManager);
 
 const server = createServer();
 server.add(WalletManagerGRPCServiceDefinition, walletManagerGRPCService);
-server.listen(fileConfig.grpcServer.listeningAddress + ':' + fileConfig.grpcServer.listeningPort);
+server.listen(fileConfig.grpc.listenAddress + ':' + fileConfig.grpc.listenPort);
 
 // FIXME: This only handles the signal sent by docker. It does not handle keyboard interrupts.
 process.on('SIGTERM', function () {
