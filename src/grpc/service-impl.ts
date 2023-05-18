@@ -5,15 +5,11 @@ import {
 } from "./out/wallet-manager-grpc-service";
 import {CallContext} from "nice-grpc-common";
 import {DeepPartial, Empty} from "./out/google/protobuf/empty";
-import {WalletManager, WalletManagerConfig, WalletManagerOptions} from "../wallet-manager";
 import {ChainName} from "../wallets";
+import {IServiceWalletManager} from "../i-wallet-manager";
 
 export class WalletManagerGRPCService implements WalletManagerGRPCServiceImplementation {
-    private underlyingWalletManager;
-
-    constructor(config: WalletManagerConfig, options?: WalletManagerOptions) {
-        this.underlyingWalletManager = new WalletManager(config, options);
-    }
+    constructor(private underlyingWalletManager: IServiceWalletManager) {}
 
     async acquireLock(request: AcquireLockRequest, context: CallContext): Promise<DeepPartial<AcquireLockResponse>> {
         const acquiredWallet = await this.underlyingWalletManager.acquireLock(request.chainName as ChainName, {address: request.address, leaseTimeout: request.leaseTimeout})

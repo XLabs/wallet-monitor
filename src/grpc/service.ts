@@ -3,7 +3,7 @@ import {WalletManagerGRPCService} from "./service-impl";
 import {createServer} from "nice-grpc";
 import {WalletManagerGRPCServiceDefinition} from "./out/wallet-manager-grpc-service";
 import * as fs from "fs";
-import {WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../wallet-manager";
+import {WalletManager, WalletManagerConfigSchema, WalletManagerOptionsSchema} from "../wallet-manager";
 
 const grpcServerSchema = z.object({
   listeningAddress: z.string().default('0.0.0.0'),
@@ -28,7 +28,9 @@ function readConfig() {
 
 const fileConfig = readConfig();
 
-const walletManagerGRPCService = new WalletManagerGRPCService(fileConfig.config, fileConfig.options);
+const walletManager = new WalletManager(fileConfig.config, fileConfig.options)
+
+const walletManagerGRPCService = new WalletManagerGRPCService(walletManager);
 
 const server = createServer();
 server.add(WalletManagerGRPCServiceDefinition, walletManagerGRPCService);
