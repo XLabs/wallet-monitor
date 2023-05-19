@@ -65,5 +65,4 @@ const allChainWallets: WalletManagerConfig = {
 }
 
 
-// export const manager: ILocalWalletManager = new WalletManager(allChainWallets, options);
-export const manager = buildWalletManager('library', allChainWallets, options)
+export const manager = buildWalletManager({config: allChainWallets, options})

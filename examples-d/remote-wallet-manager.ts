@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import { WalletInterface } from "wallet-monitor";
 import {buildWalletManager} from "../src";
 
-// FIXME: Bit of code duplication going on here. We should probably have a single place where we read the config.
 function readConfig() {
   const filePath = './config.json'
   const fileData = fs.readFileSync(filePath, 'utf-8')

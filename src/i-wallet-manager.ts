@@ -1,7 +1,6 @@
-import {WalletBalancesByAddress, WalletExecuteOptions, WithWalletExecutor} from "./chain-wallet-manager";
+import {WalletExecuteOptions, WithWalletExecutor} from "./chain-wallet-manager";
 import {ChainName} from "./wallets";
 import {WalletInterface} from "./wallets/base-wallet";
-import {Registry} from "prom-client";
 
 /*
  This file defines interfaces to be used as a mask for the WalletManager class.

@@ -1,7 +1,5 @@
 
 export type { ILibraryWalletManager, IServiceWalletManager, IClientWalletManager } from './i-wallet-manager'
-export { WalletManager } from './wallet-manager';
-export { ClientWalletManager } from './grpc/client'
 export { buildWalletManager } from './utils'
 
 import { EVM_CHAIN_CONFIGS  } from './wallets/evm';
