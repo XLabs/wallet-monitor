@@ -7,11 +7,7 @@ import {
   WalletManager, WalletManagerConfigSchema,
   WalletManagerGRPCConfigSchema, WalletManagerOptionsSchema,
 } from "../wallet-manager";
-
-const grpcServerSchema = z.object({
-  listeningAddress: z.string().default('0.0.0.0'),
-  listeningPort: z.number().default(50051),
-})
+import {lockStatusDB} from "./kvdb";
 
 function readConfig() {
   const filePath = '/etc/wallet-manager/config.json'
@@ -31,7 +27,7 @@ const fileConfig = readConfig();
 
 const walletManager = new WalletManager(fileConfig.config, fileConfig.options)
 
-const walletManagerGRPCService = new WalletManagerGRPCService(walletManager);
+const walletManagerGRPCService = new WalletManagerGRPCService(walletManager, lockStatusDB);
 
 const server = createServer();
 server.add(WalletManagerGRPCServiceDefinition, walletManagerGRPCService);
