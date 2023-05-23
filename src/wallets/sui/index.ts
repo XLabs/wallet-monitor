@@ -44,6 +44,9 @@ export type SuiDefaultConfigs = Record<string, SuiDefaultConfig>;
 
 export type SuiChainName = keyof typeof SUI_CHAINS;
 
+// TODO: See other token types
+const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::coin::COIN$/;
+
 export class SuiWalletToolbox extends WalletToolbox {
   provider: Connection;
   private chainConfig: SuiChainConfig;
@@ -99,11 +102,13 @@ export class SuiWalletToolbox extends WalletToolbox {
         `Invalid config for chain: ${this.chainName}: Invalid token`
       );
 
-    if (token.toUpperCase() in chainConfig.knownTokens[this.network])
+    if (
+      !SUI_HEX_ADDRESS_REGEX.test(token)
+      && token.toUpperCase() in chainConfig.knownTokens[this.network]
+    )
       return true;
 
-    // TODO: find a way to validate the hex string:
-    return true;
+    return false;
   }
 
   public parseTokensConfig(tokens: WalletConfig["tokens"]): string[] {

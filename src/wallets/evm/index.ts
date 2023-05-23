@@ -129,7 +129,7 @@ export class EvmWalletToolbox extends WalletToolbox {
       throw new Error(`Invalid token config for chain: ${this.chainName}: Invalid token "${token}"`);
     }    
 
-    return true;
+    return false;
   }
 
   public parseTokensConfig(tokens: string[]): string[] {
