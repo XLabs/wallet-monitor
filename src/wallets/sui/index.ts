@@ -103,7 +103,7 @@ export class SuiWalletToolbox extends WalletToolbox {
       return true;
 
     // TODO: find a way to validate the hex string:
-    return false;
+    return true;
   }
 
   public parseTokensConfig(tokens: WalletConfig["tokens"]): string[] {
