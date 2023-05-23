@@ -94,33 +94,19 @@ export class SuiWalletToolbox extends WalletToolbox {
     return true;
   }
 
-  validateTokenAddress(token: any): boolean {
-    const chainConfig = SUI_CHAIN_CONFIGS[this.chainName];
+  validateTokenAddress(token: string): boolean {
+    const knownTokens = SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
 
-    if (typeof token !== "string")
-      throw new Error(
-        `Invalid config for chain: ${this.chainName}: Invalid token`
-      );
-
-    if (
-      !SUI_HEX_ADDRESS_REGEX.test(token)
-      && token.toUpperCase() in chainConfig.knownTokens[this.network]
-    )
-      return true;
-
-    return false;
+    return SUI_HEX_ADDRESS_REGEX.test(token)
+    || token.toUpperCase() in knownTokens;
   }
 
-  public parseTokensConfig(tokens: WalletConfig["tokens"]): string[] {
-    const knownTokens =
-      SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
-    return tokens
-      ? tokens.map((token) => {
-          if (token.toUpperCase() in knownTokens) {
-            return knownTokens[token.toUpperCase()];
-          } else return token;
-        })
-      : [];
+  public parseTokensConfig(tokens: string[]): string[] {
+    const knownTokens = SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
+
+    return tokens.map((token) => {
+      return knownTokens[token.toUpperCase()] ?? token;
+    });
   }
 
   public async warmup() {
