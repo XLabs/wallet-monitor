@@ -48,7 +48,6 @@ export abstract class WalletToolbox {
 
   abstract validateOptions(options: any): boolean;
 
-  // throw an error if the token is invalid
   abstract validateTokenAddress(token: string): boolean;
 
   // Should parse tokens received from the user.
