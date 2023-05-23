@@ -153,34 +153,39 @@ export class SuiWalletToolbox extends WalletToolbox {
   ): Promise<TokenBalance[]> {
     const uniqueTokens = [...new Set(tokens)];
     const allBalances = await pullSuiTokenBalances(this.provider, address);
-    return allBalances.reduce(
-      (
-        selectedBalances: TokenBalance[],
-        balance: { coinType: string; totalBalance: string }
-      ) => {
-        if (
-          uniqueTokens.includes(balance.coinType) &&
-          balance.coinType !== SUI_NATIVE_COIN_MODULE
-        ) {
-          const tokenData = this.tokenData[balance.coinType];
+
+    return uniqueTokens.map((tokenAddress: string) => {
+      const tokenData = this.tokenData[tokenAddress];
+      const symbol: string = tokenData?.symbol ? tokenData.symbol : "";
+
+      for (const balance of allBalances) {
+        if (balance.coinType === tokenAddress) {
+
           const formattedBalance = formatFixed(
               balance.totalBalance,
               tokenData?.decimals ? tokenData.decimals : 9
           );
-          const symbol: string = tokenData?.symbol ? tokenData.symbol : "";
-          selectedBalances.push({
-            tokenAddress: balance.coinType,
+
+          return {
+            tokenAddress,
             address,
             isNative: false,
             rawBalance: balance.totalBalance,
             formattedBalance,
             symbol,
-          });
+          };
         }
-        return selectedBalances;
-      },
-      []
-    );
+      }
+
+      return {
+        tokenAddress,
+        address,
+        isNative: false,
+        rawBalance: "0",
+        formattedBalance: "0",
+        symbol,
+      }
+    });
   }
 
   public async transferNativeBalance(
