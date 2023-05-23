@@ -44,6 +44,7 @@ export type SuiDefaultConfigs = Record<string, SuiDefaultConfig>;
 
 export type SuiChainName = keyof typeof SUI_CHAINS;
 
+// TODO: See other token types
 const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::coin::COIN$/;
 
 export class SuiWalletToolbox extends WalletToolbox {
