@@ -46,6 +46,7 @@ export const SUI_KNOWN_TOKENS = {
     "WGLMR": "0x66f87084e49c38f76502d17f87d17f943f183bb94117561eb573e075fdc5ff75::coin::COIN",
     "SUI": "0x2::sui::SUI",
   },
+  [SUI_TESTNET]: {},
 };
 export const SUI_CHAIN_CONFIG = {
   chainName: SUI,
