@@ -102,12 +102,11 @@ export class SuiWalletToolbox extends WalletToolbox {
       );
 
     if (
-      !SUI_HEX_ADDRESS_REGEX.test(token) 
+      !SUI_HEX_ADDRESS_REGEX.test(token)
       && token.toUpperCase() in chainConfig.knownTokens[this.network]
     )
       return true;
 
-    // TODO: find a way to validate the hex string:
     return false;
   }
 
