@@ -48,7 +48,6 @@ export abstract class WalletToolbox {
 
   abstract validateOptions(options: any): boolean;
 
-  // throw an error if the token is invalid
   abstract validateTokenAddress(token: string): boolean;
 
   // Should parse tokens received from the user.
@@ -86,6 +85,7 @@ export abstract class WalletToolbox {
     
     for (const raw of rawConfig) {
       const config = this.buildWalletConfig(raw);
+      this.validateConfig(config);
       wallets[config.address] = config;
     }
 
@@ -192,7 +192,9 @@ export abstract class WalletToolbox {
 
     if (rawConfig.tokens?.length) {
       rawConfig.tokens.forEach((token: any) => {
-        this.validateTokenAddress(token);
+        if (!this.validateTokenAddress(token)) {
+          throw new Error(`Token not supported for ${this.chainName}[${this.network}]: ${token}`)
+        }
       });
     }
 
