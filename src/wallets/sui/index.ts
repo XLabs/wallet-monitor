@@ -44,6 +44,9 @@ export type SuiDefaultConfigs = Record<string, SuiDefaultConfig>;
 
 export type SuiChainName = keyof typeof SUI_CHAINS;
 
+// TODO: See other token types
+const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::coin::COIN$/;
+
 export class SuiWalletToolbox extends WalletToolbox {
   provider: Connection;
   private chainConfig: SuiChainConfig;
@@ -91,31 +94,19 @@ export class SuiWalletToolbox extends WalletToolbox {
     return true;
   }
 
-  validateTokenAddress(token: any): boolean {
-    const chainConfig = SUI_CHAIN_CONFIGS[this.chainName];
+  validateTokenAddress(token: string): boolean {
+    const knownTokens = SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
 
-    if (typeof token !== "string")
-      throw new Error(
-        `Invalid config for chain: ${this.chainName}: Invalid token`
-      );
-
-    if (token.toUpperCase() in chainConfig.knownTokens[this.network])
-      return true;
-
-    // TODO: find a way to validate the hex string:
-    return true;
+    return SUI_HEX_ADDRESS_REGEX.test(token)
+    || token.toUpperCase() in knownTokens;
   }
 
-  public parseTokensConfig(tokens: WalletConfig["tokens"]): string[] {
-    const knownTokens =
-      SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
-    return tokens
-      ? tokens.map((token) => {
-          if (token.toUpperCase() in knownTokens) {
-            return knownTokens[token.toUpperCase()];
-          } else return token;
-        })
-      : [];
+  public parseTokensConfig(tokens: string[]): string[] {
+    const knownTokens = SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
+
+    return tokens.map((token) => {
+      return knownTokens[token.toUpperCase()] ?? token;
+    });
   }
 
   public async warmup() {
@@ -153,34 +144,39 @@ export class SuiWalletToolbox extends WalletToolbox {
   ): Promise<TokenBalance[]> {
     const uniqueTokens = [...new Set(tokens)];
     const allBalances = await pullSuiTokenBalances(this.provider, address);
-    return allBalances.reduce(
-      (
-        selectedBalances: TokenBalance[],
-        balance: { coinType: string; totalBalance: string }
-      ) => {
-        if (
-          uniqueTokens.includes(balance.coinType) &&
-          balance.coinType !== SUI_NATIVE_COIN_MODULE
-        ) {
-          const tokenData = this.tokenData[balance.coinType];
+
+    return uniqueTokens.map((tokenAddress: string) => {
+      const tokenData = this.tokenData[tokenAddress];
+      const symbol: string = tokenData?.symbol ? tokenData.symbol : "";
+
+      for (const balance of allBalances) {
+        if (balance.coinType === tokenAddress) {
+
           const formattedBalance = formatFixed(
               balance.totalBalance,
               tokenData?.decimals ? tokenData.decimals : 9
           );
-          const symbol: string = tokenData?.symbol ? tokenData.symbol : "";
-          selectedBalances.push({
-            tokenAddress: balance.coinType,
+
+          return {
+            tokenAddress,
             address,
             isNative: false,
             rawBalance: balance.totalBalance,
             formattedBalance,
             symbol,
-          });
+          };
         }
-        return selectedBalances;
-      },
-      []
-    );
+      }
+
+      return {
+        tokenAddress,
+        address,
+        isNative: false,
+        rawBalance: "0",
+        formattedBalance: "0",
+        symbol,
+      }
+    });
   }
 
   public async transferNativeBalance(

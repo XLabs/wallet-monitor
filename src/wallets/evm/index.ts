@@ -117,28 +117,19 @@ export class EvmWalletToolbox extends WalletToolbox {
     return true;
   }
 
-  public validateTokenAddress(token: any) {
-    const chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
+  public validateTokenAddress(token: string): boolean {
+    const knownTokens = EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
 
-    if (typeof token !== 'string')
-      throw new Error(`Invalid config for chain: ${this.chainName}: Invalid token`);
-    if (
-      !EVM_HEX_ADDRESS_REGEX.test(token) &&
-      !(token.toUpperCase() in chainConfig.knownTokens[this.network])
-    ) {
-      throw new Error(`Invalid token config for chain: ${this.chainName}: Invalid token "${token}"`);
-    }    
-
-    return true;
+    return EVM_HEX_ADDRESS_REGEX.test(token)
+    || token.toUpperCase() in knownTokens;
   }
 
   public parseTokensConfig(tokens: string[]): string[] {
-    return tokens ? tokens.map((token) => {
-      if (EVM_HEX_ADDRESS_REGEX.test(token)) {
-        return token;
-      }
-      return EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network][token.toUpperCase()];
-    }) : [];
+    const knownTokens = EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
+
+    return tokens.map((token) => {
+      return knownTokens[token.toUpperCase()] ?? token;
+    });
   }
 
   public async warmup() {
