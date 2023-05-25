@@ -2,7 +2,7 @@ version: "3"
 
 services:
   wallet-manager:
-    image: giorgioxlabs/wallet-manager:latest
+    image: wallet-manager:latest
     container_name: wallet-manager-d
     ports:
       - "50051:50051"

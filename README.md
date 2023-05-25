@@ -1,179 +1,95 @@
+# Wallet Monitor
+This is a npm package that allows you to monitor the balance of multiple wallets in multiple blockchains.
+Along monitoring, it can also export the balances as prometheus metrics and perform rebalancing strategies between your wallets.  
+It can be used as a package within a nodejs application (*library modality*) or as a gRPC service (*service modality*).
+
+## Table of Contents
+* [TL;DR](#tldr)
+* [Contributions](#contributions)
+* [WalletManager](#walletmanager)
+* [ChainWalletManager](#chainwalletmanager)
+* [WalletToolbox](#wallettoolbox)
+* [Supported Tokens](#supported-tokens)
+* [gRPC service](src/grpc/README.md)
 
 ## TL;DR
+`WalletManager` exposes a few utilities to monitor the balance of a wallet in a blockchain. Optionally, you can also monitor the balance of tokens for the wallet.  
+The module requires near zero configuration by defaulting most required values to what would be reasonable, but it can be configured more granularly if needed.  
+`WalletManager` uses underneath multiple `ChainWalletManager` objects, one for each blockchain you want to monitor.  
+`ChainWalletManager` in turn uses a `WalletToolbox` object to perform the actual monitoring of the wallet.  
+These objects are composed rather than inherited and this means that they will have, in general, different interfaces, but it is always possible to use them independently.  
+**Check out the [example](examples/wallet-manager.ts).**
 
-Wallet Monitor exposes a few utilities to monitor the balance of N wallets in M blockchains. Optionally, you can also monitor the balance of tokens for the wallets.
+## Contributions
+Any feature request for this project is welcomed and will be considered for implementation.  
+The more detail you can provide about your use case, the better.
 
-The module requires near 0 configuration by defaulting most required values to what would be reasonable, but it can be configured more granularly if needed.
+## WalletManager
+This is the main object of the package. It is responsible for efficiently dispatching your configuration to the right `ChainWalletManager` objects and for aggregating the results.
+It can do locking of each wallet and will also take care of exporting balances, metrics and errors if you want it to.  
+In general, it is a useful class to treat a collection of `ChainWalletManager` objects as a single object.
 
-The main Modules of the package are:
-- `MultiWalletMonitor`: Polls the balances of configured wallets and allows you to react to them using events
-- `MultiWalletExporter`: A thin wrapper around the monitor, that automatically updates prometheus metrics with the wallet balances for easy integration with prometheus.
+It's useful to explain the properties and features of this class by looking at the configuration and options that are passed to the constructor (using [zod](https://github.com/colinhacks/zod)).
+### WalletManagerConfig
+```typescript
+export const WalletManagerChainConfigSchema = z.object({
+  network: z.string().optional(),
+  chainConfig: z.any().optional(),
+  rebalance: z.object({
+    enabled: z.boolean(),
+    strategy: z.string().optional(),
+    interval: z.number().optional(),
+    minBalanceThreshold: z.number().optional(),
+    maxGasPrice: z.number().optional(),
+    gasLimit: z.number().optional(),
+  }).optional(),
+  wallets: z.array(WalletConfigSchema),
+})
 
+export const WalletManagerConfigSchema = z.record(z.string(), WalletManagerChainConfigSchema)
+```
+In short, each record keys is the name of a chain. The value within that record is a network name, an optional rebalancing strategy and a collection of wallets.  
+**Also, check out the [rebalancing example](examples/rebalancing.ts).**
 
-## Multi Wallet Monitor Basic Usage:
-```javascript
-import { MultiWalletWatcher } from 'wallet-monitor';
-
-const wallets = {
-  ethereum: {
-    addresses: {
-      "0x80C67432656d59144cEFf962E8fAF8926599bCF8": ["USDC", "DAI"],
-    },
-  },
-};
-
-const monitor = new MultiWalletWatcher(wallets);
-
-monitor.on('balances', (chainName, network, allBalances, lastBalance) => {
-  // do what you want with your balances.
+### WalletManagerOptions
+```typescript
+export const WalletManagerOptionsSchema = z.object({
+  logger: z.any().optional(),
+  logLevel: z.union([
+      z.literal('error'),
+      z.literal('warn'),
+      z.literal('info'),
+      z.literal('debug'),
+      z.literal('verbose'),
+      z.literal('silent'),
+  ]).optional(),
+  balancePollInterval: z.number().optional(),
+  metrics: z.object({
+    enabled: z.boolean(),
+    port: z.number().optional(),
+    path: z.string().optional(),
+    registry: z.any().optional(),
+    serve: z.boolean().optional(),
+  }).optional(),
 });
-
-
-monitor.on('error', (error) => {
-  // Handle error as desired
-});
-
-monitor.getBalances() // returns current balances for wallets and chains
-
 ```
-## Multi Wallet Exporter Basic Usage:
+The options applied to all blockchains and wallets monitored specify logging and if/where to expose prometheus metrics.
 
-```javascript
-import { MultiWalletExporter } from 'wallet-monitor';
+There are cases where `WalletManager` needs to be used with all its functionality but the application code does not need
+to interact with the monitoring or rebalancing.
+In such cases, you can use `buildWalletManager` convenience function which will return a `WalletManager` masked by the correct interface
+that will only allow you to interact with the locking mechanisms of the wallets.
 
-const wallets = {
-  ethereum: {
-    addresses: {
-      "0x80C67432656d59144cEFf962E8fAF8926599bCF8": ["USDC", "DAI"],
-    },
-  },
-};
+## ChainWalletManager
+This class knows how to use a `WalletToolbox` to perform chain-specific monitoring and transactional operations.  
+The interface is mostly similar to `WalletManager` but it is pending to be refactored to be more consistent.
 
-const exporter = new MultiWalletExporter(wallets);
+## WalletToolbox
+A `WalletToolbox` handles the communication with the blockchain and is responsible for knowing reasonable defaults
+for the blockchain endpoints, networks, token IDs, which sdk to use and how to handle sdk results.
 
-
-exporter.startMetricsServer(); // Starts a prometheus server with the resulting metrics
-
-// Listening to events and getting balances are available just as in MultiWalletWatcher
-exporter.on('balances', () => {}) 
-exporter.getBalances();
-```
-
-### Integrating with an existing prometheus server:
-If you already have a server running and don't want to start a new prometheus server, you can get the prometheus registry or the registry metrics from the exporter instance. If you don't call `startMetricsServer`, you will need to call `exporter.start()` in order to start polling for the wallet balances.
-Example code:
-```
-```javascript
-import { MultiWalletExporter } from 'wallet-monitor';
-
-const wallets = {
-  ethereum: {
-    addresses: {
-      "0x80C67432656d59144cEFf962E8fAF8926599bCF8": ["USDC", "DAI"],
-    },
-  },
-};
-
-const exporter = new MultiWalletExporter(wallets);
-
-exporter.start(); // Starts a worker that polls for the balances
-exporter.metrics(); // Returns prometheus metrics
-exporter.getRegistry() // Returns the prometheus registry
-```
-
-## Options
-`MultiWalletExporter` takes an optional second parameter "options" that allows some configuration on the exporter. Available properties for the object are:
--   `pollInterval`: (optional) the interval (in milliseconds) at which balances will be polled. Default value is 60000 (60 seconds).
--   `logger`: (optional) a logger object that can be used to output logs. Default value is `null`.
--   `prometheus`: (optional) an object with options related to prometheus metrics:
-    -   `gaugeName`: (optional) the name of the prometheus gauge that will hold the balance information. Default value is `wallet_monitor_balance`.
-    -   `registry`: (optional) a prometheus registry that can be passed if you want to use a custom one.
-
-### `Wallet Options`
-The code sample in the `Basic Usage` section is the simplest possible configuration to poll balances of some addresses. Each blockchain connection can be further configured if needed by passing in more properties in the wallets configuration, as such:
-```
-const wallets = {
-  ethereum: {
-	// add here options for wallets in the ethereum chain
-    addresses: {
-      "0x80C67432656d59144cEFf962E8fAF8926599bCF8": ["USDC", "DAI"],
-    },
-  },
-};
-```
-Each wallet object can have the following properties:
-
--   `network`: (optional) the network you want to monitor. Default value is the main network of each chain.
--   `chainConfig`: (optional) an object with configuration options for the blockchain you want to monitor wallets in. The options available depend on the type of blockchain being monitored. The available options are defined in `src/wallets/<chain-type>/<chain-name>.config.ts`. You can pass the options you want to override as properties of this object.
-
-### What data will I get?:
-Suppose a `wallets` configuration for monitoring that look like this:
-```
-const wallets = {
-  ethereum: {
-    addresses: {
-      0x80C67432656d59144cEFf962E8fAF8926599bCF8: ['USDC'],
-      0x8d0d970225597085A59ADCcd7032113226C0419d: ['DAI'],
-      0xBd8eDBCad57b5197373309954DD959fCCa40d183: [],
-    }
-  }
-}
-```
-This configuration will:
-- pull the native balance for all three addresses
-- pull the USDC balance for `0x80C67432656d59144cEFf962E8fAF8926599bCF8`
-- pull the DAI balance for `0x80C67432656d59144cEFf962E8fAF8926599bCF8`
-
-The return value of `getBalances()` for this example will look like this:
-```
-{
-    "ethereum": {
-        "0x80C67432656d59144cEFf962E8fAF8926599bCF8": [
-            {
-                "isNative": true, // the native balance for this wallet
-                "rawBalance": "104032581332177120568",
-                "address": "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
-                "formattedBalance": "104.032581332177120568",
-                "symbol": "ETH"
-            },
-            {
-                "isNative": false, // USDC balance for this wallet
-                "rawBalance": "20000000",
-                "address": "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
-                "formattedBalance": "20.0",
-                "symbol": "USDC"
-            },
-
-        ],
-        "0x8d0d970225597085A59ADCcd7032113226C0419d": [
-            {
-                "isNative": true, // the native balance for this wallet
-                "rawBalance": "60372718604099355",
-                "address": "0x8d0d970225597085A59ADCcd7032113226C0419d",
-                "formattedBalance": "0.060372718604099355",
-                "symbol": "ETH"
-            },
-            {
-                "isNative": false, // DAI balance for this wallet
-                "rawBalance": "2000600180000000000",
-                "address": "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
-                "formattedBalance": "2.00060018",
-                "symbol": "DAI"
-            }
-        ],
-        "0xBd8eDBCad57b5197373309954DD959fCCa40d183": [
-            {
-                "isNative": true, // Native balance for this wallet
-                "rawBalance": "2380949603180521",
-                "address": "0xBd8eDBCad57b5197373309954DD959fCCa40d183",
-                "formattedBalance": "0.002380949603180521",
-                "symbol": "ETH"
-            }
-            // no tokens were configured for this wallet
-        ]
-    }
-}
-```
+This object is also really useful on its own if you want to have fine-grained control over which network calls you are
+making.
 
 ### Supported Tokens
 
