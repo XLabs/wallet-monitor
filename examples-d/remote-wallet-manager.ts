@@ -19,7 +19,12 @@ const doSomethingWithWallet = async (wallet: WalletInterface) => {
   console.log(
     wallet.provider,
     wallet.address,
-    wallet.privateKey,
+    /**
+     * You should never ever log your private keys.
+     * This is just an example, to show what information you get from the interface provided.
+     * Uncomment under your own risk &#9760;
+     */
+    // wallet.privateKey,
   );
 };
 
