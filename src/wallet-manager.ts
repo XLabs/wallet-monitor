@@ -60,6 +60,7 @@ export const WalletManagerFullConfigSchema = z.object({
   options: WalletManagerOptionsSchema.optional(),
   grpc: WalletManagerGRPCConfigSchema.optional(),
 })
+export type WalletManagerFullConfig = z.infer<typeof WalletManagerFullConfigSchema>;
 
 
 export function getDefaultNetwork(chainName: ChainName) {
