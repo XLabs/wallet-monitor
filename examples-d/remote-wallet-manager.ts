@@ -22,7 +22,7 @@ const doSomethingWithWallet = async (wallet: WalletInterface) => {
     /**
      * You should never ever log your private keys.
      * This is just an example, to show what information you get from the interface provided.
-     * Uncomment under your own risk &#9760;
+     * Uncomment under your own risk ☠️
      */
     // wallet.privateKey,
   );
