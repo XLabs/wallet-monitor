@@ -1,5 +1,6 @@
 
-export { WalletManager } from './wallet-manager';
+export type { ILibraryWalletManager, IServiceWalletManager, IClientWalletManager } from './i-wallet-manager'
+export { buildWalletManager } from './utils'
 
 import { EVM_CHAIN_CONFIGS  } from './wallets/evm';
 // import { SOLANA_CHAINS } from './wallets/solana';
@@ -10,7 +11,7 @@ import {
 } from './wallet-manager';
 import {
     WalletBalancesByAddress as WBBA,
-} from './single-wallet-manager';
+} from './chain-wallet-manager';
 import {
     WalletInterface as WI,
 } from './wallets/base-wallet';

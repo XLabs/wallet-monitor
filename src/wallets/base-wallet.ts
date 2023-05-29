@@ -146,8 +146,8 @@ export abstract class WalletToolbox {
     return balances;
   }
 
-  public async acquire(address?: string, blockTimeout?: number): Promise<WalletInterface> {
-    const timeout = blockTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
+  public async acquire(address?: string, leaseTimeout?: number): Promise<WalletInterface> {
+    const timeout = leaseTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
     // this.grpcClient.acquireWallet(address);
     const walletAddress = await this.walletPool.blockAndAcquire(timeout, address);
 
@@ -160,8 +160,8 @@ export abstract class WalletToolbox {
     }
   }
 
-  public async release(wallet: WalletInterface) {
-    await this.walletPool.release(wallet.address);
+  public async release(address: string) {
+    await this.walletPool.release(address);
   }
 
   public async transferBalance(sourceAddress: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number) {

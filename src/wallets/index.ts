@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export const DEVNET = 'devnet';
 
 import { EvmWalletOptions, EvmWalletToolbox, EVM_CHAIN_CONFIGS, EVMChainName, EvmNetworks } from './evm';
@@ -15,11 +17,13 @@ export type ChainName = EVMChainName | SolanaChainName | SuiChainName;
 export type Wallet = EvmWalletToolbox | SolanaWalletToolbox | SuiWalletToolbox;
 export type WalletOptions = EvmWalletOptions | SolanaWalletOptions | SuiWalletOptions;
 
-export type WalletConfig = {
-  address?: string;
-  tokens?: string[];
-  privateKey?: string;
-}
+// TODO: Consider writing a custom validator for an address?
+export const WalletConfigSchema = z.object({
+  address: z.string().optional(),
+  tokens: z.array(z.string()).optional(),
+  privateKey: z.string().optional(),
+});
+export type WalletConfig = z.infer<typeof WalletConfigSchema>;
 
 export type Balance = {
   symbol: string;

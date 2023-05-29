@@ -1,4 +1,4 @@
-import { WalletBalancesByAddress } from "./single-wallet-manager";
+import { WalletBalancesByAddress } from "./chain-wallet-manager";
 import { deepClone, omit } from "./utils";
 
 export type RebalanceInstruction = {

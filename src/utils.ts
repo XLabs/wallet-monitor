@@ -1,5 +1,10 @@
 import { map } from 'bluebird';
 import winston from 'winston';
+import {
+  WalletManager, WalletManagerFullConfig, WalletManagerFullConfigSchema
+} from "./wallet-manager";
+import {ClientWalletManager} from "./grpc/client";
+import {IClientWalletManager, ILibraryWalletManager} from "./i-wallet-manager";
 
 export function mapConcurrent<T>(iterable: T[], mapper: (x: T, i: number, s: number) => any, concurrency = 1): Promise<any[]> {
   return map(iterable, mapper, { concurrency });
@@ -40,4 +45,16 @@ export function createLogger(logger?: winston.Logger, logLevel?: string, meta?: 
   });
 
   return _logger;
+}
+
+// This function will return the same object with the minimal set of methods required to work for the
+//  requested context.
+export function buildWalletManager(rawWMFullConfig: WalletManagerFullConfig): IClientWalletManager | ILibraryWalletManager {
+  const { config, options, grpc } = WalletManagerFullConfigSchema.parse(rawWMFullConfig)
+
+  if (grpc) {
+    return new ClientWalletManager(grpc.connectAddress, grpc.connectPort, config, options) as IClientWalletManager
+  } else {
+    return new WalletManager(config, options) as ILibraryWalletManager
+  }
 }

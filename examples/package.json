@@ -2,9 +2,8 @@
   "description": "A set of examples for the wallet-monitor package",
   "scripts": {
     "wallet-watcher": "ts-node ./wallet-watcher.ts",
-    "wallet-exporter": "ts-node ./wallet-exporter.ts",
-    "multi-wallet-watcher": "ts-node ./multi-wallet-watcher.ts",
-    "multi-wallet-exporter": "ts-node ./multi-wallet-exporter.ts"
+    "wallet-manager": "ts-node ./wallet-manager.ts",
+    "rebalancing": "ts-node ./rebalancing.ts"
   },
   "dependencies": {
     "wallet-monitor": "file:../",

@@ -1,57 +1,82 @@
 import { EventEmitter } from 'stream';
 
+import { z } from 'zod';
 import winston from 'winston';
-import { Registry } from 'prom-client';
 import { createLogger } from './utils';
 import { PrometheusExporter } from './prometheus-exporter';
-import { SingleWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./single-wallet-manager";
-import { ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfig } from './wallets';
-import { TransferRecepit } from './wallets/base-wallet';
+import { ChainWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./chain-wallet-manager";
+import {ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfigSchema} from './wallets';
+import {TransferRecepit} from './wallets/base-wallet';
 import { RebalanceInstruction } from './rebalance-strategies';
 
-type WalletManagerChainConfig = {
-  network?: string;
-  chainConfig?: any;
-  rebalance?: {
-    enabled: boolean;
-    strategy?: string;
-    interval?: number;
-    minBalanceThreshold?: number;
-    maxGasPrice?: number;
-    gasLimit?: number;
-  };
-  wallets: WalletConfig[];
-}
+export const WalletManagerChainConfigSchema = z.object({
+  network: z.string().optional(),
+  // FIXME: This should be a zod schema
+  chainConfig: z.any().optional(),
+  rebalance: z.object({
+    enabled: z.boolean(),
+    strategy: z.string().optional(),
+    interval: z.number().optional(),
+    minBalanceThreshold: z.number().optional(),
+    maxGasPrice: z.number().optional(),
+    gasLimit: z.number().optional(),
+  }).optional(),
+  wallets: z.array(WalletConfigSchema),
+})
 
-export type WalletManagerConfig = Record<string, WalletManagerChainConfig>;
+export const WalletManagerConfigSchema = z.record(z.string(), WalletManagerChainConfigSchema)
+export type WalletManagerConfig = z.infer<typeof WalletManagerConfigSchema>;
 
-export type WalletManagerOptions = {
-  logger?: any;
-  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'verbose' | 'silent';
-  balancePollInterval?: number;
-  metrics?: {
-    enabled: boolean;
-    port?: number;
-    path?: string;
-    registry?: Registry
-    serve?: boolean;
-  };
-};
+export const WalletManagerOptionsSchema = z.object({
+  logger: z.any().optional(),
+  logLevel: z.union([
+      z.literal('error'),
+      z.literal('warn'),
+      z.literal('info'),
+      z.literal('debug'),
+      z.literal('verbose'),
+      z.literal('silent'),
+  ]).optional(),
+  balancePollInterval: z.number().optional(),
+  metrics: z.object({
+    enabled: z.boolean(),
+    port: z.number().optional(),
+    path: z.string().optional(),
+    registry: z.any().optional(),
+    serve: z.boolean().optional(),
+  }).optional(),
+});
+export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
 
-function getDefaultNetwork(chainName: ChainName) {
+export const WalletManagerGRPCConfigSchema = z.object({
+  listenAddress: z.string().default('0.0.0.0'),
+  listenPort: z.number().default(50051),
+  connectAddress: z.string(),
+  connectPort: z.number().default(50051),
+});
+
+export const WalletManagerFullConfigSchema = z.object({
+  config: WalletManagerConfigSchema,
+  options: WalletManagerOptionsSchema.optional(),
+  grpc: WalletManagerGRPCConfigSchema.optional(),
+})
+export type WalletManagerFullConfig = z.infer<typeof WalletManagerFullConfigSchema>;
+
+
+export function getDefaultNetwork(chainName: ChainName) {
   return KNOWN_CHAINS[chainName].defaultNetwork;
 }
 
 export class WalletManager {
   private emitter: EventEmitter = new EventEmitter();
-  private managers: Record<ChainName, SingleWalletManager>;
+  private managers: Record<ChainName, ChainWalletManager>;
   private exporter?: PrometheusExporter;
 
   protected logger: winston.Logger;
 
-  constructor(rawConfig: WalletManagerConfig, options?: WalletManagerOptions) {
+  constructor(config: WalletManagerConfig, options?: WalletManagerOptions) {
     this.logger = createLogger(options?.logger, options?.logLevel, { label: 'WalletManager' });
-    this.managers = {} as Record<ChainName, SingleWalletManager>;
+    this.managers = {} as Record<ChainName, ChainWalletManager>;
 
     if (options?.metrics?.enabled) {
       const { port, path, registry } = options.metrics;
@@ -62,20 +87,20 @@ export class WalletManager {
       }
     }
 
-    for (const [chainName, config] of Object.entries(rawConfig)) {
+    for (const [chainName, chainConfig] of Object.entries(config)) {
       if (!isChain(chainName)) throw new Error(`Invalid chain name: ${chainName}`);
-      const network = config.network || getDefaultNetwork(chainName);
+      const network = chainConfig.network || getDefaultNetwork(chainName);
 
       const chainManagerConfig = {
         network,
         chainName,
         logger: this.logger,
-        rebalance: config.rebalance,
-        walletOptions: config.chainConfig,
+        rebalance: chainConfig.rebalance,
+        walletOptions: chainConfig.chainConfig,
         balancePollInterval: options?.balancePollInterval,
       };
 
-      const chainManager = new SingleWalletManager(chainManagerConfig, config.wallets);
+      const chainManager = new ChainWalletManager(chainManagerConfig, chainConfig.wallets);
 
       chainManager.on('error', (error) => {
         this.logger.error('Error in chain manager: ${error}');
@@ -125,11 +150,31 @@ export class WalletManager {
     return this.exporter?.getRegistry();
   }
 
-  public withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void> {
+  public acquireLock(chainName: ChainName, opts?: WalletExecuteOptions) {
     const chainManager = this.managers[chainName];
     if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
 
-    return chainManager.withWallet(fn, opts);
+    return chainManager.acquireLock(opts);
+  }
+
+  public releaseLock(chainName: ChainName, address: string) {
+    const chainManager = this.managers[chainName];
+    if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
+
+    return chainManager.releaseLock(address);
+  }
+
+  public async withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void> {
+    const wallet = await this.acquireLock(chainName, opts);
+
+    try {
+      return fn(wallet)
+    } catch (error) {
+      this.logger.error(`Error while executing wallet function: ${error}`);
+      throw error;
+    } finally {
+      await this.releaseLock(chainName, wallet.address)
+    }
   }
 
   public getAllBalances(): Record<string, WalletBalancesByAddress> {

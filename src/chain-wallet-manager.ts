@@ -11,8 +11,9 @@ const DEFAULT_REBALANCE_STRATEGY = 'pourOver';
 
 export type WithWalletExecutor = (wallet: WalletInterface) => Promise<void>;
 
-export type SingleWalletManagerOptions = {
+export type ChainWalletManagerOptions = {
   logger: winston.Logger;
+
   network: string;
   chainName: string;
   rebalance: {
@@ -31,17 +32,18 @@ export type WalletBalancesByAddress = Record<string, WalletBalance>;
 
 export type WalletExecuteOptions = {
   address?: string;
-  blockTimeout?: number;
+  waitToAcquireTimeout?: number,
+  leaseTimeout?: number;
 }
 
-export class SingleWalletManager {
+export class ChainWalletManager {
   private locked = false;
   private rebalanceLocked = false;
   protected logger: winston.Logger;
   protected balancesByAddress: WalletBalancesByAddress = {};
   private interval: ReturnType<typeof setInterval> | null = null;
   private rebalanceInterval: ReturnType<typeof setInterval> | null = null;
-  private options: SingleWalletManagerOptions;
+  private options: ChainWalletManagerOptions;
   private emitter = new EventEmitter();
 
   public walletToolbox: Wallet;
@@ -64,7 +66,7 @@ export class SingleWalletManager {
     );
   }
 
-  private validateOptions(options: any): options is SingleWalletManagerOptions {
+  private validateOptions(options: any): options is ChainWalletManagerOptions {
     if (!options.network) throw new Error('Missing network option');
     if (!options.chainName) throw new Error('Missing chainName option');
     if (options.balancePollInterval && typeof options.balancePollInterval !== 'number') throw new Error('Invalid pollInterval option');
@@ -72,7 +74,7 @@ export class SingleWalletManager {
     return true;
   }
 
-  private parseOptions(options: SingleWalletManagerOptions): SingleWalletManagerOptions {
+  private parseOptions(options: ChainWalletManagerOptions): ChainWalletManagerOptions {
     const rebalanceOptions = {
       enabled: options.rebalance?.enabled || false,
       strategy: options.rebalance?.strategy || DEFAULT_REBALANCE_STRATEGY,
@@ -186,21 +188,12 @@ export class SingleWalletManager {
     return this.balancesByAddress;
   }
 
-  public async withWallet(fn: (w: WalletInterface) => {}, opts?: WalletExecuteOptions) {
-    const wallet = await this.walletToolbox.acquire(opts?.address, opts?.blockTimeout);
+  public async acquireLock(opts?: WalletExecuteOptions) {
+    return this.walletToolbox.acquire(opts?.address, opts?.leaseTimeout)
+  }
 
-    let result: any;
-    try {
-      result = await fn(wallet);
-    } catch (error) {
-      this.logger.error(`Error while executing wallet function: ${error}`);
-      await this.walletToolbox.release(wallet);
-      throw error;
-    }
-
-    await this.walletToolbox.release(wallet);
-
-    return result;
+  public async releaseLock(address: string) {
+    return this.walletToolbox.release(address)
   }
 
   // Returns a boolean indicating if a rebalance was executed

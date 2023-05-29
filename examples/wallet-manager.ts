@@ -1,4 +1,5 @@
-import { WalletManager, WalletBalancesByAddress, WalletManagerOptions, WalletManagerConfig, WalletInterface } from 'wallet-monitor';
+import { WalletBalancesByAddress, WalletManagerOptions, WalletManagerConfig, WalletInterface } from 'wallet-monitor';
+import {WalletManager} from "../src/wallet-manager";
 
 const options: WalletManagerOptions = {
   logLevel: 'debug',
@@ -47,7 +48,7 @@ const allChainWallets: WalletManagerConfig = {
   },
 }
 
-export const manager = new WalletManager(allChainWallets, options);
+export const manager = new WalletManager(allChainWallets, options)
 
 // if metrics.enabled=true, metrics.serve=false, you can use:
 manager.getRegistry();
@@ -87,5 +88,5 @@ manager.withWallet('ethereum', doSomethingWithWallet, {
 
 // configure the timeout for acquiring the wallet to use:
 manager.withWallet('ethereum', doSomethingWithWallet, {
-  blockTimeout: 10000,
+  leaseTimeout: 10_000,
 });
