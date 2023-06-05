@@ -217,6 +217,7 @@ While you can pass any token address to the wallet monitor, for simplicity a lis
 
 | Symbol | Address                                    |
 |--------|--------------------------------------------|
+| [ARB](https://arbiscan.io/token/0x912ce59144191c1204e64559fe8253a0e49e6548)   | 0x912ce59144191c1204e64559fe8253a0e49e6548 |
 | [WETH](https://arbiscan.io/token/0x82af49447d8a07e3bd95bd0d56f35241523fbab1)   | 0x82af49447d8a07e3bd95bd0d56f35241523fbab1 |
 | [USDC](https://arbiscan.io/token/0xff970a61a04b1ca14834a43f5de4533ebddb5cc8)   | 0xff970a61a04b1ca14834a43f5de4533ebddb5cc8 |
 | [USDT](https://arbiscan.io/token/0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9)   | 0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9 |
@@ -227,7 +228,6 @@ While you can pass any token address to the wallet monitor, for simplicity a lis
 | [WFTM](https://arbiscan.io/token/0x88a23edbb2e49ac3c1b9f9f49ae8d1c26d734fba)   | 0x88a23edbb2e49ac3c1b9f9f49ae8d1c26d734fba |
 | [WGLMR](https://arbiscan.io/token/0x944c5b67a03e6cb93ae1e4b70081f13b04cdb6bd)  | 0x944c5b67a03e6cb93ae1e4b70081f13b04cdb6bd |
 | [WSUI](https://arbiscan.io/token/0xfe7b5a32c93dc25184d475e3083ba30ed3c1bf8f)  | 0xfe7b5a32c93dc25184d475e3083ba30ed3c1bf8f |
-| [ARB](https://arbiscan.io/token/0x912ce59144191c1204e64559fe8253a0e49e6548)   | 0x912ce59144191c1204e64559fe8253a0e49e6548 |
 
 #### SUI
 
