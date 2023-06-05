@@ -19,6 +19,7 @@ import { BscNetwork, BSC, BSC_CHAIN_CONFIG } from './bsc.config';
 import { FantomNetwork, FANTOM, FANTOM_CHAIN_CONFIG } from './fantom.config';
 import { CeloNetwork, CELO, CELO_CHAIN_CONFIG } from './celo.config';
 import { MoonbeamNetwork, MOONBEAM, MOONBEAM_CHAIN_CONFIG } from './moonbeam.config';
+import { ArbitrumNetwork, ARBITRUM, ARBITRUM_CHAIN_CONFIG } from './arbitrum.config';
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
@@ -40,6 +41,7 @@ const EVM_CHAINS = {
   [FANTOM]: 5,
   [CELO]: 6,
   [MOONBEAM]: 7,
+  [ARBITRUM]: 8,
 };
 
 export type EvmDefaultConfig = {
@@ -59,6 +61,7 @@ export const EVM_CHAIN_CONFIGS: Record<EVMChainName, EvmChainConfig> = {
   [FANTOM]: FANTOM_CHAIN_CONFIG,
   [CELO]: CELO_CHAIN_CONFIG,
   [MOONBEAM]: MOONBEAM_CHAIN_CONFIG,
+  [ARBITRUM]: ARBITRUM_CHAIN_CONFIG,
 };
 
 export type EvmWalletOptions = BaseWalletOptions & {
