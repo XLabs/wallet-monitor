@@ -70,7 +70,7 @@ export type EvmWalletOptions = BaseWalletOptions & {
 }
 
 export type EvmNetworks = EthereumNetwork | PolygonNetwork | BscNetwork | AvalancheNetwork
-  | FantomNetwork | CeloNetwork | MoonbeamNetwork;
+  | FantomNetwork | CeloNetwork | MoonbeamNetwork | ArbitrumNetwork;
 
 function getUniqueTokens(wallets: WalletConfig[]): string[] {
   const tokens = wallets.reduce((acc, wallet) => {
