@@ -109,7 +109,7 @@ export function getEvmAddressFromPrivateKey(privateKey: string): string {
   try {
     wallet = new ethers.Wallet(privateKey);
   } catch(e) {
-    throw new Error('Invalid private key');
+    throw new Error(`Invalid private key: ${e}`);
   }
 
   return wallet.address;
