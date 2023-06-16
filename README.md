@@ -110,6 +110,7 @@ While you can pass any token address to the wallet monitor, for simplicity a lis
 | [WCELO](https://etherscan.io/token/0x3294395e62f4eb6af3f1fcf89f5602d90fb3ef69) | 0x3294395e62f4eb6af3f1fcf89f5602d90fb3ef69 |
 | [WGLMR](https://etherscan.io/token/0x93d3696A9F879b331f40CB5059e37015423A3Bd0) | 0x93d3696A9F879b331f40CB5059e37015423A3Bd0 |
 | [WSUI](https://etherscan.io/token/0x84074EA631dEc7a4edcD5303d164D5dEa4c653D6) | 0x84074EA631dEc7a4edcD5303d164D5dEa4c653D6 |
+| [WARB](https://etherscan.io/token/0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1) | 0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1 |
 
 #### Binance Smart Chain
 
@@ -126,6 +127,7 @@ While you can pass any token address to the wallet monitor, for simplicity a lis
 | [WCELO](https://bscscan.com/token/0x2A335e327a55b177f5B40132fEC5D7298aa0D7e6) | 0x2A335e327a55b177f5B40132fEC5D7298aa0D7e6 |
 | [WGLMR](https://bscscan.com/token/0x1C063db3c621BF901FC6C1D03328b08b2F9bbfba) | 0x1C063db3c621BF901FC6C1D03328b08b2F9bbfba |
 | [WSUI](https://bscscan.com/token/0x8314f6Bf1B4dd8604A0fC33C84F9AF2fc07AABC8) | 0x8314f6Bf1B4dd8604A0fC33C84F9AF2fc07AABC8 |
+| [WARB](https://bscscan.com/token/0x0c03a1d484b12c63bd499162fca0a403f8104939) | 0x0c03a1d484b12c63bd499162fca0a403f8104939 |
 
 #### Polygon
 
@@ -142,6 +144,7 @@ While you can pass any token address to the wallet monitor, for simplicity a lis
 | [WCELO](https://polygonscan.com/token/0x922F49a9911effc034eE756196E59BE7b90D43b3) | 0x922F49a9911effc034eE756196E59BE7b90D43b3 |
 | [WGLMR](https://polygonscan.com/token/0xcC48d6CF842083fEc0E01d913fB964b585975F05) | 0xcC48d6CF842083fEc0E01d913fB964b585975F05 |
 | [WSUI](https://polygonscan.com/token/0x34bE049fEbfc6C64Ffd82Da08a8931A9a45f2cc8) | 0x34bE049fEbfc6C64Ffd82Da08a8931A9a45f2cc8 |
+| [WARB](https://polygonscan.com/token/0x33c788e1191d18ccd0b6db8176ead234ed22321a) | 0x33c788e1191d18ccd0b6db8176ead234ed22321a |
 
 #### Avalanche
 
@@ -158,6 +161,7 @@ While you can pass any token address to the wallet monitor, for simplicity a lis
 | [WCELO](https://avascan.info/blockchain/c/token/0x494317B8521c5a5287a06DEE467dd6fe285dA4a8) | 0x494317B8521c5a5287a06DEE467dd6fe285dA4a8 |
 | [WGLMR](https://avascan.info/blockchain/c/token/0x375aA6C67BF499fBf01804A9f92C03c0776F372d) | 0x375aA6C67BF499fBf01804A9f92C03c0776F372d |
 | [WSUI](https://avascan.info/blockchain/c/token/0x1703CB0F762D2a435199B64Ea47E5349B7C17480) | 0x1703CB0F762D2a435199B64Ea47E5349B7C17480 |
+| [WARB](https://avascan.info/blockchain/c/token/0x2bb3Caf6b5c3a1FE9C4D9BE969B88FB007fE7FBd) | 0x2bb3Caf6b5c3a1FE9C4D9BE969B88FB007fE7FBd |
 
 #### Fantom
 
@@ -174,6 +178,7 @@ While you can pass any token address to the wallet monitor, for simplicity a lis
 | [WCELO](https://ftmscan.com/token/0xF432490C6c96C9d3bF523a499a1CEaFd8208A373) | 0xF432490C6c96C9d3bF523a499a1CEaFd8208A373 |
 | [WGLMR](https://ftmscan.com/token/0xBF227E92D6754EB4BFE26C40cb299ff2809Da45f) | 0xBF227E92D6754EB4BFE26C40cb299ff2809Da45f |
 | [WSUI](https://ftmscan.com/token/0xC277423a21F6e32D886BF85Ef6cCB945d5D28347) | 0xC277423a21F6e32D886BF85Ef6cCB945d5D28347 |
+| [WARB](https://ftmscan.com/token/0x07d2bed56ffdab09bfad5911d70be2af26ed010c) | 0x07d2bed56ffdab09bfad5911d70be2af26ed010c |
 
 #### Celo
 
@@ -206,6 +211,23 @@ While you can pass any token address to the wallet monitor, for simplicity a lis
 | [WCELO](https://moonbeam.moonscan.io/token/0xc1a792041985F65c17Eb65E66E254DC879CF380b)  | 0xc1a792041985F65c17Eb65E66E254DC879CF380b |
 | [WGLMR](https://moonbeam.moonscan.io/token/0xacc15dc74880c9944775448304b263d191c6077f)  | 0xacc15dc74880c9944775448304b263d191c6077f |
 | [WSUI](https://moonbeam.moonscan.io/token/0x484eCCE6775143D3335Ed2C7bCB22151C53B9F49)  | 0x484eCCE6775143D3335Ed2C7bCB22151C53B9F49 |
+
+
+#### Arbitrum
+
+| Symbol | Address                                    |
+|--------|--------------------------------------------|
+| [ARB](https://arbiscan.io/token/0x912ce59144191c1204e64559fe8253a0e49e6548)   | 0x912ce59144191c1204e64559fe8253a0e49e6548 |
+| [WETH](https://arbiscan.io/token/0x82af49447d8a07e3bd95bd0d56f35241523fbab1)   | 0x82af49447d8a07e3bd95bd0d56f35241523fbab1 |
+| [USDC](https://arbiscan.io/token/0xff970a61a04b1ca14834a43f5de4533ebddb5cc8)   | 0xff970a61a04b1ca14834a43f5de4533ebddb5cc8 |
+| [USDT](https://arbiscan.io/token/0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9)   | 0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9 |
+| [WBTC](https://arbiscan.io/token/0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f)   | 0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f |
+| [WBNB](https://arbiscan.io/token/0x8579794b10f88ebbedd3605f2e5ff54f162d4788)   | 0x8579794b10f88ebbedd3605f2e5ff54f162d4788 |
+| [WMATIC](https://arbiscan.io/token/0x3ab0e28c3f56616ad7061b4db38ae337e3809aea) | 0x3ab0e28c3f56616ad7061b4db38ae337e3809aea |
+| [WAVAX](https://arbiscan.io/token/0x565609faf65b92f7be02468acf86f8979423e514)  | 0x565609faf65b92f7be02468acf86f8979423e514 |
+| [WFTM](https://arbiscan.io/token/0x88a23edbb2e49ac3c1b9f9f49ae8d1c26d734fba)   | 0x88a23edbb2e49ac3c1b9f9f49ae8d1c26d734fba |
+| [WGLMR](https://arbiscan.io/token/0x944c5b67a03e6cb93ae1e4b70081f13b04cdb6bd)  | 0x944c5b67a03e6cb93ae1e4b70081f13b04cdb6bd |
+| [WSUI](https://arbiscan.io/token/0xfe7b5a32c93dc25184d475e3083ba30ed3c1bf8f)  | 0xfe7b5a32c93dc25184d475e3083ba30ed3c1bf8f |
 
 #### SUI
 
