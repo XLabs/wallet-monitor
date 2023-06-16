@@ -45,7 +45,9 @@ export const WalletManagerOptionsSchema = z.object({
     registry: z.any().optional(),
     serve: z.boolean().optional(),
   }).optional(),
+  failOnInvalidChain: z.boolean().default(true),
 });
+
 export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
 
 export const WalletManagerGRPCConfigSchema = z.object({
@@ -88,7 +90,15 @@ export class WalletManager {
     }
 
     for (const [chainName, chainConfig] of Object.entries(config)) {
-      if (!isChain(chainName)) throw new Error(`Invalid chain name: ${chainName}`);
+      if (!isChain(chainName)) {
+        if (options?.failOnInvalidChain) {
+          throw new Error(`Invalid chain name: ${chainName}`);
+        }
+        else {
+          this.logger.warn(`Invalid chain name: ${chainName}`);
+          continue;
+        }
+      }
       const network = chainConfig.network || getDefaultNetwork(chainName);
 
       const chainManagerConfig = {
