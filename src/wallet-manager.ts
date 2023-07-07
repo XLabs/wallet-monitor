@@ -1,57 +1,81 @@
-import { EventEmitter } from 'stream';
+import { EventEmitter } from "stream";
 
-import { z } from 'zod';
-import winston from 'winston';
-import { createLogger } from './utils';
-import { PrometheusExporter } from './prometheus-exporter';
-import { ChainWalletManager, WalletExecuteOptions, WithWalletExecutor, WalletBalancesByAddress } from "./chain-wallet-manager";
-import {ChainName, isChain, KNOWN_CHAINS, WalletBalance, WalletConfigSchema} from './wallets';
-import {TransferRecepit} from './wallets/base-wallet';
-import { RebalanceInstruction } from './rebalance-strategies';
+import { z } from "zod";
+import winston from "winston";
+import { createLogger } from "./utils";
+import { PrometheusExporter } from "./prometheus-exporter";
+import {
+  ChainWalletManager,
+  WalletExecuteOptions,
+  WithWalletExecutor,
+  WalletBalancesByAddress,
+} from "./chain-wallet-manager";
+import {
+  ChainName,
+  isChain,
+  KNOWN_CHAINS,
+  WalletBalance,
+  WalletConfigSchema,
+} from "./wallets";
+import { TransferRecepit } from "./wallets/base-wallet";
+import { RebalanceInstruction } from "./rebalance-strategies";
+
+export const WalletRebalancingConfigSchema = z.object({
+  enabled: z.boolean(),
+  strategy: z.string().optional(),
+  interval: z.number().optional(),
+  minBalanceThreshold: z.number().optional(),
+  maxGasPrice: z.number().optional(),
+  gasLimit: z.number().optional(),
+});
+
+export type WalletRebalancingConfig = z.infer<
+  typeof WalletRebalancingConfigSchema
+>;
 
 export const WalletManagerChainConfigSchema = z.object({
   network: z.string().optional(),
   // FIXME: This should be a zod schema
   chainConfig: z.any().optional(),
-  rebalance: z.object({
-    enabled: z.boolean(),
-    strategy: z.string().optional(),
-    interval: z.number().optional(),
-    minBalanceThreshold: z.number().optional(),
-    maxGasPrice: z.number().optional(),
-    gasLimit: z.number().optional(),
-  }).optional(),
+  rebalance: WalletRebalancingConfigSchema.optional(),
   wallets: z.array(WalletConfigSchema),
-})
+});
 
-export const WalletManagerConfigSchema = z.record(z.string(), WalletManagerChainConfigSchema)
+export const WalletManagerConfigSchema = z.record(
+  z.string(),
+  WalletManagerChainConfigSchema
+);
 export type WalletManagerConfig = z.infer<typeof WalletManagerConfigSchema>;
 
 export const WalletManagerOptionsSchema = z.object({
   logger: z.any().optional(),
-  logLevel: z.union([
-      z.literal('error'),
-      z.literal('warn'),
-      z.literal('info'),
-      z.literal('debug'),
-      z.literal('verbose'),
-      z.literal('silent'),
-  ]).optional(),
+  logLevel: z
+    .union([
+      z.literal("error"),
+      z.literal("warn"),
+      z.literal("info"),
+      z.literal("debug"),
+      z.literal("verbose"),
+      z.literal("silent"),
+    ])
+    .optional(),
   balancePollInterval: z.number().optional(),
-  metrics: z.object({
-    enabled: z.boolean(),
-    port: z.number().optional(),
-    path: z.string().optional(),
-    registry: z.any().optional(),
-    serve: z.boolean().optional(),
-  }).optional(),
+  metrics: z
+    .object({
+      enabled: z.boolean(),
+      port: z.number().optional(),
+      path: z.string().optional(),
+      registry: z.any().optional(),
+      serve: z.boolean().optional(),
+    })
+    .optional(),
   failOnInvalidChain: z.boolean().default(true),
 });
 
 export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
 
 export const WalletManagerGRPCConfigSchema = z.object({
-  listenAddress: z.string().default('0.0.0.0'),
+  listenAddress: z.string().default("0.0.0.0"),
   listenPort: z.number().default(50051),
   connectAddress: z.string(),
   connectPort: z.number().default(50051),
@@ -61,9 +85,10 @@ export const WalletManagerFullConfigSchema = z.object({
   config: WalletManagerConfigSchema,
   options: WalletManagerOptionsSchema.optional(),
   grpc: WalletManagerGRPCConfigSchema.optional(),
-})
-export type WalletManagerFullConfig = z.infer<typeof WalletManagerFullConfigSchema>;
-
+});
+export type WalletManagerFullConfig = z.infer<
+  typeof WalletManagerFullConfigSchema
+>;
 
 export function getDefaultNetwork(chainName: ChainName) {
   return KNOWN_CHAINS[chainName].defaultNetwork;
@@ -77,14 +102,16 @@ export class WalletManager {
   protected logger: winston.Logger;
 
   constructor(config: WalletManagerConfig, options?: WalletManagerOptions) {
-    this.logger = createLogger(options?.logger, options?.logLevel, { label: 'WalletManager' });
+    this.logger = createLogger(options?.logger, options?.logLevel, {
+      label: "WalletManager",
+    });
     this.managers = {} as Record<ChainName, ChainWalletManager>;
 
     if (options?.metrics?.enabled) {
       const { port, path, registry } = options.metrics;
       this.exporter = new PrometheusExporter(port, path, registry);
       if (options.metrics?.serve) {
-        this.logger.info('Starting metrics server.');
+        this.logger.info("Starting metrics server.");
         this.exporter.startMetricsServer();
       }
     }
@@ -93,8 +120,7 @@ export class WalletManager {
       if (!isChain(chainName)) {
         if (options?.failOnInvalidChain) {
           throw new Error(`Invalid chain name: ${chainName}`);
-        }
-        else {
+        } else {
           this.logger.warn(`Invalid chain name: ${chainName}`);
           continue;
         }
@@ -110,38 +136,64 @@ export class WalletManager {
         balancePollInterval: options?.balancePollInterval,
       };
 
-      const chainManager = new ChainWalletManager(chainManagerConfig, chainConfig.wallets);
+      const chainManager = new ChainWalletManager(
+        chainManagerConfig,
+        chainConfig.wallets
+      );
 
-      chainManager.on('error', (error) => {
-        this.logger.error('Error in chain manager: ${error}');
-        this.emitter.emit('error', error, chainName);
+      chainManager.on("error", (error) => {
+        this.logger.error("Error in chain manager: ${error}");
+        this.emitter.emit("error", error, chainName);
       });
 
-      chainManager.on('balances', (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
-        this.logger.verbose(`Balances updated for ${chainName} (${network})`);
-        this.exporter?.updateBalances(chainName, network, balances);
+      chainManager.on(
+        "balances",
+        (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
+          this.logger.verbose(`Balances updated for ${chainName} (${network})`);
+          this.exporter?.updateBalances(chainName, network, balances);
 
-        this.emitter.emit('balances', chainName, network, balances, previousBalances);
-      });
+          this.emitter.emit(
+            "balances",
+            chainName,
+            network,
+            balances,
+            previousBalances
+          );
+        }
+      );
 
-      chainManager.on('rebalance-started', (strategy: string, instructions: RebalanceInstruction[]) => {
-        this.logger.info(`Rebalance Started. Instructions to execute: ${instructions.length}`);
-        this.exporter?.updateRebalanceStarted(chainName, strategy, instructions);
-      });
+      chainManager.on(
+        "rebalance-started",
+        (strategy: string, instructions: RebalanceInstruction[]) => {
+          this.logger.info(
+            `Rebalance Started. Instructions to execute: ${instructions.length}`
+          );
+          this.exporter?.updateRebalanceStarted(
+            chainName,
+            strategy,
+            instructions
+          );
+        }
+      );
 
-      chainManager.on('rebalance-finished', (strategy: string, receipts: TransferRecepit[]) => {
-        this.logger.info(`Rebalance Finished. Executed transactions: ${receipts.length}}`);
-        this.exporter?.updateRebalanceSuccess(chainName, strategy, receipts);
-      });
+      chainManager.on(
+        "rebalance-finished",
+        (strategy: string, receipts: TransferRecepit[]) => {
+          this.logger.info(
+            `Rebalance Finished. Executed transactions: ${receipts.length}}`
+          );
+          this.exporter?.updateRebalanceSuccess(chainName, strategy, receipts);
+        }
+      );
 
-      chainManager.on('rebalance-error', (error) => {
+      chainManager.on("rebalance-error", (error) => {
         this.logger.error(`Rebalance Error: ${error}`);
       });
 
       this.managers[chainName] = chainManager;
 
       chainManager.start();
-    };
+    }
   }
 
   public stop() {
@@ -162,28 +214,34 @@ export class WalletManager {
 
   public acquireLock(chainName: ChainName, opts?: WalletExecuteOptions) {
     const chainManager = this.managers[chainName];
-    if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
+    if (!chainManager)
+      throw new Error(`No wallets configured for chain: ${chainName}`);
 
     return chainManager.acquireLock(opts);
   }
 
   public releaseLock(chainName: ChainName, address: string) {
     const chainManager = this.managers[chainName];
-    if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
+    if (!chainManager)
+      throw new Error(`No wallets configured for chain: ${chainName}`);
 
     return chainManager.releaseLock(address);
   }
 
-  public async withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void> {
+  public async withWallet(
+    chainName: ChainName,
+    fn: WithWalletExecutor,
+    opts?: WalletExecuteOptions
+  ): Promise<void> {
     const wallet = await this.acquireLock(chainName, opts);
 
     try {
-      return fn(wallet)
+      return fn(wallet);
     } catch (error) {
       this.logger.error(`Error while executing wallet function: ${error}`);
       throw error;
     } finally {
-      await this.releaseLock(chainName, wallet.address)
+      await this.releaseLock(chainName, wallet.address);
     }
   }
 
@@ -199,7 +257,8 @@ export class WalletManager {
 
   public getChainBalances(chainName: ChainName): WalletBalancesByAddress {
     const manager = this.managers[chainName];
-    if (!manager) throw new Error(`No wallets configured for chain: ${chainName}`);
+    if (!manager)
+      throw new Error(`No wallets configured for chain: ${chainName}`);
 
     return manager.getBalances();
   }
