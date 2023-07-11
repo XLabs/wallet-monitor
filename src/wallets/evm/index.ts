@@ -45,6 +45,7 @@ import {
   OPTIMISM,
   OPTIMISM_CHAIN_CONFIG,
 } from "./optimism.config";
+import { KlaytnNetwork, KLAYTN, KLAYTN_CHAIN_CONFIG } from "./klaytn.config";
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
@@ -68,6 +69,7 @@ const EVM_CHAINS = {
   [MOONBEAM]: 7,
   [ARBITRUM]: 8,
   [OPTIMISM]: 9,
+  [KLAYTN]: 10,
 };
 
 export type EvmDefaultConfig = {
@@ -89,6 +91,7 @@ export const EVM_CHAIN_CONFIGS: Record<EVMChainName, EvmChainConfig> = {
   [MOONBEAM]: MOONBEAM_CHAIN_CONFIG,
   [ARBITRUM]: ARBITRUM_CHAIN_CONFIG,
   [OPTIMISM]: OPTIMISM_CHAIN_CONFIG,
+  [KLAYTN]: KLAYTN_CHAIN_CONFIG,
 };
 
 export type EvmWalletOptions = BaseWalletOptions & {
@@ -105,7 +108,8 @@ export type EvmNetworks =
   | CeloNetwork
   | MoonbeamNetwork
   | ArbitrumNetwork
-  | OptimismNetwork;
+  | OptimismNetwork
+  | KlaytnNetwork;
 
 function getUniqueTokens(wallets: WalletConfig[]): string[] {
   const tokens = wallets.reduce((acc, wallet) => {
