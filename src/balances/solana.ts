@@ -17,7 +17,12 @@ export async function pullSolanaNativeBalance(
 export function getSolanaAddressFromPrivateKey(privateKey: string): string {
   let secretKey;
   try {
-    secretKey = new Uint8Array(JSON.parse(privateKey));
+    // when a Uint8Array has `toString` called, the string is not valid JSON since it lack `[` and `]`
+    if (privateKey[0] == "[") {
+      secretKey = new Uint8Array(JSON.parse(privateKey));
+    } else {
+      secretKey = new Uint8Array(JSON.parse(`[${privateKey}]`));
+    }
   } catch (e) {
     secretKey = bs58.decode(privateKey);
   }
