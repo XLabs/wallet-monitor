@@ -11,6 +11,7 @@ import { createLogger } from '../utils';
 
 export type BaseWalletOptions = {
   logger: winston.Logger;
+  failOnInvalidTokens: boolean;
 }
 
 export type WalletInterface = {
@@ -85,7 +86,7 @@ export abstract class WalletToolbox {
     
     for (const raw of rawConfig) {
       const config = this.buildWalletConfig(raw);
-      this.validateConfig(config);
+      this.validateConfig(config, options.failOnInvalidTokens);
       wallets[config.address] = config;
     }
 
@@ -186,11 +187,11 @@ export abstract class WalletToolbox {
     return receipt;
   }
 
-  private validateConfig(rawConfig: any) {
+  private validateConfig(rawConfig: any, failOnInvalidTokens: boolean) {
     if (!rawConfig.address && !rawConfig.privateKey)
       throw new Error(`Invalid config for chain: ${this.chainName}: Missing address`);
 
-    if (rawConfig.tokens?.length) {
+    if (failOnInvalidTokens && rawConfig.tokens?.length) {
       rawConfig.tokens.forEach((token: any) => {
         if (!this.validateTokenAddress(token)) {
           throw new Error(`Token not supported for ${this.chainName}[${this.network}]: ${token}`)
