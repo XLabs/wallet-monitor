@@ -51,7 +51,6 @@ export class ChainWalletManager {
 
   constructor(options: any, private wallets: WalletConfig[]) {
     this.validateOptions(options);
-    console.log("received options", options);
     this.options = this.parseOptions(options);
 
     if (this.options.rebalance.enabled) {
@@ -59,7 +58,6 @@ export class ChainWalletManager {
     }
 
     this.logger = createLogger(this.options.logger);
-    console.log("creating tooolboxxx", this.options.failOnInvalidTokens);
     this.walletToolbox = createWalletToolbox(
       options.network,
       options.chainName,
