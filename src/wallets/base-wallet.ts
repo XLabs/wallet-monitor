@@ -54,7 +54,7 @@ export abstract class WalletToolbox {
   // Should parse tokens received from the user.
   // The tokens returned should be a list of token addresses used by the chain client
   // Example: ["DAI", "USDC"] => ["0x00000000", "0x00000001"];
-  abstract parseTokensConfig(tokens: string[]): string[];
+  abstract parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[];
 
   // Should instantiate provider for the chain
   // calculate data which could be re-utilized (for example token's local addresses, symbol and decimals in evm chains)
@@ -85,7 +85,7 @@ export abstract class WalletToolbox {
     const wallets = {} as Record<string, WalletData>;
     
     for (const raw of rawConfig) {
-      const config = this.buildWalletConfig(raw);
+      const config = this.buildWalletConfig(raw, options.failOnInvalidTokens);
       this.validateConfig(config, options.failOnInvalidTokens);
       wallets[config.address] = config;
     }
@@ -202,12 +202,12 @@ export abstract class WalletToolbox {
     return true;
   }
 
-  private buildWalletConfig(rawConfig: any): WalletData {
+  private buildWalletConfig(rawConfig: any, failOnInvalidTokens: boolean): WalletData {
     const privateKey = rawConfig.privateKey;
 
     const address = rawConfig.address || this.getAddressFromPrivateKey(privateKey);
 
-    const tokens = rawConfig.tokens ? this.parseTokensConfig(rawConfig.tokens) : [];
+    const tokens = rawConfig.tokens ? this.parseTokensConfig(rawConfig.tokens, failOnInvalidTokens) : [];
 
     return { address, privateKey, tokens };
   }

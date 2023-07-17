@@ -60,8 +60,8 @@ export const manager = buildWalletManager({
   options: {
     logLevel: 'debug',
     balancePollInterval: 10000,
-    failOnInvalidChain: false, // optional. Defaults to true
-    failOnInvalidTokens: false, // optional. Defaults to true
+    failOnInvalidChain: false,
+    failOnInvalidTokens: false,
     metrics: {
       enabled: true,
       serve: true,
