@@ -66,14 +66,19 @@ export class SolanaWalletToolbox extends WalletToolbox {
     this.connection = new Connection(this.options.nodeUrl);
   }
 
-  parseTokensConfig(tokens: SolanaWalletConfig['tokens']): string[] {
-    return tokens.map((token) => {
-      const knownTokens = SOLANA_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
+  parseTokensConfig(tokens: SolanaWalletConfig['tokens'], failOnInvalidTokens: boolean): string[] {
+    const knownTokens = SOLANA_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
+    const validTokens: string[] = [];
+    for (const token of tokens) {
       if (token.toUpperCase() in knownTokens)
-        return knownTokens[token.toUpperCase()];
-      else
-        return token
-    });
+        validTokens.push(knownTokens[token.toUpperCase()]);
+      else if (this.isValidTokenNativeAddress(token))
+        validTokens.push(token);
+      else if (failOnInvalidTokens)
+        throw new Error('Invalid Token Config for Solana: ' + token);
+    }
+
+    return validTokens;
   }
 
   async pullNativeBalance(address: string): Promise<WalletBalance> {
@@ -138,11 +143,8 @@ export class SolanaWalletToolbox extends WalletToolbox {
 
     if ((token.toUpperCase() in chainConfig.knownTokens[this.network])) return true;
 
-    try {
-      new PublicKey(token)
-    } catch (e) {
+    if (!this.isValidTokenNativeAddress(token))
       throw new Error(`Invalid token config for chain: ${this.chainName}: Invalid token "${token}"`);
-    }
 
     return true;
   }
@@ -172,5 +174,14 @@ export class SolanaWalletToolbox extends WalletToolbox {
 
   getAddressFromPrivateKey(privateKey: string): string {
     return getSolanaAddressFromPrivateKey(privateKey);
+  }
+
+  isValidTokenNativeAddress(token: string): boolean {
+    try {
+      new PublicKey(token)
+    } catch (e) {
+      return false;
+    }
+    return true;
   }
 }
