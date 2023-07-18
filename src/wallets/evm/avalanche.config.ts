@@ -7,6 +7,7 @@ const AVALANCHE_TESTNET = "testnet";
 export const AVALANCHE_NETWORKS = {
   [DEVNET]: 1,
   [AVALANCHE_MAINNET]: 2,
+  // THIS should be called fuji
   [AVALANCHE_TESTNET]: 3,
 };
 
