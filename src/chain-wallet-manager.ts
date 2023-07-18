@@ -26,6 +26,7 @@ export type ChainWalletManagerOptions = {
   };
   balancePollInterval?: number;
   walletOptions?: WalletOptions;
+  failOnInvalidTokens: boolean;
 }
 
 export type WalletBalancesByAddress = Record<string, WalletBalance>;
@@ -57,12 +58,11 @@ export class ChainWalletManager {
     }
 
     this.logger = createLogger(this.options.logger);
-
     this.walletToolbox = createWalletToolbox(
       options.network,
       options.chainName,
       wallets,
-      { ...options.walletOptions, logger: this.logger },
+      { ...options.walletOptions, logger: this.logger, failOnInvalidTokens: this.options.failOnInvalidTokens },
     );
   }
 
@@ -88,6 +88,7 @@ export class ChainWalletManager {
       ...options,
       rebalance: rebalanceOptions,
       balancePollInterval: options.balancePollInterval || DEFAULT_POLL_INTERVAL,
+      failOnInvalidTokens: options.failOnInvalidTokens === null ? true : options.failOnInvalidTokens,
     };
   }
 

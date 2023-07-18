@@ -95,18 +95,31 @@ export class SuiWalletToolbox extends WalletToolbox {
   }
 
   validateTokenAddress(token: string): boolean {
+    if (!this.isValidNativeTokenAddress(token)) {
+      throw new Error(`Invalid token address: ${token}`);
+    }
+
     const knownTokens = SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
 
-    return SUI_HEX_ADDRESS_REGEX.test(token)
-    || token.toUpperCase() in knownTokens;
+    if (!(token.toUpperCase() in knownTokens)) {
+      throw new Error(`Unknown token address: ${token}`);
+    }
+    return true;
   }
 
-  public parseTokensConfig(tokens: string[]): string[] {
+  public parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[] {
     const knownTokens = SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
-
-    return tokens.map((token) => {
-      return knownTokens[token.toUpperCase()] ?? token;
-    });
+    const validTokens: string[] = [];
+    for (const token of tokens) {
+      if (this.isValidNativeTokenAddress(token)) {
+        validTokens.push(token);
+      } else if (token.toUpperCase() in knownTokens) {
+        validTokens.push(token.toUpperCase());
+      } else if (failOnInvalidTokens) {
+        throw new Error(`Invalid token address: ${token}`);
+      }
+    }
+    return validTokens;
   }
 
   public async warmup() {
@@ -192,5 +205,9 @@ export class SuiWalletToolbox extends WalletToolbox {
 
   public getAddressFromPrivateKey(privateKey: string): string {
     return getSuiAddressFromPrivateKey(privateKey);
+  }
+
+  public isValidNativeTokenAddress(token: string): boolean {
+    return SUI_HEX_ADDRESS_REGEX.test(token)
   }
 }

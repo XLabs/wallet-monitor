@@ -173,13 +173,26 @@ export class EvmWalletToolbox extends WalletToolbox {
     );
   }
 
-  public parseTokensConfig(tokens: string[]): string[] {
+  public parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[] {
     const knownTokens =
       EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
 
-    return tokens.map(token => {
-      return knownTokens[token.toUpperCase()] ?? token;
-    });
+    const validTokens: string[] = [];
+    for (const token of tokens) {
+      if (EVM_HEX_ADDRESS_REGEX.test(token)) {
+        validTokens.push(token);
+      } else if (token.toUpperCase() in knownTokens) {
+        validTokens.push(knownTokens[token.toUpperCase()]);
+      } else {
+        if (failOnInvalidTokens) {
+          throw new Error(`Invalid token address or symbol: ${token}`);
+        } else {
+          this.logger.warn(`Invalid token address or symbol: ${token}`);
+        }
+      }
+    }
+
+    return validTokens;
   }
 
   public async warmup() {

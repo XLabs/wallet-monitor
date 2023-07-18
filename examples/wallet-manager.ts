@@ -15,7 +15,7 @@ const allChainWallets = {
       },
       {
         address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
-        tokens: []
+        tokens: ["DAI"]
       }
     ]
   },
@@ -61,6 +61,7 @@ export const manager = buildWalletManager({
     logLevel: 'debug',
     balancePollInterval: 10000,
     failOnInvalidChain: false,
+    failOnInvalidTokens: false,
     metrics: {
       enabled: true,
       serve: true,

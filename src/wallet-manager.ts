@@ -70,6 +70,7 @@ export const WalletManagerOptionsSchema = z.object({
     })
     .optional(),
   failOnInvalidChain: z.boolean().default(true),
+  failOnInvalidTokens: z.boolean().default(true).optional(),
 });
 
 export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
@@ -134,6 +135,8 @@ export class WalletManager {
         rebalance: chainConfig.rebalance,
         walletOptions: chainConfig.chainConfig,
         balancePollInterval: options?.balancePollInterval,
+        // defaulted by Zod:
+        failOnInvalidTokens: options?.failOnInvalidTokens!, 
       };
 
       const chainManager = new ChainWalletManager(
