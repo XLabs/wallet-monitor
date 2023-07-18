@@ -1,6 +1,6 @@
 import { DEVNET } from '../index';
 const SOLANA_MAINNET = 'mainnet-beta';
-const SOLANA_DEVNET = 'solana-devnet';
+const SOLANA_DEVNET = 'devnet';
 const SOLANA_CURRENCY_SYMBOL = 'SOL';
 
 export const SOLANA = 'solana';
