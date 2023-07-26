@@ -46,6 +46,9 @@ import {
   OPTIMISM_CHAIN_CONFIG,
 } from "./optimism.config";
 import { KlaytnNetwork, KLAYTN, KLAYTN_CHAIN_CONFIG } from "./klaytn.config";
+import { is } from "bluebird";
+import { type } from "os";
+import { MultiJsonRpcProvider } from "../../providers/evm/MultiJsonRpcProvider";
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
@@ -95,7 +98,7 @@ export const EVM_CHAIN_CONFIGS: Record<EVMChainName, EvmChainConfig> = {
 };
 
 export type EvmWalletOptions = BaseWalletOptions & {
-  nodeUrl?: string;
+  nodeUrl?: string | string[];
   tokenPollConcurrency?: number;
 };
 
@@ -120,7 +123,7 @@ function getUniqueTokens(wallets: WalletConfig[]): string[] {
 }
 
 export class EvmWalletToolbox extends WalletToolbox {
-  provider: ethers.providers.JsonRpcProvider;
+  provider: ethers.providers.JsonRpcProvider | MultiJsonRpcProvider;
   private chainConfig: EvmChainConfig;
   private tokenData: Record<string, EvmTokenData> = {};
   public options: EvmWalletOptions;
@@ -139,7 +142,37 @@ export class EvmWalletToolbox extends WalletToolbox {
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
 
     this.logger.debug(`EVM rpc url: ${this.options.nodeUrl}`);
-    this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
+    this.logger.debug(
+      `EVM experimental provider fallback support: ${
+        this.options.experimentalProviderFallbackSupport
+          ? "enabled"
+          : "disabled"
+      }`,
+    );
+
+    if (this.options.experimentalProviderFallbackSupport) {
+      this.provider = this.buildProviders(this.options.nodeUrl);
+    } else {
+      const nodeUrl = Array.isArray(this.options.nodeUrl)
+        ? this.options.nodeUrl[0]
+        : this.options.nodeUrl;
+      this.provider = new ethers.providers.JsonRpcProvider(nodeUrl);
+    }
+  }
+
+  private buildProviders(
+    nodeUrls: string | string[] | undefined,
+  ): MultiJsonRpcProvider {
+    let providers = undefined;
+    if (Array.isArray(nodeUrls)) {
+      providers = nodeUrls.map(
+        nodeUrl => new ethers.providers.JsonRpcProvider(nodeUrl),
+      );
+    } else {
+      providers = [new ethers.providers.JsonRpcProvider(nodeUrls)];
+    }
+
+    return new MultiJsonRpcProvider(providers);
   }
 
   public validateChainName(chainName: string): chainName is EVMChainName {
@@ -173,7 +206,10 @@ export class EvmWalletToolbox extends WalletToolbox {
     );
   }
 
-  public parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[] {
+  public parseTokensConfig(
+    tokens: string[],
+    failOnInvalidTokens: boolean,
+  ): string[] {
     const knownTokens =
       EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
 

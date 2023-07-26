@@ -43,7 +43,7 @@ export const WalletManagerChainConfigSchema = z.object({
 
 export const WalletManagerConfigSchema = z.record(
   z.string(),
-  WalletManagerChainConfigSchema
+  WalletManagerChainConfigSchema,
 );
 export type WalletManagerConfig = z.infer<typeof WalletManagerConfigSchema>;
 
@@ -71,6 +71,7 @@ export const WalletManagerOptionsSchema = z.object({
     .optional(),
   failOnInvalidChain: z.boolean().default(true),
   failOnInvalidTokens: z.boolean().default(true).optional(),
+  experimentalProviderFallbackSupport: z.boolean().default(false).optional(),
 });
 
 export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
@@ -136,15 +137,17 @@ export class WalletManager {
         walletOptions: chainConfig.chainConfig,
         balancePollInterval: options?.balancePollInterval,
         // defaulted by Zod:
-        failOnInvalidTokens: options?.failOnInvalidTokens!, 
+        failOnInvalidTokens: options?.failOnInvalidTokens!,
+        experimentalProviderFallbackSupport:
+          options?.experimentalProviderFallbackSupport!,
       };
 
       const chainManager = new ChainWalletManager(
         chainManagerConfig,
-        chainConfig.wallets
+        chainConfig.wallets,
       );
 
-      chainManager.on("error", (error) => {
+      chainManager.on("error", error => {
         this.logger.error("Error in chain manager: ${error}");
         this.emitter.emit("error", error, chainName);
       });
@@ -160,36 +163,36 @@ export class WalletManager {
             chainName,
             network,
             balances,
-            previousBalances
+            previousBalances,
           );
-        }
+        },
       );
 
       chainManager.on(
         "rebalance-started",
         (strategy: string, instructions: RebalanceInstruction[]) => {
           this.logger.info(
-            `Rebalance Started. Instructions to execute: ${instructions.length}`
+            `Rebalance Started. Instructions to execute: ${instructions.length}`,
           );
           this.exporter?.updateRebalanceStarted(
             chainName,
             strategy,
-            instructions
+            instructions,
           );
-        }
+        },
       );
 
       chainManager.on(
         "rebalance-finished",
         (strategy: string, receipts: TransferRecepit[]) => {
           this.logger.info(
-            `Rebalance Finished. Executed transactions: ${receipts.length}}`
+            `Rebalance Finished. Executed transactions: ${receipts.length}}`,
           );
           this.exporter?.updateRebalanceSuccess(chainName, strategy, receipts);
-        }
+        },
       );
 
-      chainManager.on("rebalance-error", (error) => {
+      chainManager.on("rebalance-error", error => {
         this.logger.error(`Rebalance Error: ${error}`);
       });
 
@@ -200,7 +203,7 @@ export class WalletManager {
   }
 
   public stop() {
-    Object.values(this.managers).forEach((manager) => manager.stop());
+    Object.values(this.managers).forEach(manager => manager.stop());
   }
 
   public on(event: string, listener: (...args: any[]) => void) {
@@ -234,7 +237,7 @@ export class WalletManager {
   public async withWallet(
     chainName: ChainName,
     fn: WithWalletExecutor,
-    opts?: WalletExecuteOptions
+    opts?: WalletExecuteOptions,
   ): Promise<void> {
     const wallet = await this.acquireLock(chainName, opts);
 

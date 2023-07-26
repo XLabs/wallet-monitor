@@ -1,19 +1,19 @@
+export type {
+  ILibraryWalletManager,
+  IServiceWalletManager,
+  IClientWalletManager,
+} from "./i-wallet-manager";
+export type { WalletManagerFullConfig } from "./wallet-manager";
+export { buildWalletManager } from "./utils";
 
-export type { ILibraryWalletManager, IServiceWalletManager, IClientWalletManager } from './i-wallet-manager'
-export type { WalletManagerFullConfig } from './wallet-manager'
-export { buildWalletManager } from './utils'
-
-import { EVM_CHAIN_CONFIGS } from './wallets/evm';
+import { EVM_CHAIN_CONFIGS } from "./wallets/evm";
 // import { SOLANA_CHAINS } from './wallets/solana';
-import {
-  WalletBalancesByAddress as WBBA,
-} from './chain-wallet-manager';
+import { WalletBalancesByAddress as WBBA } from "./chain-wallet-manager";
 
-import {
-  WalletInterface as WI,
-} from './wallets/base-wallet';
+import { WalletInterface as WI } from "./wallets/base-wallet";
 export type WalletBalancesByAddress = WBBA;
 export type WalletInterface = WI;
+export { MultiJsonRpcProvider } from "./providers/evm/MultiJsonRpcProvider";
 
 /**
  * A map of chain names to their available networks.
@@ -26,4 +26,3 @@ export const NETWORKS = {
   [EVM_CHAIN_CONFIGS.polygon.chainName]: EVM_CHAIN_CONFIGS.polygon.networks,
   [EVM_CHAIN_CONFIGS.avalanche.chainName]: EVM_CHAIN_CONFIGS.avalanche.networks,
 };
-
