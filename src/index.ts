@@ -1,6 +1,6 @@
 
 export type { ILibraryWalletManager, IServiceWalletManager, IClientWalletManager } from './i-wallet-manager'
-export type { WalletManagerFullConfig } from './wallet-manager'
+export type { WalletManager, WalletManagerConfig, WalletManagerOptions, WalletManagerFullConfig } from './wallet-manager'
 export { buildWalletManager } from './utils'
 
 import { EVM_CHAIN_CONFIGS } from './wallets/evm';
