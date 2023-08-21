@@ -15,7 +15,7 @@ import {
   isChain,
   KNOWN_CHAINS,
   WalletBalance,
-  WalletConfigSchema,
+WalletConfigSchema,
 } from "./wallets";
 import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
