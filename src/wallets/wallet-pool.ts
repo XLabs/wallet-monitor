@@ -1,4 +1,4 @@
-import { WalletInterface, WalletPool } from './base-wallet';
+import { WalletPool } from './base-wallet';
 
 type Resource = {
   id: string;

@@ -37,7 +37,7 @@ export async function pullEvmTokenBalance(
     isNative: false,
     rawBalance: balance.toString(),
   }
-};
+}
 
 export async function pullEvmNativeBalance(
   provider: ethers.providers.JsonRpcProvider,

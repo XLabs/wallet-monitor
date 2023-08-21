@@ -11,7 +11,6 @@ import { pullSuiNativeBalance, pullSuiTokenBalances, pullSuiTokenData, transferS
 import {
   SUI_CHAIN_CONFIG,
   SUI,
-  SUI_NATIVE_COIN_MODULE,
   SuiDefaultConfig,
 } from "./sui.config";
 import { getSuiAddressFromPrivateKey } from "../../balances/sui";

@@ -24,6 +24,6 @@ interface IWMBareLocks {
     releaseLock(chainName: ChainName, address: string): Promise<void>
 }
 
-export interface ILibraryWalletManager extends IWMContextManagedLocks {}
-export interface IClientWalletManager extends IWMContextManagedLocks {}
-export interface IServiceWalletManager extends IWMBareLocks {}
+export type ILibraryWalletManager = IWMContextManagedLocks
+export type IClientWalletManager = IWMContextManagedLocks
+export type IServiceWalletManager = IWMBareLocks
