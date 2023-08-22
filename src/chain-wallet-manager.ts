@@ -190,7 +190,7 @@ export class ChainWalletManager {
   }
 
   public async acquireLock(opts?: WalletExecuteOptions) {
-    return this.walletToolbox.acquire(opts?.address, opts?.leaseTimeout)
+    return this.walletToolbox.acquire(opts?.address, opts?.waitToAcquireTimeout)
   }
 
   public async releaseLock(address: string) {

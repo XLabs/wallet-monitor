@@ -21,15 +21,6 @@ export const SUI_CHAINS = {
   [SUI]: 1,
 };
 
-export type SuiChainConfig = {
-  chainName: string;
-  nativeCurrencySymbol: string;
-  knownTokens: Record<string, Record<string, string>>;
-  defaultConfigs: Record<string, { nodeUrl: string }>;
-  networks: Record<string, number>;
-  defaultNetwork: string;
-};
-
 export const SUI_CHAIN_CONFIGS: Record<SuiChainName, SuiChainConfig> = {
   [SUI]: SUI_CHAIN_CONFIG,
 };
@@ -37,6 +28,15 @@ export const SUI_CHAIN_CONFIGS: Record<SuiChainName, SuiChainConfig> = {
 export type SuiWalletOptions = BaseWalletOptions & {
   nodeUrl: string;
   faucetUrl?: string;
+};
+
+export type SuiChainConfig = {
+  chainName: string;
+  nativeCurrencySymbol: string;
+  knownTokens: Record<string, Record<string, string>>;
+  defaultConfigs: Record<string, { nodeUrl: string }>;
+  networks: Record<string, number>;
+  defaultNetwork: string;
 };
 
 export type SuiDefaultConfigs = Record<string, SuiDefaultConfig>;

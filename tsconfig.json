@@ -21,7 +21,7 @@
   },
   "include": [
     "src"
-, "test/balances/sui.test.ts"],
+  ],
   "exclude": [
     "node_modules",
     "lib/**/*",
