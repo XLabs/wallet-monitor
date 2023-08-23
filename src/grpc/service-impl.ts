@@ -14,7 +14,7 @@ export class WalletManagerGRPCService implements WalletManagerGRPCServiceImpleme
     async acquireLock(request: AcquireLockRequest, context: CallContext): Promise<DeepPartial<AcquireLockResponse>> {
         const acquiredWallet = await this.underlyingWalletManager.acquireLock(
             request.chainName as ChainName, 
-            { address: request.address, leaseTimeout: request.leaseTimeout }
+            { address: request.address, leaseTimeout: request.leaseTimeout, waitToAcquireTimeout: request.acquireTimout }
         );
 
         return {address: acquiredWallet.address};
