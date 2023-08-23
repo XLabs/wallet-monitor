@@ -50,6 +50,15 @@ function createRebalanceTransactionsCounter (registry: Registry, name: string) {
   });
 }
 
+function createCounter(registry: Registry, name: string, help: string, labels: string[]) {
+  return new Counter({
+    name,
+    help,
+    labelNames: labels,
+    registers: [registry],
+  });
+}
+
 export function createBalancesGauge(registry: Registry, gaugeName: string) {
   return new Gauge({
     name: gaugeName,
@@ -87,6 +96,8 @@ export class PrometheusExporter {
   private rebalanceExpenditureCounter: Counter;
   private rebalanceInstructionsCounter: Counter;
   private rebalanceTransactionsCounter: Counter;
+  private locksAcquiredCounter: Counter;
+
 
   private prometheusPort: number;
   private prometheusPath: string;
@@ -102,6 +113,7 @@ export class PrometheusExporter {
     this.rebalanceExpenditureCounter = createRebalanceExpenditureCounter(this.registry, 'wallet_monitor_rebalance_expenditure');
     this.rebalanceInstructionsCounter = createRebalanceInstructionsCounter(this.registry, 'wallet_monitor_rebalance_instruction');
     this.rebalanceTransactionsCounter = createRebalanceTransactionsCounter(this.registry, 'wallet_monitor_rebalance_transaction');
+    this.locksAcquiredCounter = createCounter(this.registry, "locks_acquired_total", "Total number of acquired locks", ['chain_name', 'status']);
   }
 
   public getRegistry() {
@@ -133,6 +145,14 @@ export class PrometheusExporter {
       return total + parseFloat(receipt.formattedCost);
     }, 0);
     this.rebalanceExpenditureCounter.labels(chainName, strategy).inc(totalExpenditure);
+  }
+
+  public increaseAcquiredLocks(chainName: string) {
+    this.locksAcquiredCounter.labels(chainName, "success").inc();
+  }
+    
+  public increaseAcquireLockFailure(chainName: string) {
+    this.locksAcquiredCounter.labels(chainName, "failed").inc();
   }
 
   public async startMetricsServer(): Promise<void> {

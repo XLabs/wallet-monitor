@@ -33,7 +33,7 @@ const walletManager = new WalletManager(fileConfig.config, fileConfig.options)
 
 const walletManagerGRPCService = new WalletManagerGRPCService(walletManager);
 
-const server = createServer();
+const server = createServer(); // TODO: add observability for the GRPC server
 server.add(WalletManagerGRPCServiceDefinition, walletManagerGRPCService);
 server.listen(fileConfig.grpc.listenAddress + ':' + fileConfig.grpc.listenPort);
 

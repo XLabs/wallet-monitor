@@ -17,7 +17,7 @@ import {
   WalletBalance,
 WalletConfigSchema,
 } from "./wallets";
-import { TransferRecepit } from "./wallets/base-wallet";
+import { TransferRecepit, WalletInterface } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
 
 export const WalletRebalancingConfigSchema = z.object({
@@ -215,12 +215,19 @@ export class WalletManager {
     return this.exporter?.getRegistry();
   }
 
-  public acquireLock(chainName: ChainName, opts?: WalletExecuteOptions) {
+  public acquireLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<WalletInterface> {
     const chainManager = this.managers[chainName];
     if (!chainManager)
       throw new Error(`No wallets configured for chain: ${chainName}`);
 
-    return chainManager.acquireLock(opts);
+    return this.runGuarded(
+      () => chainManager.acquireLock(opts),
+      () => this.exporter?.increaseAcquiredLocks(chainName),
+      () => {
+        this.logger.error(`Failed to acquire lock for ${chainName}`);
+        this.exporter?.increaseAcquireLockFailure(chainName);
+      }
+    );
   }
 
   public releaseLock(chainName: ChainName, address: string) {
@@ -231,6 +238,15 @@ export class WalletManager {
     return chainManager.releaseLock(address);
   }
 
+  /**
+   * Guarantees wallet will only be used by caller in a single process setup.
+   * There is no enforcement of lease timeout, so you should have one defined by the fn param.
+   * If no lock is obtained befored specified waitToAcquireTimeout expires, an error will be thrown. 
+   * 
+   * @param chainName 
+   * @param fn
+   * @param opts - leaseTimeout will be ignored
+   */
   public async withWallet(
     chainName: ChainName,
     fn: WithWalletExecutor,
@@ -264,5 +280,16 @@ export class WalletManager {
       throw new Error(`No wallets configured for chain: ${chainName}`);
 
     return manager.getBalances();
+  }
+
+  private async runGuarded<T>(supplier: () => Promise<T>, onSuccess: () => void, onFailure: () => void): Promise<T> {
+    try {
+      const result = await supplier();
+      onSuccess();
+      return result;
+    } catch (e) {
+      onFailure();
+      throw e;
+    }
   }
 }

@@ -25,20 +25,20 @@ describe("wallet-manager", () => {
         expect(markers).toEqual([0, 1]);
     });
 
-    test("should release and continue when something goes wrong", async () => {
+    test("should continue when something goes wrong", async () => {
         const markers: number[] = [];
 
         givenAWalletManager();
 
         await Promise.allSettled([
-             whenWalletCalled(ETHEREUM, async () => { throw new Error("oops"); }),
-             whenWalletCalled(ETHEREUM, async () => { markers.push(1); }, 50)
+            whenWalletCalled(ETHEREUM, async () => { throw new Error("oops"); }),
+            whenWalletCalled(ETHEREUM, async () => { markers.push(1); }, 50)
         ]);
 
         expect(markers).toEqual([1]);
     });
 
-    test("should fail to acquire if timeout is reached", async () => {
+    test("should fail if timeout is reached", async () => {
         const markers: number[] = [];
         const waitToAcquireTimeout = 10;
 
@@ -58,7 +58,7 @@ describe("wallet-manager", () => {
 
 });
 
-const delay = (ms: number)  => new Promise((resolve, reject) => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve, reject) => setTimeout(resolve, ms));
 
 const givenAWalletManager = (rebalance: boolean = false) => {
     const cfg = {
@@ -78,5 +78,6 @@ const givenAWalletManager = (rebalance: boolean = false) => {
     walletManager = new WalletManager(cfg);
 };
 
-const whenWalletCalled = (chain: ChainName, executor: WithWalletExecutor, waitToAcquireTimeout: number = 1000) => walletManager.withWallet(chain, executor, { waitToAcquireTimeout });
+const whenWalletCalled = (chain: ChainName, executor: WithWalletExecutor, waitToAcquireTimeout: number = 1000) => 
+    walletManager.withWallet(chain, executor, { waitToAcquireTimeout });
 
