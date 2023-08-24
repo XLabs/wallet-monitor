@@ -135,7 +135,6 @@ export class WalletManager {
         rebalance: chainConfig.rebalance,
         walletOptions: chainConfig.chainConfig,
         balancePollInterval: options?.balancePollInterval,
-        // defaulted by Zod:
         failOnInvalidTokens: options?.failOnInvalidTokens ?? true, 
       };
 

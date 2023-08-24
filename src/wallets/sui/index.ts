@@ -16,6 +16,7 @@ import {
 import { getSuiAddressFromPrivateKey } from "../../balances/sui";
 import {mapConcurrent} from "../../utils";
 import { formatFixed } from "@ethersproject/bignumber";
+import { time } from "console";
 
 export const SUI_CHAINS = {
   [SUI]: 1,
@@ -98,21 +99,19 @@ export class SuiWalletToolbox extends WalletToolbox {
       throw new Error(`Invalid token address: ${token}`);
     }
 
-    const knownTokens = SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
-
-    if (!(token.toUpperCase() in knownTokens)) {
+    if (!(this.isKnownToken(token))) {
       throw new Error(`Unknown token address: ${token}`);
     }
     return true;
   }
 
   public parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[] {
-    const knownTokens = SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
+    const knownTokens = this.getKnownTokens();
     const validTokens: string[] = [];
     for (const token of tokens) {
       if (this.isValidNativeTokenAddress(token)) {
         validTokens.push(token);
-      } else if (token.toUpperCase() in knownTokens) {
+      } else if (this.isKnownToken(token)) {
         validTokens.push(token.toUpperCase());
       } else if (failOnInvalidTokens) {
         throw new Error(`Invalid token address: ${token}`);
@@ -121,9 +120,19 @@ export class SuiWalletToolbox extends WalletToolbox {
     return validTokens;
   }
 
+  private getKnownTokens(): Record<string, string> {
+    return SUI_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
+  }
+
+  private isKnownToken(token: string): boolean {
+    return token.toUpperCase() in this.getKnownTokens();
+  }
+  
   public async warmup() {
     const tokens = this.walletTokens(this.wallets);
-    await mapConcurrent(tokens, async (tokenAddress: string): Promise<void> => {
+    await mapConcurrent(tokens, async (token: string): Promise<void> => {
+      // token can be stored as symbol or address, so we normalize to address here
+      const tokenAddress = this.isKnownToken(token) ? this.getKnownTokens()[token] : token; 
       this.tokenData[tokenAddress] = await pullSuiTokenData(this.provider, tokenAddress);
     }, 1);
 

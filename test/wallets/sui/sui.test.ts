@@ -44,8 +44,7 @@ jest.mock("../../../src/balances/sui", () => ({
     })
 }));
 
-// Skipping due to failures
-describe.skip("sui wallet tests", () => {
+describe("sui wallet tests", () => {
     let logger: winston.Logger;
     let options: SuiWalletOptions;
     beforeAll(() => {
