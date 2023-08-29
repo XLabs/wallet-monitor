@@ -1,4 +1,3 @@
-import { DEVNET } from '../index';
 import { EvmDefaultConfigs } from './index';
 
 export const POLYGON = 'polygon';

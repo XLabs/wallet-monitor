@@ -21,7 +21,8 @@ const options: WalletManagerOptions = {
     enabled: true,
     serve: true,
     port: 9091,
-  }
+  },
+  failOnInvalidChain: true
 };
 
 const allChainWallets: WalletManagerConfig = {

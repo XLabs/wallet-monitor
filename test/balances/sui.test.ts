@@ -16,7 +16,7 @@ describe("Test sui balance util", () => {
         ["-1", 6, "-0.000001"], // negative minimal precision for usdc
         [(2n ** 64n - 1n).toString(), 8, "184467440737.09551615"], // max uint64
     ])("Test format units", (rawUnits: string, decimals: number, expectedFormattedValue: string) => {
-        let result = formatFixed(rawUnits, decimals);
+        const result = formatFixed(rawUnits, decimals);
         expect(result).toBe(expectedFormattedValue);
     });
 });

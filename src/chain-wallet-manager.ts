@@ -132,7 +132,7 @@ export class ChainWalletManager {
       console.warn(`A monitoring run is already in progress for ${this.options.chainName}. Will skip run`);
       this.emitter.emit('skipped', { chainName: this.options.chainName, rawConfig: this.wallets });
       return;
-    };
+    }
 
     this.locked = true;
 
@@ -158,7 +158,7 @@ export class ChainWalletManager {
 
       return acc;
     }, {} as WalletBalancesByAddress);
-  };
+  }
 
   public on(event: string, listener: (...args: any[]) => void) {
     this.emitter.on(event, listener);
@@ -190,7 +190,7 @@ export class ChainWalletManager {
   }
 
   public async acquireLock(opts?: WalletExecuteOptions) {
-    return this.walletToolbox.acquire(opts?.address, opts?.leaseTimeout)
+    return this.walletToolbox.acquire(opts?.address, opts?.waitToAcquireTimeout)
   }
 
   public async releaseLock(address: string) {
@@ -198,7 +198,7 @@ export class ChainWalletManager {
   }
 
   // Returns a boolean indicating if a rebalance was executed
-  public async executeRebalanceIfNeeded(): Promise<Boolean> {
+  public async executeRebalanceIfNeeded(): Promise<boolean> {
     if (this.rebalanceLocked) {
       this.logger.warn(`A rebalance is already in progress for ${this.options.chainName}. Will skip rebalance`);
       return false;
@@ -236,7 +236,7 @@ export class ChainWalletManager {
       }
       
       receipts.push(receipt);
-    };
+    }
     
     await this.refreshBalances();
     

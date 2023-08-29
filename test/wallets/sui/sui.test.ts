@@ -1,12 +1,15 @@
 import { describe, expect, jest, test } from '@jest/globals';
 
-import { SuiWalletOptions, SuiWalletToolbox } from "./";
-import { SUI, SUI_MAINNET } from "./sui.config";
-import { WalletConfig } from "../index";
-import * as winston from "winston";
-import { pullSuiTokenData } from "../../balances/sui";
+import { SuiWalletOptions } from "../../../src/wallets/sui";
 
-jest.mock("../../balances/sui", () => ({
+import { createWalletToolbox, WalletConfig } from "../../../src/wallets";
+
+import * as winston from "winston";
+import { pullSuiTokenData } from "../../../src/balances/sui";
+
+
+
+jest.mock("../../../src/balances/sui", () => ({
     pullSuiTokenBalances: jest.fn(() => [
         {
             coinType: "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN",
@@ -59,6 +62,7 @@ describe("sui wallet tests", () => {
         options = {
             logger,
             nodeUrl: "",
+            failOnInvalidTokens: false
         };
     })
     test("Pull token balances", async () => {
@@ -68,9 +72,9 @@ describe("sui wallet tests", () => {
                 tokens: ["USDC", "PEPE", "SHIBA"],
             },
         ];
-        const wallet = new SuiWalletToolbox(
-            SUI_MAINNET,
-            SUI,
+        const wallet = createWalletToolbox(
+            "mainnet",
+            "sui",
             wallets,
             options
         );

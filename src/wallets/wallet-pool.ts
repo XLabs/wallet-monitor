@@ -1,4 +1,4 @@
-import { WalletInterface, WalletPool } from './base-wallet';
+import { WalletPool } from './base-wallet';
 
 type Resource = {
   id: string;
@@ -19,7 +19,7 @@ export class LocalWalletPool implements WalletPool {
     }
   }
 
-  public async acquire(resourceId?: string): Promise<string> {
+  private async acquire(resourceId?: string): Promise<string> {
     const resource = resourceId
       ? this.resources[resourceId]
       : Object.values(this.resources).find((resource) => !resource.locked);

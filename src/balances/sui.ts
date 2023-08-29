@@ -124,7 +124,7 @@ function buildEd25519KeyPair(key: Buffer): Ed25519Keypair {
 }
 
 function buildSuiKeyPairFromPrivateKey(privateKey: string): Secp256k1Keypair | Ed25519Keypair {
-  let parsedKey = Buffer.from(privateKey, 'base64');
+  const parsedKey = Buffer.from(privateKey, 'base64');
 
   let key, buildKeyPair;
   if (parsedKey.length === PRIVATE_KEY_SIZE+1) {
