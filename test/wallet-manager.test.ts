@@ -60,7 +60,7 @@ describe("wallet-manager", () => {
 
 const delay = (ms: number) => new Promise((resolve, reject) => setTimeout(resolve, ms));
 
-const givenAWalletManager = (rebalance: boolean = false) => {
+const givenAWalletManager = (rebalance = false) => {
     const cfg = {
         [ETHEREUM]: {
             rebalance: {
@@ -78,6 +78,6 @@ const givenAWalletManager = (rebalance: boolean = false) => {
     walletManager = new WalletManager(cfg);
 };
 
-const whenWalletCalled = (chain: ChainName, executor: WithWalletExecutor, waitToAcquireTimeout: number = 1000) => 
+const whenWalletCalled = (chain: ChainName, executor: WithWalletExecutor, waitToAcquireTimeout = 1000) => 
     walletManager.withWallet(chain, executor, { waitToAcquireTimeout });
 

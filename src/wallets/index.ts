@@ -57,7 +57,7 @@ export function isSolanaChain(chainName: ChainName): chainName is SolanaChainNam
 
 export function isSuiChain(chainName: ChainName): chainName is SuiChainName {
   return chainName in SUI_CHAINS;
-};
+}
 
 export function createWalletToolbox(
   network: string, chainName: string, wallets: WalletConfig[], walletOptions: WalletOptions

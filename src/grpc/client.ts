@@ -45,7 +45,7 @@ export class ClientWalletManager implements IClientWalletManager {
         const chainManager = this.managers[chainName];
         if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
 
-        const { address: acquiredAddress } = await this.walletManagerGRPCClient.acquireLock({chainName, address: opts?.address, leaseTimeout: opts?.leaseTimeout, acquireTimout: opts?.waitToAcquireTimeout })
+        const { address: acquiredAddress } = await this.walletManagerGRPCClient.acquireLock({chainName, address: opts?.address, leaseTimeout: opts?.leaseTimeout, acquireTimeout: opts?.waitToAcquireTimeout })
 
         // FIXME
         // Dirty solution. We are doing as little work as possible to get the same expected WalletInterface after

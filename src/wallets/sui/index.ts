@@ -16,7 +16,6 @@ import {
 import { getSuiAddressFromPrivateKey } from "../../balances/sui";
 import {mapConcurrent} from "../../utils";
 import { formatFixed } from "@ethersproject/bignumber";
-import { time } from "console";
 
 export const SUI_CHAINS = {
   [SUI]: 1,
