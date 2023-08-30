@@ -6,7 +6,13 @@ import {
   BaseWalletOptions,
   TransferRecepit, WalletData,
 } from "../base-wallet";
-import { pullSuiNativeBalance, pullSuiTokenBalances, pullSuiTokenData, transferSuiNativeBalance } from "../../balances/sui";
+import { 
+  SuiTokenData, 
+  pullSuiNativeBalance, 
+  pullSuiTokenBalances, 
+  pullSuiTokenData, 
+  transferSuiNativeBalance
+} from "../../balances/sui";
 
 import {
   SUI_CHAIN_CONFIG,
@@ -49,7 +55,7 @@ const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::coin::COIN$/;
 export class SuiWalletToolbox extends WalletToolbox {
   provider: Connection;
   private chainConfig: SuiChainConfig;
-  private tokenData: Record<string, any> = {};
+  private tokenData: Record<string, SuiTokenData> = {};
   public options: SuiWalletOptions;
 
   constructor(
@@ -105,7 +111,6 @@ export class SuiWalletToolbox extends WalletToolbox {
   }
 
   public parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[] {
-    const knownTokens = this.getKnownTokens();
     const validTokens: string[] = [];
     for (const token of tokens) {
       if (this.isValidNativeTokenAddress(token)) {
@@ -131,8 +136,10 @@ export class SuiWalletToolbox extends WalletToolbox {
     const tokens = this.walletTokens(this.wallets);
     await mapConcurrent(tokens, async (token: string): Promise<void> => {
       // token can be stored as symbol or address, so we normalize to address here
-      const tokenAddress = this.isKnownToken(token) ? this.getKnownTokens()[token] : token; 
-      this.tokenData[tokenAddress] = await pullSuiTokenData(this.provider, tokenAddress);
+      const tokenAddress = this.isKnownToken(token) ? this.getKnownTokens()[token] : token;
+      const tokenData = await pullSuiTokenData(this.provider, tokenAddress);
+      this.tokenData[tokenAddress] = tokenData
+      this.tokenData[token] = tokenData;
     }, 1);
 
     this.logger.debug(`Sui token data: ${JSON.stringify(this.tokenData)}`);
@@ -170,7 +177,7 @@ export class SuiWalletToolbox extends WalletToolbox {
       const symbol: string = tokenData?.symbol ? tokenData.symbol : "";
 
       for (const balance of allBalances) {
-        if (balance.coinType === tokenAddress) {
+        if (balance.coinType === tokenData.address) {
 
           const formattedBalance = formatFixed(
               balance.totalBalance,
