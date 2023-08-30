@@ -72,7 +72,7 @@ describe("sui wallet tests", () => {
         const wallets: WalletConfig[] = [
             {
                 address: "0x0000000000000000000000000000000000000000000000000000000000000000",
-                tokens: ["USDC", "PEPE", "SHIBA"],
+                tokens: ["USDC", "PEPE", "SHIBA", "0x5d1f47ea69bb0de31c313d7acf89b890dbb8991ea8e03c6c355171f84bb1ba4a::turbos::TURBOS"],
             },
         ];
         const wallet = createWalletToolbox(
@@ -83,7 +83,7 @@ describe("sui wallet tests", () => {
         );
 
         await wallet.warmup();
-        expect(pullSuiTokenData).toHaveBeenCalled();
+        expect(pullSuiTokenData).toHaveBeenCalledTimes(2); // KnownToken (USDC) and Valid Address (TURBOS)
 
         const tokenBalances = await wallet.pullTokenBalances(
             "0x0000000000000000000000000000000000000000000000000000000000000000",

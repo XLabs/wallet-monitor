@@ -49,8 +49,7 @@ export type SuiDefaultConfigs = Record<string, SuiDefaultConfig>;
 
 export type SuiChainName = keyof typeof SUI_CHAINS;
 
-// TODO: See other token types
-const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::coin::COIN$/;
+const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::\w+::\w+$/;
 
 export class SuiWalletToolbox extends WalletToolbox {
   provider: Connection;
@@ -116,7 +115,7 @@ export class SuiWalletToolbox extends WalletToolbox {
       if (this.isValidNativeTokenAddress(token)) {
         validTokens.push(token);
       } else if (this.isKnownToken(token)) {
-        validTokens.push(token.toUpperCase());
+        validTokens.push(this.getKnownTokens()[token.toUpperCase()]);
       } else if (failOnInvalidTokens) {
         throw new Error(`Invalid token address: ${token}`);
       }
@@ -134,12 +133,10 @@ export class SuiWalletToolbox extends WalletToolbox {
   
   public async warmup() {
     const tokens = this.walletTokens(this.wallets);
-    await mapConcurrent(tokens, async (token: string): Promise<void> => {
-      // token can be stored as symbol or address, so we normalize to address here
-      const tokenAddress = this.isKnownToken(token) ? this.getKnownTokens()[token] : token;
+    await mapConcurrent(tokens, async (tokenAddress: string): Promise<void> => {
+      // tokens has addresses, per this.parseTokensConfig() contract
       const tokenData = await pullSuiTokenData(this.provider, tokenAddress);
-      this.tokenData[tokenAddress] = tokenData
-      this.tokenData[token] = tokenData;
+      this.tokenData[tokenAddress] = tokenData;
     }, 1);
 
     this.logger.debug(`Sui token data: ${JSON.stringify(this.tokenData)}`);
