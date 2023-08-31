@@ -115,12 +115,16 @@ export class SuiWalletToolbox extends WalletToolbox {
       if (this.isValidNativeTokenAddress(token)) {
         validTokens.push(token);
       } else if (this.isKnownToken(token)) {
-        validTokens.push(this.getKnownTokens()[token.toUpperCase()]);
+        validTokens.push(this.getKnownTokenAddress(token));
       } else if (failOnInvalidTokens) {
         throw new Error(`Invalid token address: ${token}`);
       }
     }
     return validTokens;
+  }
+
+  private getKnownTokenAddress(token: string): string {
+    return this.getKnownTokens()[token.toUpperCase()];
   }
 
   private getKnownTokens(): Record<string, string> {
