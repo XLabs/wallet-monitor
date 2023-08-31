@@ -206,7 +206,7 @@ export class WalletManager {
     this.emitter.on(event, listener);
   }
 
-  public metrics() {
+  public async metrics() {
     return this.exporter?.metrics();
   }
 
@@ -214,7 +214,10 @@ export class WalletManager {
     return this.exporter?.getRegistry();
   }
 
-  public acquireLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<WalletInterface> {
+  public async acquireLock(
+    chainName: ChainName,
+    opts?: WalletExecuteOptions,
+  ): Promise<WalletInterface> {
     const chainManager = this.managers[chainName];
     if (!chainManager)
       throw new Error(`No wallets configured for chain: ${chainName}`);
@@ -229,7 +232,7 @@ export class WalletManager {
     );
   }
 
-  public releaseLock(chainName: ChainName, address: string) {
+  public async releaseLock(chainName: ChainName, address: string) {
     const chainManager = this.managers[chainName];
     if (!chainManager)
       throw new Error(`No wallets configured for chain: ${chainName}`);

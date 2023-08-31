@@ -19,5 +19,18 @@ jobs:
         run: npm ci
       - name: typecheck
         run: npm run build
-      - name: test
+      - name: Install PM2 and wait-port
+        run: |
+          npm install -g pm2
+          npm install -g wait-port
+      - name: Run Ganache in the background
+        working-directory: ./pkg/app
+        run: |
+          pm2 --name ganache-service start npm -- run start-ganache
+          wait-port -t 10000 127.0.0.1:8545
+      - name: Run tests
         run: npm test
+      - name: Remove ganache process from the background
+        if: always()
+        run: |
+          pm2 delete ganache-service

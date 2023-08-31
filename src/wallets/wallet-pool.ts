@@ -1,9 +1,16 @@
-import { WalletPool } from './base-wallet';
+export interface WalletPool {
+  blockAndAcquire(blockTimeout: number, resourceId?: string): Promise<string>;
+  release(wallet: string): Promise<void>;
+  discardWalletFromPool(wallet: string): void;
+  addWalletBackToPoolIfRequired(wallet: string): void;
+}
 
 type Resource = {
   id: string;
   locked: boolean;
-}
+  /** Discard wallet from usage if balance goes below min threshold defined in rebalance config */
+  discarded: boolean;
+};
 
 type ResourcePool = Record<string, Resource>;
 
@@ -15,6 +22,7 @@ export class LocalWalletPool implements WalletPool {
       this.resources[address] = {
         id: address,
         locked: false,
+        discarded: false,
       };
     }
   }
@@ -22,13 +30,30 @@ export class LocalWalletPool implements WalletPool {
   private async acquire(resourceId?: string): Promise<string> {
     const resource = resourceId
       ? this.resources[resourceId]
-      : Object.values(this.resources).find((resource) => !resource.locked);
+      : Object.values(this.resources).find(
+          resource => !resource.locked || !resource.discarded,
+        );
 
-    if (!resource || resource.locked) throw new Error('Resource not available');
+    if (!resource || resource.locked || resource.discarded)
+      throw new Error("Resource not available");
 
     resource.locked = true;
 
     return resource.id;
+  }
+
+  public discardWalletFromPool(resourceId: string): void {
+    if (resourceId in this.resources) {
+      this.resources[resourceId].discarded = true;
+    } else {
+      throw new Error(`Resource ${resourceId} not available for discarding`);
+    }
+  }
+
+  public addWalletBackToPoolIfRequired(resourceId: string): void {
+    if (resourceId in this.resources && this.resources[resourceId].discarded) {
+      this.resources[resourceId].discarded = false;
+    }
   }
 
   /**

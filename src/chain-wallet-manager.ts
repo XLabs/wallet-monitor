@@ -33,7 +33,7 @@ export type WalletBalancesByAddress = Record<string, WalletBalance>;
 
 export type WalletExecuteOptions = {
   address?: string;
-  waitToAcquireTimeout?: number,
+  waitToAcquireTimeout?: number;
   leaseTimeout?: number;
 }
 
@@ -137,7 +137,13 @@ export class ChainWalletManager {
     this.locked = true;
 
     try {
-      const balances = await this.walletToolbox.pullBalances();
+      const {
+        rebalance: { enabled: isRebalancingEnabled, minBalanceThreshold },
+      } = this.options;
+      const balances = await this.walletToolbox.pullBalances(
+        isRebalancingEnabled,
+        minBalanceThreshold,
+      );
       const lastBalance = this.balancesByAddress;
       this.balancesByAddress = this.mapBalances(balances);
       this.emitter.emit('balances', balances, this.balancesByAddress, lastBalance);
@@ -167,22 +173,23 @@ export class ChainWalletManager {
   public async start() {
     this.logger.info(`Starting Manager for chain: ${this.options.chainName}`);
     this.interval = setInterval(async () => {
-      this.refreshBalances();
+      await this.refreshBalances();
     }, DEFAULT_POLL_INTERVAL);
 
     if (this.options.rebalance.enabled) {
       this.logger.info(`Starting Rebalancing Cycle for chain: ${this.options.chainName}. Strategy: "${this.options.rebalance.strategy}"`);
-      this.rebalanceInterval = setInterval(() => {
-        this.executeRebalanceIfNeeded();
+      this.rebalanceInterval = setInterval(async () => {
+        await this.executeRebalanceIfNeeded();
       }, this.options.rebalance.interval);
     }
 
-    this.refreshBalances();
+    await this.refreshBalances();
   }
 
   public stop() {
     if (this.interval) clearInterval(this.interval);
     if (this.rebalanceInterval) clearInterval(this.rebalanceInterval);
+    this.emitter.removeAllListeners();
   }
 
   public getBalances(): WalletBalancesByAddress {
