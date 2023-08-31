@@ -24,7 +24,6 @@ jobs:
           npm install -g pm2
           npm install -g wait-port
       - name: Run Ganache in the background
-        working-directory: ./pkg/app
         run: |
           pm2 --name ganache-service start npm -- run start-ganache
           wait-port -t 10000 127.0.0.1:8545
