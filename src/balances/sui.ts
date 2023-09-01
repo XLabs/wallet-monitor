@@ -5,6 +5,7 @@ import { parseFixed } from '@ethersproject/bignumber';
 export type SuiTokenData = {
   symbol: string;
   decimals: number;
+  address: string;
 };
 
 export interface SuiTransactionDetails {
@@ -45,7 +46,8 @@ export async function pullSuiTokenData(
 
   return {
     symbol: coinData.symbol,
-    decimals: coinData.decimals
+    decimals: coinData.decimals,
+    address: address
   };
 }
 

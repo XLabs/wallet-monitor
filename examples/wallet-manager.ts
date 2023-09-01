@@ -25,6 +25,12 @@ const allChainWallets = {
     ],
   },
   sui: {
+    rebalance: {
+      enabled: false,
+      strategy: 'default',
+      interval: 10000,
+      minBalanceThreshold: 0.1,
+    },
     wallets: [
       { privateKey: 'ODV9VYi3eSljEWWmpWh8s9m/P2BNNxU/Vp8jwADeNuw=' },
       { address: '0x934042d46762fadf9f61ef07aa265fc14d28525c7051224a5f1cba2409aef307' },
@@ -33,6 +39,10 @@ const allChainWallets = {
       { address: '0x18337b4c5b964b7645506542589c5ed496e794af82f98b3789fed96f61a94c96' },
       { address: '0x9ae846f88db3476d7c9f2d8fc49722f7085a3b46aad998120dd11ebeab83e021' },
       { address: '0xcb39d897bf0561af7531d37db9781e54528269fed4761275931ce32f20352977' },
+      { 
+        address: '0x8f11fe7121be742f46e2b3bc2eba081efdc3027697c317a917a2d16fd9b59ab1', 
+        tokens: ['USDC', 'USDT', '0x5d1f47ea69bb0de31c313d7acf89b890dbb8991ea8e03c6c355171f84bb1ba4a::turbos::TURBOS'] 
+      },
     ]
   },
   klatyn: {
