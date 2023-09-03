@@ -196,8 +196,8 @@ export class ChainWalletManager {
     return this.balancesByAddress;
   }
 
-  public async acquireLock(opts?: WalletExecuteOptions) {
-    return this.walletToolbox.acquire(opts?.address, opts?.waitToAcquireTimeout)
+  public async acquireLock(opts?: WalletExecuteOptions): Promise<WalletInterface> {
+    return this.walletToolbox.acquire(opts?.address, opts?.waitToAcquireTimeout);
   }
 
   public async releaseLock(address: string) {

@@ -12,6 +12,7 @@ export type WalletInterface = {
   address: string;
   privateKey?: string;
   provider: any; // TODO use providers union type
+  getBalance: () => Promise<string>;
 }
 
 export type TransferRecepit = {
@@ -163,6 +164,10 @@ export abstract class WalletToolbox {
       privateKey,
       address: walletAddress,
       provider: this.provider,
+      getBalance: async () => {
+        const balance = await this.pullNativeBalance(walletAddress);
+        return balance.rawBalance;
+      }
     }
   }
 
