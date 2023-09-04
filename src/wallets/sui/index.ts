@@ -1,4 +1,4 @@
-import { Connection } from "@mysten/sui.js";
+import { Connection, Ed25519Keypair, RawSigner, JsonRpcProvider } from "@mysten/sui.js";
 
 import { WalletConfig, WalletBalance, TokenBalance } from "../";
 import {
@@ -42,6 +42,8 @@ export type SuiChainConfig = {
 export type SuiDefaultConfigs = Record<string, SuiDefaultConfig>;
 
 export type SuiChainName = keyof typeof SUI_CHAINS;
+export type SuiWallet = RawSigner;
+export type SuiProvider = Connection;
 
 // TODO: See other token types
 const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::coin::COIN$/;
@@ -208,6 +210,13 @@ export class SuiWalletToolbox extends WalletToolbox {
   ): Promise<TransferRecepit> {
     const txDetails = { targetAddress, amount, maxGasPrice, gasLimit };
     return transferSuiNativeBalance(this.provider, privateKey, txDetails);
+  }
+
+  public async createSignedWallet (privateKey: string) {
+    const seiPrivateKeyAsBuffer = Buffer.from(privateKey, "hex");
+    const keyPair = Ed25519Keypair.fromSecretKey(seiPrivateKeyAsBuffer);
+    const suiProvider = new JsonRpcProvider(this.provider);
+    return new RawSigner(keyPair, suiProvider);
   }
 
   public getAddressFromPrivateKey(privateKey: string): string {

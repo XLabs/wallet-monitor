@@ -2,17 +2,37 @@ import winston from 'winston';
 import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
 import { LocalWalletPool, WalletPool } from "./wallet-pool";
 import { createLogger } from '../utils';
+import { EVMWallet, EvmProvider } from './evm';
+import { SolanaProvider, SolanaWallet } from './solana';
+import { SuiProvider, SuiWallet } from './sui';
 
 export type BaseWalletOptions = {
   logger: winston.Logger;
   failOnInvalidTokens: boolean;
 }
 
+export type Wallet =
+  | EVMWallet
+  | SolanaWallet
+  | UntypedWallet
+  | SuiWallet
+
+export type Providers = EvmProvider | SolanaProvider | SuiProvider | UntypedProvider;
+
+export type UntypedProvider = {
+  rpcUrl: string;
+};
+
+export type UntypedWallet = UntypedProvider & {
+  privateKey: string;
+};
+
 export type WalletInterface = {
   address: string;
   privateKey?: string;
-  provider: any; // TODO use providers union type
+  provider: Providers;
   getBalance: () => Promise<string>;
+  signedWallet: Wallet;
 }
 
 export type TransferRecepit = {
@@ -31,7 +51,9 @@ export type WalletData = {
 };
 
 export abstract class WalletToolbox {
-  protected provider: any;// TODO: reevaluate the best way to do this
+  protected provider: Providers = {
+    rpcUrl: ""
+  };
   private warm = false;
   private walletPool: WalletPool;
   protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};
@@ -64,6 +86,8 @@ export abstract class WalletToolbox {
   abstract pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]>;
 
   abstract transferNativeBalance(privateKey: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number): Promise<TransferRecepit>;
+
+  abstract createSignedWallet (privateKey: string): Promise<Wallet>;
 
   constructor(
     protected network: string,
@@ -167,7 +191,8 @@ export abstract class WalletToolbox {
       getBalance: async () => {
         const balance = await this.pullNativeBalance(walletAddress);
         return balance.rawBalance;
-      }
+      },
+      signedWallet: await this.createSignedWallet(privateKey!)
     }
   }
 

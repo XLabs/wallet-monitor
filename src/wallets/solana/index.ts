@@ -1,4 +1,5 @@
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js"
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Keypair } from "@solana/web3.js"
+import { decode } from "bs58";
 import { SOLANA, SOLANA_CHAIN_CONFIG, SolanaNetworks } from "./solana.config";
 import { PYTHNET, PYTHNET_CHAIN_CONFIG } from "./pythnet.config";
 import { BaseWalletOptions, TransferRecepit, WalletToolbox } from "../base-wallet";
@@ -29,7 +30,11 @@ export const SOLANA_CHAINS = {
 
 
 export type SolanaChainName = keyof typeof SOLANA_CHAINS;
-
+export type SolanaWallet = {
+  conn: Connection;
+  payer: Keypair;
+};
+export type SolanaProvider = Connection;
 
 export const SOLANA_CHAIN_CONFIGS: Record<SolanaChainName, SolanaChainConfig> = {
   [SOLANA]: SOLANA_CHAIN_CONFIG,
@@ -170,6 +175,19 @@ export class SolanaWalletToolbox extends WalletToolbox {
   async transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<TransferRecepit> {
     // TODO: implement
     throw new Error('SolanaWalletToolbox.transferNativeBalance not implemented.');
+  }
+
+  public async createSignedWallet (privateKey: string) {
+    let secretKey;
+      try {
+        secretKey = decode(privateKey);
+      } catch (e) {
+        secretKey = new Uint8Array(JSON.parse(privateKey));
+      }
+    return {
+      conn: this.provider,
+      payer: Keypair.fromSecretKey(secretKey),
+    } as SolanaWallet;
   }
 
   getAddressFromPrivateKey(privateKey: string): string {

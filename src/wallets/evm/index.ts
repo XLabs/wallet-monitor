@@ -82,6 +82,8 @@ export type EvmDefaultConfig = {
 export type EvmDefaultConfigs = Record<string, EvmDefaultConfig>;
 
 export type EVMChainName = keyof typeof EVM_CHAINS;
+export type EVMWallet = ethers.Wallet;
+export type EvmProvider = ethers.providers.JsonRpcProvider;
 
 export const EVM_CHAIN_CONFIGS: Record<EVMChainName, EvmChainConfig> = {
   [ETHEREUM]: ETHEREUM_CHAIN_CONFIG,
@@ -275,6 +277,10 @@ export class EvmWalletToolbox extends WalletToolbox {
     );
 
     return receipt;
+  }
+
+  public async createSignedWallet (privateKey: string) {
+    return new ethers.Wallet(privateKey, this.provider);
   }
 
   public getAddressFromPrivateKey(privateKey: string): string {
