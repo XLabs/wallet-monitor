@@ -29,7 +29,8 @@ export type UntypedWallet = UntypedProvider & {
 
 export type WalletInterface = {
   address: string;
-  privateKey?: string;
+  // Removing privateKey from WalletInterface as we don't use it inside execute callback explicitly
+  // privateKey?: string;
   provider: Providers;
   getBalance: () => Promise<string>;
   signedWallet: Wallet;
@@ -185,7 +186,6 @@ export abstract class WalletToolbox {
     const privateKey = this.wallets[walletAddress].privateKey;
 
     return {
-      privateKey,
       address: walletAddress,
       provider: this.provider,
       getBalance: async () => {
