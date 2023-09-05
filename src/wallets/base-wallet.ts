@@ -2,7 +2,7 @@ import winston from 'winston';
 import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
 import { LocalWalletPool, WalletPool } from "./wallet-pool";
 import { createLogger } from '../utils';
-import { EVMWallet, EvmProvider } from './evm';
+import { EVMWallet, EVMProvider } from './evm';
 import { SolanaProvider, SolanaWallet } from './solana';
 import { SuiProvider, SuiWallet } from './sui';
 
@@ -14,18 +14,9 @@ export type BaseWalletOptions = {
 export type Wallet =
   | EVMWallet
   | SolanaWallet
-  | UntypedWallet
   | SuiWallet
 
-export type Providers = EvmProvider | SolanaProvider | SuiProvider | UntypedProvider;
-
-export type UntypedProvider = {
-  rpcUrl: string;
-};
-
-export type UntypedWallet = UntypedProvider & {
-  privateKey: string;
-};
+export type Providers = EVMProvider | SolanaProvider | SuiProvider;
 
 export type WalletInterface = {
   address: string;
@@ -52,9 +43,7 @@ export type WalletData = {
 };
 
 export abstract class WalletToolbox {
-  protected provider: Providers = {
-    rpcUrl: ""
-  };
+  protected provider: Providers = {} as Providers;
   private warm = false;
   private walletPool: WalletPool;
   protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};

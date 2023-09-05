@@ -83,7 +83,7 @@ export type EvmDefaultConfigs = Record<string, EvmDefaultConfig>;
 
 export type EVMChainName = keyof typeof EVM_CHAINS;
 export type EVMWallet = ethers.Wallet;
-export type EvmProvider = ethers.providers.JsonRpcProvider;
+export type EVMProvider = ethers.providers.JsonRpcProvider;
 
 export const EVM_CHAIN_CONFIGS: Record<EVMChainName, EvmChainConfig> = {
   [ETHEREUM]: ETHEREUM_CHAIN_CONFIG,
@@ -144,6 +144,7 @@ export class EvmWalletToolbox extends WalletToolbox {
 
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
 
+    // TODO: Mask Node URL
     this.logger.debug(`EVM rpc url: ${this.options.nodeUrl}`);
     this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
   }

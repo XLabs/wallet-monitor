@@ -67,6 +67,7 @@ export class SuiWalletToolbox extends WalletToolbox {
 
     this.options = { ...defaultOptions, ...options } as SuiWalletOptions;
 
+    // TODO: Mask Node URL
     this.logger.debug(`SUI rpc url: ${this.options.nodeUrl}`);
 
     this.provider = new Connection({
@@ -107,7 +108,6 @@ export class SuiWalletToolbox extends WalletToolbox {
   }
 
   public parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[] {
-    const knownTokens = this.getKnownTokens();
     const validTokens: string[] = [];
     for (const token of tokens) {
       if (this.isValidNativeTokenAddress(token)) {
@@ -215,8 +215,8 @@ export class SuiWalletToolbox extends WalletToolbox {
   public async createSignedWallet (privateKey: string) {
     const seiPrivateKeyAsBuffer = Buffer.from(privateKey, "hex");
     const keyPair = Ed25519Keypair.fromSecretKey(seiPrivateKeyAsBuffer);
-    const suiProvider = new JsonRpcProvider(this.provider);
-    return new RawSigner(keyPair, suiProvider);
+    const suiJsonProvider = new JsonRpcProvider(this.provider);
+    return new RawSigner(keyPair, suiJsonProvider);
   }
 
   public getAddressFromPrivateKey(privateKey: string): string {
