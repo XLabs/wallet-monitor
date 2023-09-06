@@ -107,6 +107,8 @@ describe("wallet-manager", () => {
     const activeWalletsReadyToBeAquired = Object.values(
       walletManager.getChainBalances(ETHEREUM),
     ).length;
+
+    console.log(walletManager.getChainBalances(ETHEREUM), walletManager.getAllBalances())
     expect(activeWalletsReadyToBeAquired).toEqual(2);
   });
 
@@ -122,6 +124,7 @@ describe("wallet-manager", () => {
         async () => {
           // no op
         },
+        // ETH_ADDR -> 0.2 ETH as balance pre-defined
         { waitToAcquireTimeout: WAIT_TO_ACQUIRE_TIMEOUT, address: ETH_ADDR },
       ),
       whenWalletCalled(
@@ -129,11 +132,14 @@ describe("wallet-manager", () => {
         async () => {
           // no op
         },
+        // ETH_ADDR_2 -> 10 ETH as balance pre-defined
         { waitToAcquireTimeout: WAIT_TO_ACQUIRE_TIMEOUT, address: ETH_ADDR_2 },
       ),
     ]);
 
+    // Below wallet is expected to be rejected as balance is below threshold
     expect(settledWithWalletCalls[0].status).toEqual("rejected");
+    // Below wallet is expected to be fulfilled as balance is above threshold
     expect(settledWithWalletCalls[1].status).toEqual("fulfilled");
   });
 });
