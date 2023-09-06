@@ -69,6 +69,10 @@ describe("wallet-manager", () => {
   });
 
   test("should fail if timeout is reached", async () => {
+    /**
+     * Expected behaviour: If one wallet A is already aquired and locked
+     * Then, anyone else trying to acquire the same wallet A should fail
+     */
     const markers: number[] = [];
 
     await givenAWalletManager();
@@ -80,14 +84,14 @@ describe("wallet-manager", () => {
           await wait(WAIT_TO_ACQUIRE_TIMEOUT * 2);
           markers.push(0);
         },
-        { waitToAcquireTimeout: WAIT_TO_ACQUIRE_TIMEOUT },
+        { waitToAcquireTimeout: WAIT_TO_ACQUIRE_TIMEOUT, address: ETH_ADDR_2 },
       ),
       whenWalletCalled(
         ETHEREUM,
         async () => {
           markers.push(1);
         },
-        { waitToAcquireTimeout: WAIT_TO_ACQUIRE_TIMEOUT },
+        { waitToAcquireTimeout: WAIT_TO_ACQUIRE_TIMEOUT, address: ETH_ADDR_2 },
       ),
     ]);
 
@@ -108,7 +112,6 @@ describe("wallet-manager", () => {
       walletManager.getChainBalances(ETHEREUM),
     ).length;
 
-    console.log(walletManager.getChainBalances(ETHEREUM), walletManager.getAllBalances())
     expect(activeWalletsReadyToBeAquired).toEqual(2);
   });
 

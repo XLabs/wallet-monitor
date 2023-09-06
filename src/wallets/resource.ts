@@ -28,7 +28,7 @@ export class Resource {
     }
 
     isAvailable () {
-        return !this.locked && !this.discarded;
+        return !(this.locked || this.discarded);
     }
 
     isLocked () {
