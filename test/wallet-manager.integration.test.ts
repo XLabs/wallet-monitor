@@ -100,6 +100,10 @@ describe("wallet-manager", () => {
   }, 20_000);
 
   test("should not discard the wallets if native balance is above threshold", async () => {
+    /**
+     * Expected behaviour: Wallets are configured to have balances of 0.2 ETH and 10 ETH
+     * and minBalanceThreshold is set to 0.1 ETH, so both wallets should be ready to be acquired
+     */
     await givenAWalletManager(rebalanceConfig);
     await whenWalletCalled(
       ETHEREUM,
@@ -116,7 +120,12 @@ describe("wallet-manager", () => {
   });
 
   test("should discard wallet if wallet native balance is below threshold", async () => {
-    // Adding 10ETH as balance as min threshold
+    /**
+     * Expected behaviour: Wallets are configured to have balances of 0.2 ETH and 10 ETH
+     * and minBalanceThreshold is set to 10 ETH
+     * so, ETH_ADDR is expected to be rejected as balance is below threshold
+     * and ETH_ADDR_2 is expected to be fulfilled as balance is above threshold
+     */
     const minBalanceThreshold = 10;
 
     await givenAWalletManager({ ...rebalanceConfig, minBalanceThreshold });
@@ -127,7 +136,6 @@ describe("wallet-manager", () => {
         async () => {
           // no op
         },
-        // ETH_ADDR -> 0.2 ETH as balance pre-defined
         { waitToAcquireTimeout: WAIT_TO_ACQUIRE_TIMEOUT, address: ETH_ADDR },
       ),
       whenWalletCalled(
@@ -135,14 +143,11 @@ describe("wallet-manager", () => {
         async () => {
           // no op
         },
-        // ETH_ADDR_2 -> 10 ETH as balance pre-defined
         { waitToAcquireTimeout: WAIT_TO_ACQUIRE_TIMEOUT, address: ETH_ADDR_2 },
       ),
     ]);
 
-    // Below wallet is expected to be rejected as balance is below threshold
     expect(settledWithWalletCalls[0].status).toEqual("rejected");
-    // Below wallet is expected to be fulfilled as balance is above threshold
     expect(settledWithWalletCalls[1].status).toEqual("fulfilled");
   });
 });
