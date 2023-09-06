@@ -67,8 +67,8 @@ export class SuiWalletToolbox extends WalletToolbox {
 
     this.options = { ...defaultOptions, ...options } as SuiWalletOptions;
 
-    // TODO: Mask Node URL
-    this.logger.debug(`SUI rpc url: ${this.options.nodeUrl}`);
+    const nodeUrlOrigin = this.options.nodeUrl && new URL(this.options.nodeUrl).origin
+    this.logger.debug(`SUI rpc url: ${nodeUrlOrigin}`);
 
     this.provider = new Connection({
       fullnode: this.options.nodeUrl,

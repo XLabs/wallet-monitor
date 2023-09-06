@@ -1,16 +1,11 @@
+import { Resource } from "./resource";
+
 export interface WalletPool {
   blockAndAcquire(blockTimeout: number, resourceId?: string): Promise<string>;
   release(wallet: string): Promise<void>;
   discardWalletFromPool(wallet: string): void;
   addWalletBackToPoolIfRequired(wallet: string): void;
 }
-
-type Resource = {
-  id: string;
-  locked: boolean;
-  /** Discard wallet from usage if balance goes below min threshold defined in rebalance config */
-  discarded: boolean;
-};
 
 type ResourcePool = Record<string, Resource>;
 
@@ -19,11 +14,7 @@ export class LocalWalletPool implements WalletPool {
 
   constructor(walletAddresses: string[]) {
     for (const address of walletAddresses) {
-      this.resources[address] = {
-        id: address,
-        locked: false,
-        discarded: false,
-      };
+      this.resources[address] = new Resource(address)
     }
   }
 
@@ -31,28 +22,28 @@ export class LocalWalletPool implements WalletPool {
     const resource = resourceId
       ? this.resources[resourceId]
       : Object.values(this.resources).find(
-          resource => !resource.locked || !resource.discarded,
+          resource => resource.isAvailable(),
         );
 
-    if (!resource || resource.locked || resource.discarded)
+    if (!resource || !resource?.isAvailable())
       throw new Error("Resource not available");
 
-    resource.locked = true;
+    resource.lock();
 
-    return resource.id;
+    return resource.getId();
   }
 
   public discardWalletFromPool(resourceId: string): void {
     if (resourceId in this.resources) {
-      this.resources[resourceId].discarded = true;
+      this.resources[resourceId].discard();
     } else {
       throw new Error(`Resource ${resourceId} not available for discarding`);
     }
   }
 
   public addWalletBackToPoolIfRequired(resourceId: string): void {
-    if (resourceId in this.resources && this.resources[resourceId].discarded) {
-      this.resources[resourceId].discarded = false;
+    if (resourceId in this.resources && this.resources[resourceId].isDiscarded()) {
+      this.resources[resourceId].retain();
     }
   }
 
@@ -87,6 +78,6 @@ export class LocalWalletPool implements WalletPool {
   public async release(walletAddress: string): Promise<void> {
     const resource = this.resources[walletAddress];
     if (!resource) throw new Error(`Resource "${walletAddress}" not found`);
-    resource.locked = false;
+    resource.unlock();
   }
 }

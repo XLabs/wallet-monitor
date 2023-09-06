@@ -144,8 +144,8 @@ export class EvmWalletToolbox extends WalletToolbox {
 
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
 
-    // TODO: Mask Node URL
-    this.logger.debug(`EVM rpc url: ${this.options.nodeUrl}`);
+    const nodeUrlOrigin = this.options.nodeUrl && new URL(this.options.nodeUrl).origin
+    this.logger.debug(`EVM rpc url: ${nodeUrlOrigin}`);
     this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
   }
 
