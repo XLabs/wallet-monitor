@@ -4,12 +4,13 @@ import { createLogger } from './utils';
 import { createWalletToolbox, WalletConfig, WalletOptions, Wallet, WalletBalance } from './wallets';
 import { TransferRecepit, WalletInterface } from './wallets/base-wallet';
 import { rebalanceStrategies, RebalanceStrategyName } from './rebalance-strategies';
+import { EVMProvider, EVMWallet } from './wallets/evm';
+import { SolanaProvider, SolanaWallet } from './wallets/solana';
+import { SuiProvider, SuiWallet } from './wallets/sui';
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_STRATEGY = 'pourOver';
-
-export type WithWalletExecutor = (wallet: WalletInterface) => Promise<void>;
 
 export type ChainWalletManagerOptions = {
   logger: winston.Logger;
@@ -36,6 +37,10 @@ export type WalletExecuteOptions = {
   waitToAcquireTimeout?: number;
   leaseTimeout?: number;
 }
+
+export type Providers = EVMProvider | SolanaProvider | SuiProvider;
+export type Wallets = EVMWallet | SolanaWallet | SuiWallet;
+export type WithWalletExecutor = (wallet: WalletInterface<Providers, Wallets>) => Promise<void>;
 
 export class ChainWalletManager {
   private locked = false;
@@ -196,7 +201,7 @@ export class ChainWalletManager {
     return this.balancesByAddress;
   }
 
-  public async acquireLock(opts?: WalletExecuteOptions): Promise<WalletInterface> {
+  public async acquireLock(opts?: WalletExecuteOptions): Promise<WalletInterface<Providers, Wallets>> {
     return this.walletToolbox.acquire(opts?.address, opts?.waitToAcquireTimeout);
   }
 

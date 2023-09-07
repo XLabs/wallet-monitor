@@ -56,7 +56,7 @@ export class ClientWalletManager implements IClientWalletManager {
         const acquiredWallet = await this.managers[chainName].acquireLock({...opts, address: acquiredAddress});
 
         try {
-            return fn(acquiredWallet);
+            return await fn(acquiredWallet);
         } catch (error) {
             this.logger.error('The workflow function failed to run within the context of the acquired wallet.', error);
             throw error;

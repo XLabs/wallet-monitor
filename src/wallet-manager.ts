@@ -9,6 +9,8 @@ import {
   WalletExecuteOptions,
   WithWalletExecutor,
   WalletBalancesByAddress,
+  Providers,
+  Wallets,
 } from "./chain-wallet-manager";
 import {
   ChainName,
@@ -217,7 +219,7 @@ export class WalletManager {
   public async acquireLock(
     chainName: ChainName,
     opts?: WalletExecuteOptions,
-  ): Promise<WalletInterface> {
+  ): Promise<WalletInterface<Providers, Wallets>> {
     const chainManager = this.managers[chainName];
     if (!chainManager)
       throw new Error(`No wallets configured for chain: ${chainName}`);

@@ -46,7 +46,7 @@ export type SolanaWalletOptions = BaseWalletOptions & {
   tokenPollConcurrency?: number;
 }
 
-export class SolanaWalletToolbox extends WalletToolbox {
+export class SolanaWalletToolbox extends WalletToolbox<SolanaProvider, SolanaWallet> {
   private chainConfig: SolanaChainConfig;
   public options: SolanaWalletOptions;
   private tokenData: Record<string, Mint> = {};

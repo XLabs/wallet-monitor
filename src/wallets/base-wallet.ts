@@ -2,29 +2,17 @@ import winston from 'winston';
 import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
 import { LocalWalletPool, WalletPool } from "./wallet-pool";
 import { createLogger } from '../utils';
-import { EVMWallet, EVMProvider } from './evm';
-import { SolanaProvider, SolanaWallet } from './solana';
-import { SuiProvider, SuiWallet } from './sui';
 
 export type BaseWalletOptions = {
   logger: winston.Logger;
   failOnInvalidTokens: boolean;
 }
 
-export type Wallet =
-  | EVMWallet
-  | SolanaWallet
-  | SuiWallet
-
-export type Providers = EVMProvider | SolanaProvider | SuiProvider;
-
-export type WalletInterface = {
+export type WalletInterface<P, W> = {
   address: string;
-  // Removing privateKey from WalletInterface as we don't use it inside execute callback explicitly
-  // privateKey?: string;
-  provider: Providers;
+  provider: P;
   getBalance: () => Promise<string>;
-  signedWallet: Wallet;
+  signedWallet: W;
 }
 
 export type TransferRecepit = {
@@ -42,8 +30,8 @@ export type WalletData = {
   tokens: string[];
 };
 
-export abstract class WalletToolbox {
-  protected provider: Providers = {} as Providers;
+export abstract class WalletToolbox<P, W> {
+  protected provider: P = {} as P;
   private warm = false;
   private walletPool: WalletPool;
   protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};
@@ -77,7 +65,7 @@ export abstract class WalletToolbox {
 
   abstract transferNativeBalance(privateKey: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number): Promise<TransferRecepit>;
 
-  abstract createSignedWallet (privateKey: string): Promise<Wallet>;
+  abstract createSignedWallet (privateKey: string): Promise<W>;
 
   constructor(
     protected network: string,
@@ -167,7 +155,7 @@ export abstract class WalletToolbox {
     return balances;
   }
 
-  public async acquire(address?: string, acquireTimeout?: number): Promise<WalletInterface> {
+  public async acquire(address?: string, acquireTimeout?: number): Promise<WalletInterface<P, W>> {
     const timeout = acquireTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
     // this.grpcClient.acquireWallet(address);
     const walletAddress = await this.walletPool.blockAndAcquire(timeout, address);

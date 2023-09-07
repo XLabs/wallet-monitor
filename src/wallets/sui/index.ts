@@ -48,7 +48,7 @@ export type SuiProvider = Connection;
 // TODO: See other token types
 const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::coin::COIN$/;
 
-export class SuiWalletToolbox extends WalletToolbox {
+export class SuiWalletToolbox extends WalletToolbox<SuiProvider, SuiWallet> {
   provider: Connection;
   private chainConfig: SuiChainConfig;
   private tokenData: Record<string, any> = {};

@@ -2,7 +2,7 @@
 export type { ILibraryWalletManager, IServiceWalletManager, IClientWalletManager } from './i-wallet-manager'
 export type { WalletManager, WalletManagerConfig, WalletManagerOptions, WalletManagerFullConfig } from './wallet-manager'
 export { buildWalletManager } from './utils'
-export type {WalletExecuteOptions} from './chain-wallet-manager';
+export type {WalletExecuteOptions, WithWalletExecutor} from './chain-wallet-manager';
 
 import { EVM_CHAIN_CONFIGS } from './wallets/evm';
 // import { SOLANA_CHAINS } from './wallets/solana';
@@ -14,7 +14,7 @@ import {
   WalletInterface as WI,
 } from './wallets/base-wallet';
 export type WalletBalancesByAddress = WBBA;
-export type WalletInterface = WI;
+export type WalletInterface<P, W> = WI<P, W>;
 
 /**
  * A map of chain names to their available networks.

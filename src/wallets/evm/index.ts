@@ -125,8 +125,8 @@ function getUniqueTokens(wallets: WalletConfig[]): string[] {
   return [...new Set(tokens)];
 }
 
-export class EvmWalletToolbox extends WalletToolbox {
-  provider: ethers.providers.JsonRpcProvider;
+export class EvmWalletToolbox extends WalletToolbox<EVMProvider, EVMWallet> {
+  provider: EVMProvider;
   private chainConfig: EvmChainConfig;
   private tokenData: Record<string, EvmTokenData> = {};
   public options: EvmWalletOptions;
