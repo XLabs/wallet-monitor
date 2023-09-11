@@ -2,7 +2,9 @@ import { describe, expect, test } from "@jest/globals";
 import { WalletManager, WalletRebalancingConfig } from "../src/wallet-manager";
 import { ChainName, DEVNET } from "../src/wallets";
 import {
+  Providers,
   WalletExecuteOptions,
+  Wallets,
   WithWalletExecutor,
 } from "../src/chain-wallet-manager";
 import { ETHEREUM } from "../src/wallets/evm/ethereum.config";
@@ -169,6 +171,6 @@ const givenAWalletManager = async (
 
 const whenWalletCalled = async (
   chain: ChainName,
-  executor: WithWalletExecutor,
+  executor: WithWalletExecutor<Providers, Wallets>,
   walletOpts?: WalletExecuteOptions,
 ) => walletManager.withWallet(chain, executor, walletOpts);
