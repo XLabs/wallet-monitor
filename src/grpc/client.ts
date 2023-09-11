@@ -1,4 +1,4 @@
-import {ChainWalletManager, WalletExecuteOptions, WithWalletExecutor} from "../chain-wallet-manager";
+import {ChainWalletManager, Providers, WalletExecuteOptions, Wallets, WithWalletExecutor} from "../chain-wallet-manager";
 import {ChainName, isChain} from "../wallets";
 import {getDefaultNetwork, WalletManagerConfig, WalletManagerOptions} from "../wallet-manager";
 import winston from "winston";
@@ -41,7 +41,7 @@ export class ClientWalletManager implements IClientWalletManager {
         }
     }
 
-    public async withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void> {
+    public async withWallet<P extends Providers, W extends Wallets>(chainName: ChainName, fn: WithWalletExecutor<P, W>, opts?: WalletExecuteOptions): Promise<void> {
         const chainManager = this.managers[chainName];
         if (!chainManager) throw new Error(`No wallets configured for chain: ${chainName}`);
 
@@ -53,7 +53,7 @@ export class ClientWalletManager implements IClientWalletManager {
         // Unfortunately this is not only inefficient (we lock 2 times) but also nonsense because, if we successfully
         //  locked a particular address in the wallet manager service, it's impossible that we have it locked here.
         // Nevertheless, this should allow us to just make it work right now.
-        const acquiredWallet = await this.managers[chainName].acquireLock({...opts, address: acquiredAddress});
+        const acquiredWallet = await this.managers[chainName].acquireLock<P, W>({...opts, address: acquiredAddress});
 
         try {
             return await fn(acquiredWallet);

@@ -16,6 +16,10 @@ import {
 export type WalletBalancesByAddress = WBBA;
 export type WalletInterface<P, W> = WI<P, W>;
 
+export type {EVMProvider, EVMWallet} from './wallets/evm';
+export type {SolanaProvider, SolanaWallet} from './wallets/solana';
+export type {SuiProvider, SuiWallet} from './wallets/sui';
+
 /**
  * A map of chain names to their available networks.
  * It's exposed to the library user for convenience.

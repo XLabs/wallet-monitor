@@ -40,7 +40,7 @@ export type WalletExecuteOptions = {
 
 export type Providers = EVMProvider | SolanaProvider | SuiProvider;
 export type Wallets = EVMWallet | SolanaWallet | SuiWallet;
-export type WithWalletExecutor = (wallet: WalletInterface<Providers, Wallets>) => Promise<void>;
+export type WithWalletExecutor<P, W> = (wallet: WalletInterface<P, W>) => Promise<void>;
 
 export class ChainWalletManager {
   private locked = false;
@@ -201,8 +201,9 @@ export class ChainWalletManager {
     return this.balancesByAddress;
   }
 
-  public async acquireLock(opts?: WalletExecuteOptions): Promise<WalletInterface<Providers, Wallets>> {
-    return this.walletToolbox.acquire(opts?.address, opts?.waitToAcquireTimeout);
+  public async acquireLock<P extends Providers, W extends Wallets>(opts?: WalletExecuteOptions): Promise<WalletInterface<P, W>> {
+    // TODO: Need to properly make this fn generic
+    return this.walletToolbox.acquire(opts?.address, opts?.waitToAcquireTimeout) as unknown as WalletInterface<P, W>;
   }
 
   public async releaseLock(address: string) {

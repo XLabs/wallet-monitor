@@ -216,16 +216,16 @@ export class WalletManager {
     return this.exporter?.getRegistry();
   }
 
-  public async acquireLock(
+  public async acquireLock<P extends Providers, W extends Wallets>(
     chainName: ChainName,
     opts?: WalletExecuteOptions,
-  ): Promise<WalletInterface<Providers, Wallets>> {
+  ): Promise<WalletInterface<P, W>> {
     const chainManager = this.managers[chainName];
     if (!chainManager)
       throw new Error(`No wallets configured for chain: ${chainName}`);
 
-    return this.runGuarded(
-      () => chainManager.acquireLock(opts),
+    return this.runGuarded<WalletInterface<P, W>>(
+      () => chainManager.acquireLock<P, W>(opts),
       () => this.exporter?.increaseAcquiredLocks(chainName),
       () => {
         this.logger.error(`Failed to acquire lock for ${chainName}`);
@@ -251,12 +251,12 @@ export class WalletManager {
    * @param fn
    * @param opts - leaseTimeout will be ignored
    */
-  public async withWallet(
+  public async withWallet<P extends Providers, W extends Wallets>(
     chainName: ChainName,
-    fn: WithWalletExecutor,
+    fn: WithWalletExecutor<P, W>,
     opts?: WalletExecuteOptions
   ): Promise<void> {
-    const wallet = await this.acquireLock(chainName, opts);
+    const wallet = await this.acquireLock<P, W>(chainName, opts);
 
     try {
       await fn(wallet);

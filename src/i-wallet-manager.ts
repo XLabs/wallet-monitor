@@ -17,7 +17,7 @@ import {WalletInterface} from "./wallets/base-wallet";
 */
 
 interface IWMContextManagedLocks {
-    withWallet(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void>
+    withWallet<P extends Providers, W extends Wallets>(chainName: ChainName, fn: WithWalletExecutor<P, W>, opts?: WalletExecuteOptions): Promise<void>
 }
 interface IWMBareLocks {
     acquireLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<WalletInterface<Providers, Wallets>>
