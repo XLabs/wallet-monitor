@@ -19,6 +19,7 @@ export type WalletInterface<P, W> = WI<P, W>;
 export type {EVMProvider, EVMWallet} from './wallets/evm';
 export type {SolanaProvider, SolanaWallet} from './wallets/solana';
 export type {SuiProvider, SuiWallet} from './wallets/sui';
+export type {Providers, Wallets} from './chain-wallet-manager';
 
 /**
  * A map of chain names to their available networks.
