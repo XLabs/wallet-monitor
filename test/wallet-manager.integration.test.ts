@@ -1,6 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
+import { ChainName } from "@certusone/wormhole-sdk";
 import { WalletManager, WalletRebalancingConfig } from "../src/wallet-manager";
-import { ChainName, DEVNET } from "../src/wallets";
+import { DEVNET } from "../src/wallets";
 import {
   Providers,
   WalletExecuteOptions,
