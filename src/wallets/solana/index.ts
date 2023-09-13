@@ -9,7 +9,7 @@ import { getMint, Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { mapConcurrent } from "../../utils";
 
 
-type SolanaChainConfig = {
+export type SolanaChainConfig = {
   chainName: string;
   nativeCurrencySymbol: string;
   knownTokens: Record<string, Record<string, string>>;

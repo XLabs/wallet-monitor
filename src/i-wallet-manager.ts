@@ -1,5 +1,5 @@
 import {Providers, WalletExecuteOptions, Wallets, WithWalletExecutor} from "./chain-wallet-manager";
-import {ChainName} from "./wallets";
+import { ChainName } from "@certusone/wormhole-sdk";
 import {WalletInterface} from "./wallets/base-wallet";
 
 /*

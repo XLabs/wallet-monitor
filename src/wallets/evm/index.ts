@@ -50,7 +50,7 @@ import { BaseNetwork, BASE, BASE_CHAIN_CONFIG } from "./base.config";
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
-type EvmChainConfig = {
+export type EvmChainConfig = {
   // TODO: most of this properties should actually be in a BaseChainConfig type
   chainName: string;
   nativeCurrencySymbol: string;

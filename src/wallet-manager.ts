@@ -1,4 +1,5 @@
 import { EventEmitter } from "stream";
+import { ChainName } from "@certusone/wormhole-sdk";
 
 import { z } from "zod";
 import winston from "winston";
@@ -13,7 +14,6 @@ import {
   Wallets,
 } from "./chain-wallet-manager";
 import {
-  ChainName,
   isChain,
   KNOWN_CHAINS,
   WalletBalance,
@@ -94,7 +94,7 @@ export type WalletManagerFullConfig = z.infer<
 >;
 
 export function getDefaultNetwork(chainName: ChainName) {
-  return KNOWN_CHAINS[chainName].defaultNetwork;
+  return KNOWN_CHAINS[chainName]!.defaultNetwork;
 }
 
 export class WalletManager {
