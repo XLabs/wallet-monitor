@@ -208,7 +208,7 @@ export class WalletManager {
     this.emitter.on(event, listener);
   }
 
-  public async metrics() {
+  public metrics() {
     return this.exporter?.metrics();
   }
 
@@ -224,17 +224,18 @@ export class WalletManager {
     if (!chainManager)
       throw new Error(`No wallets configured for chain: ${chainName}`);
 
-    return this.runGuarded<WalletInterface<P, W>>(
-      () => chainManager.acquireLock<P, W>(opts),
-      () => this.exporter?.increaseAcquiredLocks(chainName),
-      () => {
-        this.logger.error(`Failed to acquire lock for ${chainName}`);
-        this.exporter?.increaseAcquireLockFailure(chainName);
-      }
-    );
+    let wallet: WalletInterface<P, W>;
+    try {
+      wallet = await chainManager.acquireLock<P, W>(opts);
+      this.exporter?.increaseAcquiredLocks(chainName)
+    } catch (error) {
+      this.exporter?.increaseAcquireLockFailure(chainName);
+      throw error;
+    }
+    return wallet;
   }
 
-  public async releaseLock(chainName: ChainName, address: string) {
+  public releaseLock(chainName: ChainName, address: string) {
     const chainManager = this.managers[chainName];
     if (!chainManager)
       throw new Error(`No wallets configured for chain: ${chainName}`);
@@ -260,9 +261,6 @@ export class WalletManager {
 
     try {
       await fn(wallet);
-    } catch (error) {
-      this.logger.error(`Error while executing wallet function: ${error}`);
-      throw error;
     } finally {
       await this.releaseLock(chainName, wallet.address);
     }
@@ -284,16 +282,5 @@ export class WalletManager {
       throw new Error(`No wallets configured for chain: ${chainName}`);
 
     return manager.getBalances();
-  }
-
-  private async runGuarded<T>(supplier: () => Promise<T>, onSuccess: () => void, onFailure: () => void): Promise<T> {
-    try {
-      const result = await supplier();
-      onSuccess();
-      return result;
-    } catch (e) {
-      onFailure();
-      throw e;
-    }
   }
 }

@@ -119,7 +119,7 @@ export abstract class WalletToolbox<P, W> {
       try {
         nativeBalance = await this.pullNativeBalance(address);
 
-        this.discardWalletIfRequired(
+        this.addOrDiscardWalletIfRequired(
           isRebalancingEnabled,
           address,
           nativeBalance,
@@ -170,7 +170,7 @@ export abstract class WalletToolbox<P, W> {
         return balance.rawBalance;
       },
       signedWallet: await this.createSignedWallet(privateKey!)
-    }
+    };
   }
 
   public async release(address: string) {
@@ -233,7 +233,7 @@ export abstract class WalletToolbox<P, W> {
    * @param minBalanceThreshold passed from rebalance config, defaults to zero
    * @returns true if there is enough balance on the wallet, false otherwise
    */
-  private discardWalletIfRequired(
+  private addOrDiscardWalletIfRequired(
     isRebalancingEnabled: boolean,
     address: string,
     balance: WalletBalance,

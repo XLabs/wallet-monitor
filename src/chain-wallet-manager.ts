@@ -202,7 +202,7 @@ export class ChainWalletManager {
   }
 
   public async acquireLock<P extends Providers, W extends Wallets>(opts?: WalletExecuteOptions): Promise<WalletInterface<P, W>> {
-    // TODO: Need to properly make this fn generic
+    // TODO: Need to remove unknown type casting below
     return this.walletToolbox.acquire(opts?.address, opts?.waitToAcquireTimeout) as unknown as WalletInterface<P, W>;
   }
 
