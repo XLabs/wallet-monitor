@@ -1,6 +1,5 @@
-import {Providers, WalletExecuteOptions, Wallets, WithWalletExecutor} from "./chain-wallet-manager";
+import {Providers, WalletExecuteOptions, WalletInterface, Wallets, WithWalletExecutor} from "./chain-wallet-manager";
 import { ChainName } from "@certusone/wormhole-sdk";
-import {WalletInterface} from "./wallets/base-wallet";
 
 /*
  This file defines interfaces to be used as a mask for the WalletManager class.
@@ -17,10 +16,10 @@ import {WalletInterface} from "./wallets/base-wallet";
 */
 
 interface IWMContextManagedLocks {
-    withWallet<P extends Providers, W extends Wallets>(chainName: ChainName, fn: WithWalletExecutor<P, W>, opts?: WalletExecuteOptions): Promise<void>
+    withWallet<P extends Providers, W extends Wallets>(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void>
 }
 interface IWMBareLocks {
-    acquireLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<WalletInterface<Providers, Wallets>>
+    acquireLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<WalletInterface>
     releaseLock(chainName: ChainName, address: string): Promise<void>
 }
 

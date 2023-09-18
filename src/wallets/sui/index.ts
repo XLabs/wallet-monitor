@@ -53,7 +53,7 @@ export type SuiProvider = Connection;
 
 const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::\w+::\w+$/;
 
-export class SuiWalletToolbox extends WalletToolbox<SuiProvider, SuiWallet> {
+export class SuiWalletToolbox extends WalletToolbox {
   provider: Connection;
   private chainConfig: SuiChainConfig;
   private tokenData: Record<string, SuiTokenData> = {};
@@ -80,13 +80,13 @@ export class SuiWalletToolbox extends WalletToolbox<SuiProvider, SuiWallet> {
     });
   }
 
-  public validateChainName(chainName: any): chainName is SuiChainName {
+  protected validateChainName(chainName: any): chainName is SuiChainName {
     if (chainName !== SUI)
       throw new Error(`Invalid chain name "${chainName}" for SUI wallet`);
     return true;
   }
 
-  public validateNetwork(network: string) {
+  protected validateNetwork(network: string) {
     if (!(network in SUI_CHAIN_CONFIGS[this.chainName].networks))
       throw new Error(
         `Invalid network "${network}" for chain: ${this.chainName}`
@@ -94,14 +94,14 @@ export class SuiWalletToolbox extends WalletToolbox<SuiProvider, SuiWallet> {
     return true;
   }
 
-  public validateOptions(options: any) {
+  protected validateOptions(options: any) {
     if (!options) return true;
     if (typeof options !== "object")
       throw new Error(`Invalid options for chain: ${this.chainName}`);
     return true;
   }
 
-  validateTokenAddress(token: string): boolean {
+  protected validateTokenAddress(token: string): boolean {
     if (!this.isValidNativeTokenAddress(token)) {
       throw new Error(`Invalid token address: ${token}`);
     }
@@ -112,7 +112,7 @@ export class SuiWalletToolbox extends WalletToolbox<SuiProvider, SuiWallet> {
     return true;
   }
 
-  public parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[] {
+  protected parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[] {
     const validTokens: string[] = [];
     for (const token of tokens) {
       if (this.isValidNativeTokenAddress(token)) {
@@ -149,7 +149,7 @@ export class SuiWalletToolbox extends WalletToolbox<SuiProvider, SuiWallet> {
     this.logger.debug(`Sui token data: ${JSON.stringify(this.tokenData)}`);
   }
 
-  walletTokens(wallets: Record<string, WalletData>): string[] {
+  private walletTokens(wallets: Record<string, WalletData>): string[] {
     const walletData = Object.values(wallets);
 
     return walletData.reduce((tokens: string[], wallet: WalletData): string[] => {
@@ -210,7 +210,7 @@ export class SuiWalletToolbox extends WalletToolbox<SuiProvider, SuiWallet> {
     });
   }
 
-  public async transferNativeBalance(
+  protected async transferNativeBalance(
     privateKey: string,
     targetAddress: string,
     amount: number,
@@ -221,18 +221,18 @@ export class SuiWalletToolbox extends WalletToolbox<SuiProvider, SuiWallet> {
     return transferSuiNativeBalance(this.provider, privateKey, txDetails);
   }
 
-  public async createSignedWallet (privateKey: string) {
+  protected async getRawWallet (privateKey: string) {
     const seiPrivateKeyAsBuffer = Buffer.from(privateKey, "hex");
     const keyPair = Ed25519Keypair.fromSecretKey(seiPrivateKeyAsBuffer);
     const suiJsonProvider = new JsonRpcProvider(this.provider);
     return new RawSigner(keyPair, suiJsonProvider);
   }
 
-  public getAddressFromPrivateKey(privateKey: string): string {
+  protected getAddressFromPrivateKey(privateKey: string): string {
     return getSuiAddressFromPrivateKey(privateKey);
   }
 
-  public isValidNativeTokenAddress(token: string): boolean {
+  protected isValidNativeTokenAddress(token: string): boolean {
     return SUI_HEX_ADDRESS_REGEX.test(token)
   }
 }

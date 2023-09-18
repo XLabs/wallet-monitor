@@ -2,17 +2,11 @@ import winston from 'winston';
 import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
 import { LocalWalletPool, WalletPool } from "./wallet-pool";
 import { createLogger } from '../utils';
+import { Wallets } from '../chain-wallet-manager';
 
 export type BaseWalletOptions = {
   logger: winston.Logger;
   failOnInvalidTokens: boolean;
-}
-
-export type WalletInterface<P, W> = {
-  address: string;
-  provider: P;
-  getBalance: () => Promise<string>;
-  signedWallet: W;
 }
 
 export type TransferRecepit = {
@@ -30,32 +24,32 @@ export type WalletData = {
   tokens: string[];
 };
 
-export abstract class WalletToolbox<P, W> {
-  protected provider: P = {} as P;
+export abstract class WalletToolbox {
+  protected provider: any;
   private warm = false;
   private walletPool: WalletPool;
   protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};
   protected wallets: Record<string, WalletData>;
   protected logger: winston.Logger;
 
-  abstract validateNetwork(network: string): boolean;
+  protected abstract validateNetwork(network: string): boolean;
 
-  abstract validateChainName(chainName: string): boolean;
+  protected abstract validateChainName(chainName: string): boolean;
 
-  abstract validateOptions(options: any): boolean;
+  protected abstract validateOptions(options: any): boolean;
 
-  abstract validateTokenAddress(token: string): boolean;
+  protected abstract validateTokenAddress(token: string): boolean;
 
   // Should parse tokens received from the user.
   // The tokens returned should be a list of token addresses used by the chain client
   // Example: ["DAI", "USDC"] => ["0x00000000", "0x00000001"];
-  abstract parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[];
+  protected abstract parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[];
 
   // Should instantiate provider for the chain
   // calculate data which could be re-utilized (for example token's local addresses, symbol and decimals in evm chains)
   abstract warmup(): Promise<void>;
 
-  abstract getAddressFromPrivateKey(privateKey: string): string;
+  protected abstract getAddressFromPrivateKey(privateKey: string): string;
 
   // Should return balances for a native address in the chain
   abstract pullNativeBalance(address: string): Promise<WalletBalance>;
@@ -63,9 +57,9 @@ export abstract class WalletToolbox<P, W> {
   // Should return balances for tokens in the list for the address specified
   abstract pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]>;
 
-  abstract transferNativeBalance(privateKey: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number): Promise<TransferRecepit>;
+  protected abstract transferNativeBalance(privateKey: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number): Promise<TransferRecepit>;
 
-  abstract createSignedWallet (privateKey: string): Promise<W>;
+  protected abstract getRawWallet (privateKey: string): Promise<Wallets>;
 
   constructor(
     protected network: string,
@@ -155,7 +149,7 @@ export abstract class WalletToolbox<P, W> {
     return balances;
   }
 
-  public async acquire(address?: string, acquireTimeout?: number): Promise<WalletInterface<P, W>> {
+  public async acquire(address?: string, acquireTimeout?: number) {
     const timeout = acquireTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
     // this.grpcClient.acquireWallet(address);
     const walletAddress = await this.walletPool.blockAndAcquire(timeout, address);
@@ -164,12 +158,7 @@ export abstract class WalletToolbox<P, W> {
 
     return {
       address: walletAddress,
-      provider: this.provider,
-      getBalance: async () => {
-        const balance = await this.pullNativeBalance(walletAddress);
-        return balance.rawBalance;
-      },
-      signedWallet: await this.createSignedWallet(privateKey!)
+      rawWallet: await this.getRawWallet(privateKey!)
     };
   }
 

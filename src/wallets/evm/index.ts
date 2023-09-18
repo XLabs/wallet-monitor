@@ -125,11 +125,11 @@ function getUniqueTokens(wallets: WalletConfig[]): string[] {
   return [...new Set(tokens)];
 }
 
-export class EvmWalletToolbox extends WalletToolbox<EVMProvider, EVMWallet> {
+export class EvmWalletToolbox extends WalletToolbox {
   provider: EVMProvider;
   private chainConfig: EvmChainConfig;
   private tokenData: Record<string, EvmTokenData> = {};
-  public options: EvmWalletOptions;
+  private options: EvmWalletOptions;
 
   constructor(
     public network: string,
@@ -149,13 +149,13 @@ export class EvmWalletToolbox extends WalletToolbox<EVMProvider, EVMWallet> {
     this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
   }
 
-  public validateChainName(chainName: string): chainName is EVMChainName {
+  protected validateChainName(chainName: string): chainName is EVMChainName {
     if (!(chainName in EVM_CHAIN_CONFIGS))
       throw new Error(`Invalid chain name "${chainName}" for EVM wallet`);
     return true;
   }
 
-  public validateNetwork(network: string): network is EvmNetworks {
+  protected validateNetwork(network: string): network is EvmNetworks {
     if (!(network in EVM_CHAIN_CONFIGS[this.chainName].networks))
       throw new Error(
         `Invalid network "${network}" for chain: ${this.chainName}`,
@@ -164,14 +164,14 @@ export class EvmWalletToolbox extends WalletToolbox<EVMProvider, EVMWallet> {
     return true;
   }
 
-  public validateOptions(options: any): options is EvmWalletOptions {
+  protected validateOptions(options: any): options is EvmWalletOptions {
     if (!options) return true;
     if (typeof options !== "object")
       throw new Error(`Invalid options for chain: ${this.chainName}`);
     return true;
   }
 
-  public validateTokenAddress(token: string): boolean {
+  protected validateTokenAddress(token: string): boolean {
     const knownTokens =
       EVM_CHAIN_CONFIGS[this.chainName].knownTokens[this.network];
 
@@ -180,7 +180,7 @@ export class EvmWalletToolbox extends WalletToolbox<EVMProvider, EVMWallet> {
     );
   }
 
-  public parseTokensConfig(
+  protected parseTokensConfig(
     tokens: string[],
     failOnInvalidTokens: boolean,
   ): string[] {
@@ -263,7 +263,7 @@ export class EvmWalletToolbox extends WalletToolbox<EVMProvider, EVMWallet> {
     );
   }
 
-  public async transferNativeBalance(
+  protected async transferNativeBalance(
     privateKey: string,
     targetAddress: string,
     amount: number,
@@ -280,11 +280,11 @@ export class EvmWalletToolbox extends WalletToolbox<EVMProvider, EVMWallet> {
     return receipt;
   }
 
-  public async createSignedWallet (privateKey: string) {
+  protected async getRawWallet (privateKey: string) {
     return new ethers.Wallet(privateKey, this.provider);
   }
 
-  public getAddressFromPrivateKey(privateKey: string): string {
+  protected getAddressFromPrivateKey(privateKey: string): string {
     return getEvmAddressFromPrivateKey(privateKey);
   }
 }

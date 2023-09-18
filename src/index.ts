@@ -7,14 +7,12 @@ export type {WalletExecuteOptions, WithWalletExecutor} from './chain-wallet-mana
 import { EVM_CHAIN_CONFIGS } from './wallets/evm';
 // import { SOLANA_CHAINS } from './wallets/solana';
 import {
+  WalletInterface as WI,
   WalletBalancesByAddress as WBBA,
 } from './chain-wallet-manager';
 
-import {
-  WalletInterface as WI,
-} from './wallets/base-wallet';
 export type WalletBalancesByAddress = WBBA;
-export type WalletInterface<P, W> = WI<P, W>;
+export type WalletInterface = WI;
 
 export type {EVMProvider, EVMWallet} from './wallets/evm';
 export type {SolanaProvider, SolanaWallet} from './wallets/solana';
