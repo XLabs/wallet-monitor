@@ -158,7 +158,9 @@ export abstract class WalletToolbox {
 
     return {
       address: walletAddress,
-      rawWallet: await this.getRawWallet(privateKey!)
+      rawWallet: await this.getRawWallet(privateKey!),
+      // TODO: Remove this, when we remove gas estimation dependency from .onEVM
+      getGasPrice: this.provider?.getGasPrice ?? (() => Promise.resolve(0)),
     };
   }
 

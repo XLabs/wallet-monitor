@@ -16,6 +16,7 @@ import {
 import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
+import { BigNumber } from "ethers/lib/ethers";
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
@@ -50,7 +51,9 @@ export type WalletExecuteOptions = {
 export type SafeWalletToolbox = Pick<
   Wallet,
   "pullNativeBalance" | "pullTokenBalances"
->;
+> & {
+  getGasPrice: () => Promise<BigNumber>;
+};
 
 export type WalletInterface = {
   address: string;
@@ -264,7 +267,7 @@ export class ChainWalletManager {
   public async acquireLock(
     opts?: WalletExecuteOptions,
   ): Promise<WalletInterface> {
-    const { address, rawWallet } = await this.walletToolbox.acquire(
+    const { address, rawWallet, getGasPrice } = await this.walletToolbox.acquire(
       opts?.address,
       opts?.waitToAcquireTimeout,
     );
@@ -279,6 +282,7 @@ export class ChainWalletManager {
         pullTokenBalances: async (address: string, tokens: string[]) => {
           return await this.walletToolbox.pullTokenBalances(address, tokens);
         },
+        getGasPrice
       },
     };
   }
