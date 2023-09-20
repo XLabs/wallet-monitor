@@ -54,10 +54,10 @@ export type SuiProvider = Connection;
 const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::\w+::\w+$/;
 
 export class SuiWalletToolbox extends WalletToolbox {
-  provider: Connection;
+  private provider: Connection;
   private chainConfig: SuiChainConfig;
   private tokenData: Record<string, SuiTokenData> = {};
-  public options: SuiWalletOptions;
+  private options: SuiWalletOptions;
 
   constructor(
     public network: string,
@@ -138,7 +138,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     return token.toUpperCase() in this.getKnownTokens();
   }
   
-  public async warmup() {
+  protected async warmup() {
     const tokens = this.walletTokens(this.wallets);
     await mapConcurrent(tokens, async (tokenAddress: string): Promise<void> => {
       // tokens has addresses, per this.parseTokensConfig() contract
@@ -226,6 +226,11 @@ export class SuiWalletToolbox extends WalletToolbox {
     const keyPair = Ed25519Keypair.fromSecretKey(seiPrivateKeyAsBuffer);
     const suiJsonProvider = new JsonRpcProvider(this.provider);
     return new RawSigner(keyPair, suiJsonProvider);
+  }
+
+  public async getGasPrice () {
+    // TODO: implement
+    return 0;
   }
 
   protected getAddressFromPrivateKey(privateKey: string): string {

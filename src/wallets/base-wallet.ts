@@ -25,7 +25,6 @@ export type WalletData = {
 };
 
 export abstract class WalletToolbox {
-  protected provider: any;
   private warm = false;
   private walletPool: WalletPool;
   protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};
@@ -47,7 +46,7 @@ export abstract class WalletToolbox {
 
   // Should instantiate provider for the chain
   // calculate data which could be re-utilized (for example token's local addresses, symbol and decimals in evm chains)
-  abstract warmup(): Promise<void>;
+  protected abstract warmup(): Promise<void>;
 
   protected abstract getAddressFromPrivateKey(privateKey: string): string;
 
@@ -60,6 +59,8 @@ export abstract class WalletToolbox {
   protected abstract transferNativeBalance(privateKey: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number): Promise<TransferRecepit>;
 
   protected abstract getRawWallet (privateKey: string): Promise<Wallets>;
+
+  public abstract getGasPrice (): Promise<unknown>;
 
   constructor(
     protected network: string,
@@ -158,9 +159,7 @@ export abstract class WalletToolbox {
 
     return {
       address: walletAddress,
-      rawWallet: await this.getRawWallet(privateKey!),
-      // TODO: Remove this, when we remove gas estimation dependency from .onEVM
-      getGasPrice: this.provider?.getGasPrice ?? (() => Promise.resolve(0)),
+      rawWallet: await this.getRawWallet(privateKey!)
     };
   }
 

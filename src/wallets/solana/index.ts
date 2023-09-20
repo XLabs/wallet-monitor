@@ -48,7 +48,7 @@ export type SolanaWalletOptions = BaseWalletOptions & {
 
 export class SolanaWalletToolbox extends WalletToolbox {
   private chainConfig: SolanaChainConfig;
-  public options: SolanaWalletOptions;
+  private options: SolanaWalletOptions;
   private tokenData: Record<string, Mint> = {};
   private connection: Connection;
 
@@ -163,7 +163,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     return false;
   }
 
-  public async warmup() {
+  protected async warmup() {
     const distinctTokens = [...new Set(Object.values(this.wallets).flatMap(({ address, tokens }) => {
       return tokens || [];
     }))]
@@ -185,9 +185,14 @@ export class SolanaWalletToolbox extends WalletToolbox {
         secretKey = new Uint8Array(JSON.parse(privateKey));
       }
     return {
-      conn: this.provider,
+      conn: this.connection,
       payer: Keypair.fromSecretKey(secretKey),
     } as SolanaWallet;
+  }
+
+  public async getGasPrice () {
+    // TODO: implement
+    return 0;
   }
 
   protected getAddressFromPrivateKey(privateKey: string): string {
