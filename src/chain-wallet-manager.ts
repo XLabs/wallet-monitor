@@ -47,15 +47,10 @@ export type WalletExecuteOptions = {
   leaseTimeout?: number;
 };
 
-export type SafeWalletToolbox = Pick<
-  Wallet,
-  "pullNativeBalance" | "pullTokenBalances" | "getGasPrice"
->;
-
 export type WalletInterface = {
   address: string;
   rawWallet: Wallets;
-  walletToolbox: SafeWalletToolbox;
+  walletToolbox: Wallet;
 };
 
 export type Providers = EVMProvider | SolanaProvider | SuiProvider;
@@ -272,11 +267,7 @@ export class ChainWalletManager {
     return {
       address,
       rawWallet,
-      walletToolbox: {
-        pullNativeBalance: this.walletToolbox.pullNativeBalance,
-        pullTokenBalances: this.walletToolbox.pullTokenBalances,
-        getGasPrice: this.walletToolbox.getGasPrice,
-      },
+      walletToolbox: this.walletToolbox
     };
   }
 
