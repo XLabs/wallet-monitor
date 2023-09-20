@@ -1,6 +1,5 @@
 import {ChainWalletManager, WalletExecuteOptions, WithWalletExecutor} from "../chain-wallet-manager";
-import {isChain} from "../wallets";
-import { ChainName } from "@certusone/wormhole-sdk";
+import {ChainName, isChain} from "../wallets";
 import {getDefaultNetwork, WalletManagerConfig, WalletManagerOptions} from "../wallet-manager";
 import winston from "winston";
 import {createLogger} from "../utils";

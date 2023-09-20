@@ -1,5 +1,5 @@
 import {Providers, WalletExecuteOptions, WalletInterface, Wallets, WithWalletExecutor} from "./chain-wallet-manager";
-import { ChainName } from "@certusone/wormhole-sdk";
+import { ChainName } from "./wallets";
 
 /*
  This file defines interfaces to be used as a mask for the WalletManager class.

@@ -1,5 +1,4 @@
 import { EventEmitter } from "stream";
-import { ChainName } from "@certusone/wormhole-sdk";
 
 import { z } from "zod";
 import winston from "winston";
@@ -13,6 +12,7 @@ import {
   WalletInterface,
 } from "./chain-wallet-manager";
 import {
+  ChainName,
   isChain,
   KNOWN_CHAINS,
   WalletBalance,

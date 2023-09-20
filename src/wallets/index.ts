@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { ChainName } from "@certusone/wormhole-sdk";
 
 export const DEVNET = 'devnet';
 
@@ -17,6 +16,7 @@ export const KNOWN_CHAINS: Partial<{[key in ChainName]: EvmChainConfig | SuiChai
   ...SOLANA_CHAIN_CONFIGS,
 }
 
+export type ChainName = EVMChainName | SolanaChainName | SuiChainName;
 export type Wallet = EvmWalletToolbox | SolanaWalletToolbox | SuiWalletToolbox;
 export type WalletOptions = EvmWalletOptions | SolanaWalletOptions | SuiWalletOptions;
 

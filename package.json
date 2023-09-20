@@ -45,7 +45,6 @@
   "dependencies": {
     "@cosmjs/proto-signing": "^0.31.1",
     "@ethersproject/bignumber": "^5.7.0",
-    "@certusone/wormhole-sdk": "0.9.24-beta.0",
     "@mysten/sui.js": "^0.32.2",
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.74.0",
