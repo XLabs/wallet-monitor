@@ -13,11 +13,8 @@ import {
 
 export type WalletBalancesByAddress = WBBA;
 export type WalletInterface = WI;
+export type {ChainName} from "./wallets";
 
-export type {EVMProvider, EVMWallet} from './wallets/evm';
-export type {SolanaProvider, SolanaWallet} from './wallets/solana';
-export type {SuiProvider, SuiWallet} from './wallets/sui';
-export type {Providers, Wallets} from './chain-wallet-manager';
 export {isEvmChain, isSolanaChain, isSuiChain} from './wallets';
 
 /**
