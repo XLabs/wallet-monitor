@@ -1,6 +1,6 @@
 
 export type { ILibraryWalletManager, IServiceWalletManager, IClientWalletManager } from './i-wallet-manager'
-export type { WalletManager, WalletManagerConfig, WalletManagerOptions, WalletManagerFullConfig } from './wallet-manager'
+export type { WalletManager, WalletManagerConfig, WalletManagerOptions, WalletManagerFullConfig, WalletRebalancingConfig } from './wallet-manager'
 export { buildWalletManager } from './utils'
 export type {WalletExecuteOptions, WithWalletExecutor} from './chain-wallet-manager';
 

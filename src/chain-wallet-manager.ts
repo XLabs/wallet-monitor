@@ -16,6 +16,7 @@ import {
 import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
+import { WalletRebalancingConfig } from "./wallet-manager";
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
@@ -125,10 +126,7 @@ export class ChainWalletManager {
     };
   }
 
-  private validateRebalanceConfiguration(
-    rebalanceConfig: any,
-    wallets: WalletConfig[],
-  ) {
+  private validateRebalanceConfiguration(rebalanceConfig: any, wallets: WalletConfig[]): rebalanceConfig is WalletRebalancingConfig {
     if (!rebalanceConfig.enabled) return true;
 
     if (!rebalanceStrategies[rebalanceConfig.strategy])
