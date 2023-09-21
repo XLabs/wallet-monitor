@@ -5,8 +5,8 @@ import {
 } from "./out/wallet-manager-grpc-service";
 import {CallContext} from "nice-grpc-common";
 import {DeepPartial, Empty} from "./out/google/protobuf/empty";
-import {ChainName} from "../wallets";
 import {IServiceWalletManager} from "../i-wallet-manager";
+import { ChainName } from "../wallets";
 
 export class WalletManagerGRPCService implements WalletManagerGRPCServiceImplementation {
     constructor(private underlyingWalletManager: IServiceWalletManager) {}

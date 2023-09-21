@@ -50,7 +50,9 @@ export const ETHEREUM_KNOWN_TOKENS = {
   [ETHEREUM_SEPOLIA]: {
     // USDC: "0x07865c6e87b9f70255377e024ace6630c1eaa37f", // Disable Sepolia's tokens
   },
-  [DEVNET]: {},
+  [DEVNET]: {
+    ETH: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
+  },
 };
 
 const ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY = 10;
@@ -77,7 +79,7 @@ export const ETHEREUM_DEFAULT_CONFIGS: EvmDefaultConfigs = {
     tokenPollConcurrency: ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
   [DEVNET]: {
-    nodeUrl: "http://localhost:8545",
+    nodeUrl: "http://127.0.0.1:8545",
     tokenPollConcurrency: ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY,
   },
 };

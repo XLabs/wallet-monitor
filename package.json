@@ -1,6 +1,6 @@
 {
   "name": "@xlabs-xyz/wallet-monitor",
-  "version": "0.2.16",
+  "version": "0.2.17",
   "description": "A set of utilities to monitor blockchain wallets and react to them",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -12,7 +12,8 @@
     "watch": "tsc -w",
     "lint": "eslint --ignore-path .gitignore --ext .js,.ts .",
     "prettier": "prettier --ignore-path .gitignore --write .",
-    "test": "jest --silent=false"
+    "test": "jest --silent=false",
+    "start-ganache": "npx ganache -i 5777 --wallet.accounts=0xf9fdbcbcdb4c7c72642be9fe7c09ad5869a961a8ae3c3374841cb6ead5fd34b1,200000000000000000 --wallet.accounts=0xe94000d730b9655850afc8e39facb7058678f11e765075d4806d27ed619f258c,10000000000000000000"
   },
   "repository": {
     "type": "git",
@@ -42,6 +43,7 @@
   },
   "homepage": "https://github.com/xlabs/wallet-monitor#readme",
   "dependencies": {
+    "@cosmjs/proto-signing": "^0.31.1",
     "@ethersproject/bignumber": "^5.7.0",
     "@mysten/sui.js": "^0.32.2",
     "@solana/spl-token": "^0.3.7",

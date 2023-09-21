@@ -1,4 +1,5 @@
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js"
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Keypair } from "@solana/web3.js"
+import { decode } from "bs58";
 import { SOLANA, SOLANA_CHAIN_CONFIG, SolanaNetworks } from "./solana.config";
 import { PYTHNET, PYTHNET_CHAIN_CONFIG } from "./pythnet.config";
 import { BaseWalletOptions, TransferRecepit, WalletToolbox } from "../base-wallet";
@@ -8,7 +9,7 @@ import { getMint, Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { mapConcurrent } from "../../utils";
 
 
-type SolanaChainConfig = {
+export type SolanaChainConfig = {
   chainName: string;
   nativeCurrencySymbol: string;
   knownTokens: Record<string, Record<string, string>>;
@@ -29,7 +30,11 @@ export const SOLANA_CHAINS = {
 
 
 export type SolanaChainName = keyof typeof SOLANA_CHAINS;
-
+export type SolanaWallet = {
+  conn: Connection;
+  payer: Keypair;
+};
+export type SolanaProvider = Connection;
 
 export const SOLANA_CHAIN_CONFIGS: Record<SolanaChainName, SolanaChainConfig> = {
   [SOLANA]: SOLANA_CHAIN_CONFIG,
@@ -43,7 +48,7 @@ export type SolanaWalletOptions = BaseWalletOptions & {
 
 export class SolanaWalletToolbox extends WalletToolbox {
   private chainConfig: SolanaChainConfig;
-  public options: SolanaWalletOptions;
+  private options: SolanaWalletOptions;
   private tokenData: Record<string, Mint> = {};
   private connection: Connection;
 
@@ -81,7 +86,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     return validTokens;
   }
 
-  async pullNativeBalance(address: string): Promise<WalletBalance> {
+  public async pullNativeBalance(address: string): Promise<WalletBalance> {
     const balance = await pullSolanaNativeBalance(this.connection, address);
     const formattedBalance = (Number(balance.rawBalance) / LAMPORTS_PER_SOL).toString();
 
@@ -94,7 +99,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     }
   }
 
-  async pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]> {
+  public async pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]> {
     // Because one user account could be the owner of multiple token accounts with the same mint account,
     //  we need to aggregate data and sum over the distinct mint accounts.
     const tokenBalances = await this.connection.getParsedTokenAccountsByOwner(
@@ -130,12 +135,12 @@ export class SolanaWalletToolbox extends WalletToolbox {
     })
   }
 
-  validateChainName(chainName: string): chainName is SolanaChainName {
+  protected validateChainName(chainName: string): chainName is SolanaChainName {
     if (!(chainName in SOLANA_CHAIN_CONFIGS)) throw new Error(`Invalid chain name "${chainName}" for Solana wallet`);
     return true;
   }
 
-  validateTokenAddress(token: any) {
+  protected validateTokenAddress(token: any) {
     const chainConfig = SOLANA_CHAIN_CONFIGS[this.chainName];
 
     if (typeof token !== 'string')
@@ -149,16 +154,16 @@ export class SolanaWalletToolbox extends WalletToolbox {
     return true;
   }
 
-  validateNetwork(network: string): network is SolanaNetworks {
+  protected validateNetwork(network: string): network is SolanaNetworks {
     if (!(network in SOLANA_CHAIN_CONFIGS[this.chainName].networks)) throw new Error(`Invalid network "${network}" for chain: ${this.chainName}`);
     return true;
   }
 
-  validateOptions(options: any): options is SolanaWalletOptions {
+  protected validateOptions(options: any): options is SolanaWalletOptions {
     return false;
   }
 
-  async warmup() {
+  protected async warmup() {
     const distinctTokens = [...new Set(Object.values(this.wallets).flatMap(({ address, tokens }) => {
       return tokens || [];
     }))]
@@ -167,16 +172,34 @@ export class SolanaWalletToolbox extends WalletToolbox {
     }, this.options.tokenPollConcurrency)
   }
 
-  async transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<TransferRecepit> {
+  protected async transferNativeBalance(sourceAddress: string, targetAddress: string, amount: number): Promise<TransferRecepit> {
     // TODO: implement
     throw new Error('SolanaWalletToolbox.transferNativeBalance not implemented.');
   }
 
-  getAddressFromPrivateKey(privateKey: string): string {
+  protected async getRawWallet (privateKey: string) {
+    let secretKey;
+      try {
+        secretKey = decode(privateKey);
+      } catch (e) {
+        secretKey = new Uint8Array(JSON.parse(privateKey));
+      }
+    return {
+      conn: this.connection,
+      payer: Keypair.fromSecretKey(secretKey),
+    } as SolanaWallet;
+  }
+
+  public async getGasPrice () {
+    // TODO: implement
+    throw new Error('SolanaWalletToolbox.getGasPrice not implemented.');
+  }
+
+  protected getAddressFromPrivateKey(privateKey: string): string {
     return getSolanaAddressFromPrivateKey(privateKey);
   }
 
-  isValidTokenNativeAddress(token: string): boolean {
+  protected isValidTokenNativeAddress(token: string): boolean {
     try {
       new PublicKey(token)
     } catch (e) {

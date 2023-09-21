@@ -1,8 +1,10 @@
-import { WalletPool } from './base-wallet';
+import { Resource } from "./resource";
 
-type Resource = {
-  id: string;
-  locked: boolean;
+export interface WalletPool {
+  blockAndAcquire(blockTimeout: number, resourceId?: string): Promise<string>;
+  release(wallet: string): Promise<void>;
+  discardWalletFromPool(wallet: string): void;
+  addWalletBackToPoolIfRequired(wallet: string): void;
 }
 
 type ResourcePool = Record<string, Resource>;
@@ -12,23 +14,37 @@ export class LocalWalletPool implements WalletPool {
 
   constructor(walletAddresses: string[]) {
     for (const address of walletAddresses) {
-      this.resources[address] = {
-        id: address,
-        locked: false,
-      };
+      this.resources[address] = new Resource(address)
     }
   }
 
   private async acquire(resourceId?: string): Promise<string> {
     const resource = resourceId
       ? this.resources[resourceId]
-      : Object.values(this.resources).find((resource) => !resource.locked);
+      : Object.values(this.resources).find(
+          resource => resource.isAvailable(),
+        );
 
-    if (!resource || resource.locked) throw new Error('Resource not available');
+    if (!resource || !resource?.isAvailable())
+      throw new Error("Resource not available");
 
-    resource.locked = true;
+    resource.lock();
 
-    return resource.id;
+    return resource.getId();
+  }
+
+  public discardWalletFromPool(resourceId: string): void {
+    if (resourceId in this.resources) {
+      this.resources[resourceId].discard();
+    } else {
+      throw new Error(`Resource ${resourceId} not available for discarding`);
+    }
+  }
+
+  public addWalletBackToPoolIfRequired(resourceId: string): void {
+    if (resourceId in this.resources && this.resources[resourceId].isDiscarded()) {
+      this.resources[resourceId].retain();
+    }
   }
 
   /**
@@ -62,6 +78,6 @@ export class LocalWalletPool implements WalletPool {
   public async release(walletAddress: string): Promise<void> {
     const resource = this.resources[walletAddress];
     if (!resource) throw new Error(`Resource "${walletAddress}" not found`);
-    resource.locked = false;
+    resource.unlock();
   }
 }

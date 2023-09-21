@@ -1,22 +1,12 @@
-export interface WalletPool {
-  blockAndAcquire(blockTimeout: number, resourceId?: string): Promise<string>;
-  release(wallet: string): Promise<void>;
-}
-
 import winston from 'winston';
 import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
-import { LocalWalletPool } from "./wallet-pool";
+import { LocalWalletPool, WalletPool } from "./wallet-pool";
 import { createLogger } from '../utils';
+import { Wallets } from '../chain-wallet-manager';
 
 export type BaseWalletOptions = {
   logger: winston.Logger;
   failOnInvalidTokens: boolean;
-}
-
-export type WalletInterface = {
-  address: string;
-  privateKey?: string;
-  provider: any; // TODO use providers union type
 }
 
 export type TransferRecepit = {
@@ -32,34 +22,33 @@ export type WalletData = {
   address: string;
   privateKey?: string;
   tokens: string[];
-}
+};
 
 export abstract class WalletToolbox {
-  protected provider: any;// TODO: reevaluate the best way to do this
   private warm = false;
   private walletPool: WalletPool;
   protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};
   protected wallets: Record<string, WalletData>;
   protected logger: winston.Logger;
 
-  abstract validateNetwork(network: string): boolean;
+  protected abstract validateNetwork(network: string): boolean;
 
-  abstract validateChainName(chainName: string): boolean;
+  protected abstract validateChainName(chainName: string): boolean;
 
-  abstract validateOptions(options: any): boolean;
+  protected abstract validateOptions(options: any): boolean;
 
-  abstract validateTokenAddress(token: string): boolean;
+  protected abstract validateTokenAddress(token: string): boolean;
 
   // Should parse tokens received from the user.
   // The tokens returned should be a list of token addresses used by the chain client
   // Example: ["DAI", "USDC"] => ["0x00000000", "0x00000001"];
-  abstract parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[];
+  protected abstract parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[];
 
   // Should instantiate provider for the chain
   // calculate data which could be re-utilized (for example token's local addresses, symbol and decimals in evm chains)
-  abstract warmup(): Promise<void>;
+  protected abstract warmup(): Promise<void>;
 
-  abstract getAddressFromPrivateKey(privateKey: string): string;
+  protected abstract getAddressFromPrivateKey(privateKey: string): string;
 
   // Should return balances for a native address in the chain
   abstract pullNativeBalance(address: string): Promise<WalletBalance>;
@@ -67,7 +56,11 @@ export abstract class WalletToolbox {
   // Should return balances for tokens in the list for the address specified
   abstract pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]>;
 
-  abstract transferNativeBalance(privateKey: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number): Promise<TransferRecepit>;
+  protected abstract transferNativeBalance(privateKey: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number): Promise<TransferRecepit>;
+
+  protected abstract getRawWallet (privateKey: string): Promise<Wallets>;
+
+  public abstract getGasPrice (): Promise<unknown>;
 
   constructor(
     protected network: string,
@@ -94,7 +87,10 @@ export abstract class WalletToolbox {
     this.walletPool = new LocalWalletPool(Object.keys(this.wallets)); // if HA: new DistributedWalletPool();
   }
 
-  public async pullBalances(): Promise<WalletBalance[]> {
+  public async pullBalances(
+    isRebalancingEnabled = false,
+    minBalanceThreshold?: number,
+  ): Promise<WalletBalance[]> {
     if (!this.warm) {
       this.logger.debug(`Warming up wallet toolbox for chain ${this.chainName}...`);
       try {
@@ -113,10 +109,18 @@ export abstract class WalletToolbox {
 
       this.logger.verbose(`Pulling balances for ${address}...`);
 
-      let nativeBalance;
+      let nativeBalance: WalletBalance;
 
       try {
         nativeBalance = await this.pullNativeBalance(address);
+
+        this.addOrDiscardWalletIfRequired(
+          isRebalancingEnabled,
+          address,
+          nativeBalance,
+          minBalanceThreshold ?? 0,
+        );
+
         balances.push(nativeBalance);
 
         this.logger.debug(`Balances for ${address} pulled: ${JSON.stringify(nativeBalance)}`)
@@ -146,7 +150,7 @@ export abstract class WalletToolbox {
     return balances;
   }
 
-  public async acquire(address?: string, acquireTimeout?: number): Promise<WalletInterface> {
+  public async acquire(address?: string, acquireTimeout?: number) {
     const timeout = acquireTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
     // this.grpcClient.acquireWallet(address);
     const walletAddress = await this.walletPool.blockAndAcquire(timeout, address);
@@ -154,10 +158,9 @@ export abstract class WalletToolbox {
     const privateKey = this.wallets[walletAddress].privateKey;
 
     return {
-      privateKey,
       address: walletAddress,
-      provider: this.provider,
-    }
+      rawWallet: await this.getRawWallet(privateKey!)
+    };
   }
 
   public async release(address: string) {
@@ -209,5 +212,36 @@ export abstract class WalletToolbox {
     const tokens = rawConfig.tokens ? this.parseTokensConfig(rawConfig.tokens, failOnInvalidTokens) : [];
 
     return { address, privateKey, tokens };
+  }
+
+  /**
+   * Removes the wallet from the pool or adds the wallet back in the
+   * pool based on the min threshold specified in the rebalance config
+   *
+   * @param address wallet address
+   * @param balance native balance in the wallet
+   * @param minBalanceThreshold passed from rebalance config, defaults to zero
+   * @returns true if there is enough balance on the wallet, false otherwise
+   */
+  private addOrDiscardWalletIfRequired(
+    isRebalancingEnabled: boolean,
+    address: string,
+    balance: WalletBalance,
+    minBalanceThreshold: number,
+  ): boolean {
+    const isEnoughWalletBalance =
+      Number(balance.formattedBalance) >= minBalanceThreshold;
+
+    if (isRebalancingEnabled && balance.isNative) {
+      if (isEnoughWalletBalance) {
+        // set's the discarded flag on the wallet to false
+        this.walletPool.addWalletBackToPoolIfRequired(address);
+      } else {
+        // set's the discarded flag on the wallet to true
+        this.walletPool.discardWalletFromPool(address);
+      }
+    }
+
+    return isEnoughWalletBalance;
   }
 }

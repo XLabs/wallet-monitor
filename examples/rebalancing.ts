@@ -28,7 +28,7 @@ const options: WalletManagerOptions = {
 const allChainWallets: WalletManagerConfig = {
   ethereum: {
     chainConfig: {
-      nodeUrl: "http://localhost:8545",
+      nodeUrl: "http://127.0.0.1:8545",
     },
     rebalance: {
       enabled: true,

@@ -82,7 +82,7 @@ describe("sui wallet tests", () => {
             options
         );
 
-        await wallet.warmup();
+        await wallet.pullBalances();
         expect(pullSuiTokenData).toHaveBeenCalledTimes(2); // KnownToken (USDC) and Valid Address (TURBOS)
 
         const tokenBalances = await wallet.pullTokenBalances(

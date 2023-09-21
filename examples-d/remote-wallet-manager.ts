@@ -17,7 +17,6 @@ const walletManager = buildWalletManager(fileConfig)
 const doSomethingWithWallet = async (wallet: WalletInterface) => {
   // do what you need with the wallet
   console.log(
-    wallet.provider,
     wallet.address,
     /**
      * You should never ever log your private keys.
