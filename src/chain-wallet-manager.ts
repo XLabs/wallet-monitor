@@ -58,6 +58,12 @@ export type Providers = EVMProvider | SolanaProvider | SuiProvider;
 export type Wallets = EVMWallet | SolanaWallet | SuiWallet;
 export type WithWalletExecutor = (wallet: WalletInterface) => Promise<void>;
 
+type WalletMetrics = {
+  chainName: string;
+  network: string;
+  acquiredAt?: number;
+}
+
 export class ChainWalletManager {
   private locked = false;
   private rebalanceLocked = false;
@@ -67,6 +73,8 @@ export class ChainWalletManager {
   private rebalanceInterval: ReturnType<typeof setInterval> | null = null;
   private options: ChainWalletManagerOptions;
   private emitter = new EventEmitter();
+  protected availableWalletsByChainName: Record<string, number> =  {};
+  protected metricsByWalletAddress: Record<string, WalletMetrics> = {};
 
   public walletToolbox: Wallet;
 
@@ -89,6 +97,13 @@ export class ChainWalletManager {
         failOnInvalidTokens: this.options.failOnInvalidTokens,
       },
     );
+
+    this.availableWalletsByChainName[options.chainName] = wallets.length;
+    wallets.forEach((wallet) => {
+      if (wallet.address) {
+        this.metricsByWalletAddress[wallet.address] = { chainName: options.chainName, network: options.network };
+      }
+    })
   }
 
   private validateOptions(options: any): options is ChainWalletManagerOptions {
@@ -340,5 +355,23 @@ export class ChainWalletManager {
     this.emitter.emit("rebalance-finished", strategy, receipts);
 
     return true;
+  }
+
+  private updateActiveWalletsMetric(walletAddress: string, isReleased = false) {
+    const {chainName, network} = this.metricsByWalletAddress[walletAddress] ?? {};
+    if (!chainName || !network) return;
+
+    if (isReleased) {
+      this.availableWalletsByChainName[chainName]++;
+      const {acquiredAt = 0} = this.metricsByWalletAddress[walletAddress];
+      const releasedAt = Date.now();
+      const timeLocked = releasedAt - acquiredAt;
+      this.emitter.emit('wallets-lock-period', chainName, network, walletAddress, timeLocked);
+    } else {
+      // wallet acquired/locked
+      this.availableWalletsByChainName[chainName]--;
+      this.metricsByWalletAddress[walletAddress].acquiredAt = Date.now();
+    }
+    this.emitter.emit('active-wallets-count', chainName, network, this.availableWalletsByChainName[chainName]);
   }
 }

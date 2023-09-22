@@ -1,7 +1,6 @@
 {
   "description": "A set of examples for the wallet-monitor package",
   "scripts": {
-    "wallet-watcher": "ts-node ./wallet-watcher.ts",
     "wallet-manager": "ts-node ./wallet-manager.ts",
     "rebalancing": "ts-node ./rebalancing.ts"
   },

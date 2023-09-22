@@ -6,7 +6,7 @@ import { WalletBalance, TokenBalance } from './wallets';
 import { RebalanceInstruction } from './rebalance-strategies';
 import { TransferRecepit } from './wallets/base-wallet';
 
-export function updateBalancesGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance | TokenBalance) {
+function updateBalancesGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance | TokenBalance) {
   const { symbol, address, isNative } = balance;
   const tokenAddress = (balance as TokenBalance).tokenAddress || '';
   gauge
@@ -14,11 +14,23 @@ export function updateBalancesGauge(gauge: Gauge, chainName: string, network: st
     .set(parseFloat(balance.formattedBalance));
 }
 
+function updateAvailableWalletsGauge(gauge: Gauge, chainName: string, network: string, count: number) {
+  gauge
+    .labels(chainName, network)
+    .set(count);
+}
+
+function updateWalletsLockPeriodGauge(gauge: Gauge, chainName: string, network: string, walletAddress: string, lockTime: number) {
+  gauge
+    .labels(chainName, network, walletAddress)
+    .set(lockTime);
+}
+
 function createRebalanceCounter (registry: Registry, name: string) {
   return new Counter({
     name,
     help: "Total times a rebalance had at least one instruction to execute",
-    labelNames: ["chain_name", "strategy"],
+    labelNames: ["chain_name", "strategy", "status"],
     registers: [registry],
   });
 }
@@ -59,7 +71,7 @@ function createCounter(registry: Registry, name: string, help: string, labels: s
   });
 }
 
-export function createBalancesGauge(registry: Registry, gaugeName: string) {
+function createBalancesGauge(registry: Registry, gaugeName: string) {
   return new Gauge({
     name: gaugeName,
     help: "Balances pulled for each configured wallet",
@@ -68,7 +80,25 @@ export function createBalancesGauge(registry: Registry, gaugeName: string) {
   });
 }
 
-export function startMetricsServer (
+function createAvailableWalletsGauge(registry: Registry, gaugeName: string) {
+  return new Gauge({
+    name: gaugeName,
+    help: "Number of available wallets per chain",
+    labelNames: ["chain_name", "network"],
+    registers: [registry],
+  });
+}
+
+function createWalletsLockPeriodGauge(registry: Registry, gaugeName: string) {
+  return new Gauge({
+    name: gaugeName,
+    help: "Amount of time a wallet was locked",
+    labelNames: ["chain_name", "network", "wallet_address"],
+    registers: [registry],
+  });
+}
+
+function startMetricsServer (
   port: number, path: string, getMetrics: () => Promise<string>
 ): Promise<Koa> {
   const app = new Koa();
@@ -92,6 +122,8 @@ export class PrometheusExporter {
   public app?: Koa;
 
   private balancesGauge: Gauge;
+  private availableWalletsGauge: Gauge;
+  private walletsLockPeriodGauge: Gauge;
   private rebalanceCounter: Counter;
   private rebalanceExpenditureCounter: Counter;
   private rebalanceInstructionsCounter: Counter;
@@ -109,6 +141,8 @@ export class PrometheusExporter {
     this.prometheusPath = path || '/metrics';
 
     this.balancesGauge = createBalancesGauge(this.registry, 'wallet_monitor_balance');
+    this.availableWalletsGauge = createAvailableWalletsGauge(this.registry, 'wallet_monitor_available_wallets');
+    this.walletsLockPeriodGauge = createWalletsLockPeriodGauge(this.registry, 'wallet_monitor_wallets_lock_period')
     this.rebalanceCounter = createRebalanceCounter(this.registry, 'wallet_monitor_rebalance');
     this.rebalanceExpenditureCounter = createRebalanceExpenditureCounter(this.registry, 'wallet_monitor_rebalance_expenditure');
     this.rebalanceInstructionsCounter = createRebalanceInstructionsCounter(this.registry, 'wallet_monitor_rebalance_instruction');
@@ -134,17 +168,29 @@ export class PrometheusExporter {
     });
   }
 
+  public updateActiveWallets (chainName: string, network: string, count: number) {
+    updateAvailableWalletsGauge(this.availableWalletsGauge, chainName, network, count);
+  }
+
+  public updateWalletsLockPeriod(chainName: string, network: string, walletAddress: string, lockTime: number) {
+    updateWalletsLockPeriodGauge(this.walletsLockPeriodGauge, chainName, network, walletAddress, lockTime);
+  }
+
   public updateRebalanceStarted(chainName: string, strategy: string, instructions: RebalanceInstruction[]) {
-    this.rebalanceCounter.inc({ chain_name: chainName, strategy });
     this.rebalanceInstructionsCounter.inc({ chain_name: chainName, strategy }, instructions.length);
   }
   
   public updateRebalanceSuccess(chainName: string, strategy: string, receipts: TransferRecepit[]) {
+    this.rebalanceCounter.labels(chainName, strategy, "success").inc();
     this.rebalanceTransactionsCounter.labels(chainName, strategy).inc(receipts.length);
     const totalExpenditure = receipts.reduce((total, receipt) => {
       return total + parseFloat(receipt.formattedCost);
     }, 0);
     this.rebalanceExpenditureCounter.labels(chainName, strategy).inc(totalExpenditure);
+  }
+
+  public updateRebalanceFailure(chainName: string, strategy: string) {
+    this.rebalanceCounter.labels(chainName, strategy, "failed").inc();
   }
 
   public increaseAcquiredLocks(chainName: string) {
