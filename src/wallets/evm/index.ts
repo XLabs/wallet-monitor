@@ -288,7 +288,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     return this.provider.getGasPrice();
   }
 
-  protected getAddressFromPrivateKey(privateKey: string): string {
+  public getAddressFromPrivateKey(privateKey: string): string {
     return getEvmAddressFromPrivateKey(privateKey);
   }
 }

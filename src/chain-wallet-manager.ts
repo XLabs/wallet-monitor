@@ -102,6 +102,11 @@ export class ChainWalletManager {
     wallets.forEach((wallet) => {
       if (wallet.address) {
         this.metricsByWalletAddress[wallet.address] = { chainName: options.chainName, network: options.network };
+      } else if (wallet.privateKey) {
+        const walletAddress = this.walletToolbox.getAddressFromPrivateKey(wallet.privateKey);
+        this.metricsByWalletAddress[walletAddress] = { chainName: options.chainName, network: options.network };
+      } else {
+        throw new Error('Wallet config must have either address or privateKey defined');
       }
     })
   }
@@ -276,6 +281,7 @@ export class ChainWalletManager {
       opts?.address,
       opts?.waitToAcquireTimeout,
     );
+    this.updateActiveWalletsMetric(address);
 
     return {
       address,
@@ -285,6 +291,7 @@ export class ChainWalletManager {
   }
 
   public async releaseLock(address: string) {
+    this.updateActiveWalletsMetric(address, true);
     return this.walletToolbox.release(address);
   }
 

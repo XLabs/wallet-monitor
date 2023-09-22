@@ -48,7 +48,7 @@ export abstract class WalletToolbox {
   // calculate data which could be re-utilized (for example token's local addresses, symbol and decimals in evm chains)
   protected abstract warmup(): Promise<void>;
 
-  protected abstract getAddressFromPrivateKey(privateKey: string): string;
+  public abstract getAddressFromPrivateKey(privateKey: string): string;
 
   // Should return balances for a native address in the chain
   abstract pullNativeBalance(address: string): Promise<WalletBalance>;

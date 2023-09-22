@@ -53,15 +53,6 @@ function createRebalanceInstructionsCounter (registry: Registry, name: string) {
   });
 }
 
-function createRebalanceTransactionsCounter (registry: Registry, name: string) {
-  return new Counter({
-    name,
-    help: "Total number of transactions executed during rebalances",
-    labelNames: ['chain_name', 'strategy'],
-    registers: [registry],
-  });
-}
-
 function createCounter(registry: Registry, name: string, help: string, labels: string[]) {
   return new Counter({
     name,
@@ -127,7 +118,6 @@ export class PrometheusExporter {
   private rebalanceCounter: Counter;
   private rebalanceExpenditureCounter: Counter;
   private rebalanceInstructionsCounter: Counter;
-  private rebalanceTransactionsCounter: Counter;
   private locksAcquiredCounter: Counter;
 
 
@@ -146,7 +136,6 @@ export class PrometheusExporter {
     this.rebalanceCounter = createRebalanceCounter(this.registry, 'wallet_monitor_rebalance');
     this.rebalanceExpenditureCounter = createRebalanceExpenditureCounter(this.registry, 'wallet_monitor_rebalance_expenditure');
     this.rebalanceInstructionsCounter = createRebalanceInstructionsCounter(this.registry, 'wallet_monitor_rebalance_instruction');
-    this.rebalanceTransactionsCounter = createRebalanceTransactionsCounter(this.registry, 'wallet_monitor_rebalance_transaction');
     this.locksAcquiredCounter = createCounter(this.registry, "locks_acquired_total", "Total number of acquired locks", ['chain_name', 'status']);
   }
 
@@ -181,8 +170,7 @@ export class PrometheusExporter {
   }
   
   public updateRebalanceSuccess(chainName: string, strategy: string, receipts: TransferRecepit[]) {
-    this.rebalanceCounter.labels(chainName, strategy, "success").inc();
-    this.rebalanceTransactionsCounter.labels(chainName, strategy).inc(receipts.length);
+    this.rebalanceCounter.labels(chainName, strategy, "success").inc(receipts.length);
     const totalExpenditure = receipts.reduce((total, receipt) => {
       return total + parseFloat(receipt.formattedCost);
     }, 0);
