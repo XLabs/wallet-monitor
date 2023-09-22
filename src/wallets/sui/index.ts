@@ -233,7 +233,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     throw new Error('SuiWalletToolbox.getGasPrice not implemented.');
   }
 
-  public getAddressFromPrivateKey(privateKey: string): string {
+  protected getAddressFromPrivateKey(privateKey: string): string {
     return getSuiAddressFromPrivateKey(privateKey);
   }
 

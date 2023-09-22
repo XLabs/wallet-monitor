@@ -195,7 +195,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     throw new Error('SolanaWalletToolbox.getGasPrice not implemented.');
   }
 
-  public getAddressFromPrivateKey(privateKey: string): string {
+  protected getAddressFromPrivateKey(privateKey: string): string {
     return getSolanaAddressFromPrivateKey(privateKey);
   }
 
