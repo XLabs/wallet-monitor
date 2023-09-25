@@ -171,11 +171,6 @@ export class WalletManager {
           this.logger.info(
             `Rebalance Started. Instructions to execute: ${instructions.length}`,
           );
-          this.exporter?.updateRebalanceStarted(
-            chainName,
-            strategy,
-            instructions,
-          );
         },
       );
 

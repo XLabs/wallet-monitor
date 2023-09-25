@@ -356,7 +356,7 @@ export class ChainWalletManager {
       this.availableWalletsByChainName[chainName]++;
       const acquiredAt = this.walletAcquiredAt[key];
       const releasedAt = Date.now();
-      const timeLocked = releasedAt - acquiredAt;
+      const timeLocked = (releasedAt - acquiredAt) / 1000;
       this.emitter.emit('wallets-lock-period', chainName, network, walletAddress, timeLocked);
     } else {
       // wallet acquired/locked

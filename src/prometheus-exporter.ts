@@ -3,7 +3,6 @@ import Router from 'koa-router';
 import { Counter, Gauge, Registry } from 'prom-client';
 
 import { WalletBalance, TokenBalance } from './wallets';
-import { RebalanceInstruction } from './rebalance-strategies';
 import { TransferRecepit } from './wallets/base-wallet';
 
 function updateBalancesGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance | TokenBalance) {
@@ -26,15 +25,6 @@ function updateWalletsLockPeriodGauge(gauge: Gauge, chainName: string, network: 
     .set(lockTime);
 }
 
-function createRebalanceCounter (registry: Registry, name: string) {
-  return new Counter({
-    name,
-    help: "Total times a rebalance had at least one instruction to execute",
-    labelNames: ["chain_name", "strategy", "status"],
-    registers: [registry],
-  });
-}
-
 function createRebalanceExpenditureCounter (registry: Registry, name: string) {
   return new Counter({
     name,
@@ -48,7 +38,7 @@ function createRebalanceInstructionsCounter (registry: Registry, name: string) {
   return new Counter({
     name,
     help: "Total number of instructions executed during rebalances",
-    labelNames: ['chain_name', 'strategy'],
+    labelNames: ["chain_name", "strategy", "status"],
     registers: [registry],
   });
 }
@@ -115,7 +105,6 @@ export class PrometheusExporter {
   private balancesGauge: Gauge;
   private availableWalletsGauge: Gauge;
   private walletsLockPeriodGauge: Gauge;
-  private rebalanceCounter: Counter;
   private rebalanceExpenditureCounter: Counter;
   private rebalanceInstructionsCounter: Counter;
   private locksAcquiredCounter: Counter;
@@ -133,7 +122,6 @@ export class PrometheusExporter {
     this.balancesGauge = createBalancesGauge(this.registry, 'wallet_monitor_balance');
     this.availableWalletsGauge = createAvailableWalletsGauge(this.registry, 'wallet_monitor_available_wallets');
     this.walletsLockPeriodGauge = createWalletsLockPeriodGauge(this.registry, 'wallet_monitor_wallets_lock_period')
-    this.rebalanceCounter = createRebalanceCounter(this.registry, 'wallet_monitor_rebalance');
     this.rebalanceExpenditureCounter = createRebalanceExpenditureCounter(this.registry, 'wallet_monitor_rebalance_expenditure');
     this.rebalanceInstructionsCounter = createRebalanceInstructionsCounter(this.registry, 'wallet_monitor_rebalance_instruction');
     this.locksAcquiredCounter = createCounter(this.registry, "locks_acquired_total", "Total number of acquired locks", ['chain_name', 'status']);
@@ -164,13 +152,9 @@ export class PrometheusExporter {
   public updateWalletsLockPeriod(chainName: string, network: string, walletAddress: string, lockTime: number) {
     updateWalletsLockPeriodGauge(this.walletsLockPeriodGauge, chainName, network, walletAddress, lockTime);
   }
-
-  public updateRebalanceStarted(chainName: string, strategy: string, instructions: RebalanceInstruction[]) {
-    this.rebalanceInstructionsCounter.inc({ chain_name: chainName, strategy }, instructions.length);
-  }
   
   public updateRebalanceSuccess(chainName: string, strategy: string, receipts: TransferRecepit[]) {
-    this.rebalanceCounter.labels(chainName, strategy, "success").inc(receipts.length);
+    this.rebalanceInstructionsCounter.labels(chainName, strategy, "success").inc(receipts.length);
     const totalExpenditure = receipts.reduce((total, receipt) => {
       return total + parseFloat(receipt.formattedCost);
     }, 0);
@@ -178,7 +162,7 @@ export class PrometheusExporter {
   }
 
   public updateRebalanceFailure(chainName: string, strategy: string) {
-    this.rebalanceCounter.labels(chainName, strategy, "failed").inc();
+    this.rebalanceInstructionsCounter.labels(chainName, strategy, "failed").inc();
   }
 
   public increaseAcquiredLocks(chainName: string) {
