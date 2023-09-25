@@ -93,6 +93,7 @@ export class ChainWalletManager {
     );
 
     this.availableWalletsByChainName[options.chainName] = wallets.length;
+    this.emitter.emit('active-wallets-count', options.chainName, options.network, this.availableWalletsByChainName[options.chainName]);
   }
 
   private validateOptions(options: any): options is ChainWalletManagerOptions {
