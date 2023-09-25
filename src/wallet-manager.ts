@@ -171,11 +171,6 @@ export class WalletManager {
           this.logger.info(
             `Rebalance Started. Instructions to execute: ${instructions.length}`,
           );
-          this.exporter?.updateRebalanceStarted(
-            chainName,
-            strategy,
-            instructions,
-          );
         },
       );
 
@@ -189,9 +184,18 @@ export class WalletManager {
         },
       );
 
-      chainManager.on("rebalance-error", error => {
+      chainManager.on("rebalance-error", (error, _, strategy) => {
         this.logger.error(`Rebalance Error: ${error}`);
+        this.exporter?.updateRebalanceFailure(chainName, strategy);
       });
+
+      chainManager.on("active-wallets-count", (chainName, network, count) => {
+        this.exporter?.updateActiveWallets(chainName, network, count);
+      })
+
+      chainManager.on("wallets-lock-period", (chainName, network, walletAddress, lockTime) => {
+        this.exporter?.updateWalletsLockPeriod(chainName, network, walletAddress, lockTime);
+      })
 
       this.managers[chainName] = chainManager;
 

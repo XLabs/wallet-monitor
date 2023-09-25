@@ -73,7 +73,7 @@ export async function transferEvmNativeBalance(
   const transaction = {
     to: targetAddress,
     value: amountInWei,
-    gasLimit: gasLimit ?? gasLimit,
+    gasLimit: gasLimit,
     gasPrice: maxGasPrice ? ethers.utils.parseUnits(maxGasPrice!.toString(), 'gwei') : undefined,
   };
 
