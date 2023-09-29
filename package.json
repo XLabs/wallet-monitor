@@ -6,7 +6,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build-docker-image": "docker build -t wallet-manager-service:latest .",
-    "start-service": "ts-node src/grpc/service.ts",
+    "start-service": "node lib/grpc/service.js",
     "build-grpc": "grpc_tools_node_protoc --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./src/grpc/out/ --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false,esModuleInterop=true --proto_path=./src/grpc/proto/ src/grpc/proto/wallet-manager-grpc-service.proto",
     "build": "npm run build-grpc && tsc",
     "watch": "tsc -w",
@@ -51,13 +51,10 @@
     "bluebird": "^3.7.2",
     "bs58": "^5.0.0",
     "ethers": "^5.7.0",
-    "google-protobuf": "^3.21.2",
     "koa": "^2.14.1",
     "koa-router": "^12.0.0",
     "nice-grpc": "^2.1.4",
     "prom-client": "^14.2.0",
-    "ts-node": "^10.9.1",
-    "ts-proto": "^1.147.3",
     "winston": "^3.8.2",
     "zod": "^3.21.4"
   },
@@ -73,10 +70,13 @@
     "eslint-plugin-unused-imports": "^2.0.0",
     "ganache": "^7.8.0",
     "ganache-cli": "^6.12.2",
+    "google-protobuf": "^3.21.2",
     "grpc-tools": "^1.12.4",
     "jest": "^29.5.0",
     "prettier": "^2.8.7",
     "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.1",
+    "ts-proto": "^1.147.3",
     "typescript": "^5.0.2"
   }
 }
