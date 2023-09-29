@@ -16,4 +16,4 @@ RUN npm run build-grpc
 
 RUN npm run build
 
-CMD [ "npm", "run", "start-service" ]
+CMD [ "node", "lib/grpc/service.js" ]
