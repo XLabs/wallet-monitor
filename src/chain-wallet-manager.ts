@@ -235,7 +235,7 @@ export class ChainWalletManager {
     this.logger.info(`Starting Manager for chain: ${this.options.chainName}`);
     this.interval = setInterval(async () => {
       await this.refreshBalances();
-    }, DEFAULT_POLL_INTERVAL);
+    }, this.options.balancePollInterval);
 
     if (this.options.rebalance.enabled) {
       this.logger.info(
