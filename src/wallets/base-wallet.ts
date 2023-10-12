@@ -3,6 +3,7 @@ import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
 import { LocalWalletPool, WalletPool } from "./wallet-pool";
 import { createLogger } from '../utils';
 import { Wallets } from '../chain-wallet-manager';
+import { BigNumber } from 'ethers';
 
 export type BaseWalletOptions = {
   logger: winston.Logger;
@@ -60,7 +61,7 @@ export abstract class WalletToolbox {
 
   protected abstract getRawWallet (privateKey: string): Promise<Wallets>;
 
-  public abstract getGasPrice (): Promise<bigint>;
+  public abstract getGasPrice (): Promise<bigint | BigNumber>;
 
   constructor(
     protected network: string,
