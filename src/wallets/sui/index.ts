@@ -229,8 +229,15 @@ export class SuiWalletToolbox extends WalletToolbox {
   }
 
   public async getGasPrice () {
-    // TODO: implement
-    throw new Error('SuiWalletToolbox.getGasPrice not implemented.');
+    const firstWalletAddress = Object.keys(this.wallets)[0];
+    const firstWallet = this.wallets[firstWalletAddress];
+    if (firstWallet.privateKey) {
+      const signer = await this.getRawWallet(firstWallet.privateKey);
+      const gasPrice = await signer.provider.getReferenceGasPrice();
+      return gasPrice;
+    } else {
+      return 0n
+    }
   }
 
   protected getAddressFromPrivateKey(privateKey: string): string {

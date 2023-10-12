@@ -60,7 +60,7 @@ export abstract class WalletToolbox {
 
   protected abstract getRawWallet (privateKey: string): Promise<Wallets>;
 
-  public abstract getGasPrice (): Promise<unknown>;
+  public abstract getGasPrice (): Promise<bigint>;
 
   constructor(
     protected network: string,

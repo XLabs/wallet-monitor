@@ -1,4 +1,4 @@
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Keypair } from "@solana/web3.js"
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Keypair, RecentPrioritizationFees } from "@solana/web3.js"
 import { decode } from "bs58";
 import { SOLANA, SOLANA_CHAIN_CONFIG, SolanaNetworks } from "./solana.config";
 import { PYTHNET, PYTHNET_CHAIN_CONFIG } from "./pythnet.config";
@@ -6,7 +6,7 @@ import { BaseWalletOptions, TransferRecepit, WalletToolbox } from "../base-walle
 import { WalletBalance, TokenBalance, WalletConfig, WalletOptions } from "../index";
 import { pullSolanaNativeBalance, getSolanaAddressFromPrivateKey } from "../../balances/solana";
 import { getMint, Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { mapConcurrent } from "../../utils";
+import { findMedian, mapConcurrent } from "../../utils";
 
 
 export type SolanaChainConfig = {
@@ -191,8 +191,11 @@ export class SolanaWalletToolbox extends WalletToolbox {
   }
 
   public async getGasPrice () {
-    // TODO: implement
-    throw new Error('SolanaWalletToolbox.getGasPrice not implemented.');
+    // see more on why use getRecentPrioritizationFees: https://docs.solana.com/transaction_fees#get-recent-prioritization-fees
+    const recentBlocks = await this.connection.getRecentPrioritizationFees();
+    const prioritizationFee = findMedian<RecentPrioritizationFees>(recentBlocks, (block) => block.prioritizationFee);
+
+    return BigInt(prioritizationFee || 0n);
   }
 
   protected getAddressFromPrivateKey(privateKey: string): string {

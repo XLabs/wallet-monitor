@@ -58,3 +58,15 @@ export function buildWalletManager(rawWMFullConfig: WalletManagerFullConfig): IC
     return new WalletManager(config, options) as ILibraryWalletManager
   }
 }
+
+export type Accessor<T> = (obj: T) => number;
+
+export function findMedian<T>(arr: T[], accessor: Accessor<T>): number | undefined {
+    const sortedArr = arr.slice().sort((a, b) => accessor(a) - accessor(b));
+    const len = sortedArr.length;
+    if (len === 0) {
+        return undefined;
+    }
+    const mid = Math.floor(len / 2);
+    return len % 2 === 0 ? (accessor(sortedArr[mid - 1]) + accessor(sortedArr[mid])) / 2 : accessor(sortedArr[mid]);
+}
