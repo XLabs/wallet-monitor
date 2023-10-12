@@ -1,7 +1,7 @@
 // Warning: In case of timeout, we are not cancelling the promise, we are just ignoring it.
 // Extend the timeout utility to accept cancellation callback
 export const timeout = <T>(promise: Promise<T>, timeoutMs: number) => {
-  let timer;
+  let timer: NodeJS.Timeout;
   const timeoutPromise = new Promise<T>(
     (_, reject) => (timer = setTimeout(() => reject(new Error("timeout")), timeoutMs))
   );
