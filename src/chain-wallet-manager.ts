@@ -176,7 +176,7 @@ export class ChainWalletManager {
 
   private async refreshBalances() {
     if (this.locked) {
-      console.warn(
+      this.logger.warn(
         `A monitoring run is already in progress for ${this.options.chainName}. Will skip run`,
       );
       this.emitter.emit("skipped", {
@@ -205,7 +205,7 @@ export class ChainWalletManager {
         lastBalance,
       );
     } catch (error) {
-      console.error(
+      this.logger.error(
         `Error while running monitor for ${this.options.chainName}-${this.options.network} Err: ${error}`,
       );
       this.emitter.emit("error", error);
@@ -235,7 +235,7 @@ export class ChainWalletManager {
     this.logger.info(`Starting Manager for chain: ${this.options.chainName}`);
     this.interval = setInterval(async () => {
       await this.refreshBalances();
-    }, DEFAULT_POLL_INTERVAL);
+    }, this.options.balancePollInterval);
 
     if (this.options.rebalance.enabled) {
       this.logger.info(
