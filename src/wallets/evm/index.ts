@@ -285,7 +285,8 @@ export class EvmWalletToolbox extends WalletToolbox {
   }
 
   public async getGasPrice () {
-    return this.provider.getGasPrice();
+    const gasPrice = await this.provider.getGasPrice();
+    return BigInt(gasPrice.toString());
   }
 
   protected getAddressFromPrivateKey(privateKey: string): string {

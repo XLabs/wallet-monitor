@@ -54,7 +54,7 @@ export type SuiProvider = Connection;
 const SUI_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}::\w+::\w+$/;
 
 export class SuiWalletToolbox extends WalletToolbox {
-  private provider: Connection;
+  private connection: Connection;
   private chainConfig: SuiChainConfig;
   private tokenData: Record<string, SuiTokenData> = {};
   private options: SuiWalletOptions;
@@ -75,7 +75,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     const nodeUrlOrigin = this.options.nodeUrl && new URL(this.options.nodeUrl).origin
     this.logger.debug(`SUI rpc url: ${nodeUrlOrigin}`);
 
-    this.provider = new Connection({
+    this.connection = new Connection({
       fullnode: this.options.nodeUrl,
     });
   }
@@ -142,7 +142,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     const tokens = this.walletTokens(this.wallets);
     await mapConcurrent(tokens, async (tokenAddress: string): Promise<void> => {
       // tokens has addresses, per this.parseTokensConfig() contract
-      const tokenData = await pullSuiTokenData(this.provider, tokenAddress);
+      const tokenData = await pullSuiTokenData(this.connection, tokenAddress);
       this.tokenData[tokenAddress] = tokenData;
     }, 1);
 
@@ -158,7 +158,7 @@ export class SuiWalletToolbox extends WalletToolbox {
   }
 
   public async pullNativeBalance(address: string): Promise<WalletBalance> {
-    const balance = await pullSuiNativeBalance(this.provider, address);
+    const balance = await pullSuiNativeBalance(this.connection, address);
     const formattedBalance = String(+balance.rawBalance / 10 ** 9);
     return {
       ...balance,
@@ -174,7 +174,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     tokens: string[]
   ): Promise<TokenBalance[]> {
     const uniqueTokens = [...new Set(tokens)];
-    const allBalances = await pullSuiTokenBalances(this.provider, address);
+    const allBalances = await pullSuiTokenBalances(this.connection, address);
 
     return uniqueTokens.map((tokenAddress: string) => {
       const tokenData = this.tokenData[tokenAddress];
@@ -218,19 +218,20 @@ export class SuiWalletToolbox extends WalletToolbox {
     gasLimit?: number
   ): Promise<TransferRecepit> {
     const txDetails = { targetAddress, amount, maxGasPrice, gasLimit };
-    return transferSuiNativeBalance(this.provider, privateKey, txDetails);
+    return transferSuiNativeBalance(this.connection, privateKey, txDetails);
   }
 
   protected async getRawWallet (privateKey: string) {
     const seiPrivateKeyAsBuffer = Buffer.from(privateKey, "hex");
     const keyPair = Ed25519Keypair.fromSecretKey(seiPrivateKeyAsBuffer);
-    const suiJsonProvider = new JsonRpcProvider(this.provider);
+    const suiJsonProvider = new JsonRpcProvider(this.connection);
     return new RawSigner(keyPair, suiJsonProvider);
   }
 
   public async getGasPrice () {
-    // TODO: implement
-    throw new Error('SuiWalletToolbox.getGasPrice not implemented.');
+    const suiJsonProvider = new JsonRpcProvider(this.connection);
+    const gasPrice = await suiJsonProvider.getReferenceGasPrice();
+    return gasPrice;
   }
 
   protected getAddressFromPrivateKey(privateKey: string): string {
