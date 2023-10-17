@@ -195,7 +195,8 @@ export class SolanaWalletToolbox extends WalletToolbox {
     const recentBlocks = await this.connection.getRecentPrioritizationFees();
     const prioritizationFee = findMedian<RecentPrioritizationFees>(recentBlocks, (block) => block.prioritizationFee);
 
-    return BigInt(prioritizationFee || 0n);
+    if (!prioritizationFee) throw new Error('Failed to get gas price for solana');
+    return BigInt(prioritizationFee);
   }
 
   protected getAddressFromPrivateKey(privateKey: string): string {

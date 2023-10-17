@@ -231,7 +231,7 @@ export class SuiWalletToolbox extends WalletToolbox {
   public async getGasPrice () {
     const suiJsonProvider = new JsonRpcProvider(this.connection);
     const gasPrice = await suiJsonProvider.getReferenceGasPrice();
-    return gasPrice || 0n;
+    return gasPrice;
   }
 
   protected getAddressFromPrivateKey(privateKey: string): string {
