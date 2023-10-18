@@ -1,5 +1,6 @@
 import { map } from 'bluebird';
 import winston from 'winston';
+import { inspect } from "util";
 import {
   WalletManager, WalletManagerFullConfig, WalletManagerFullConfigSchema
 } from "./wallet-manager";
@@ -69,4 +70,13 @@ export function findMedian<T>(arr: T[], accessor: Accessor<T>): number | undefin
     }
     const mid = Math.floor(len / 2);
     return len % 2 === 0 ? (accessor(sortedArr[mid - 1]) + accessor(sortedArr[mid])) / 2 : accessor(sortedArr[mid]);
+}
+
+export function printError(error: unknown): string {
+  if (error instanceof Error) {
+    return `${error?.stack || error.message}`;
+  }
+
+  // Prints nested properties until a depth of 2 by default.
+  return inspect(error);
 }

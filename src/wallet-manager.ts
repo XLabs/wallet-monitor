@@ -20,6 +20,7 @@ import {
 } from "./wallets";
 import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
+import { CoinGeckoIdsSchema } from "./wallets/price-assistant/supported-tokens.config";
 
 export const WalletRebalancingConfigSchema = z.object({
   enabled: z.boolean(),
@@ -29,6 +30,28 @@ export const WalletRebalancingConfigSchema = z.object({
   maxGasPrice: z.number().optional(),
   gasLimit: z.number().optional(),
 });
+
+const TokenInfoSchema = z.object({
+  tokenContract: z.string(),
+  chainId: z.number(),
+  coingeckoId: CoinGeckoIdsSchema,
+  symbol: z.string().optional(),
+})
+
+export type TokenInfo = z.infer<
+  typeof TokenInfoSchema
+>
+
+export const WalletPriceAssistantConfigSchema = z.object({
+  enabled: z.boolean(),
+  interval: z.number().optional(),
+  pricePrecision: z.number().optional(),
+  supportedTokens: z.array(TokenInfoSchema)
+})
+
+export type WalletPriceAssistantConfig = z.infer<
+  typeof WalletPriceAssistantConfigSchema
+>;
 
 export type WalletRebalancingConfig = z.infer<
   typeof WalletRebalancingConfigSchema
@@ -40,6 +63,7 @@ export const WalletManagerChainConfigSchema = z.object({
   chainConfig: z.any().optional(),
   rebalance: WalletRebalancingConfigSchema.optional(),
   wallets: z.array(WalletConfigSchema),
+  priceAssistantConfig: WalletPriceAssistantConfigSchema.optional()
 });
 
 export const WalletManagerConfigSchema = z.record(
