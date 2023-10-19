@@ -22,6 +22,7 @@ import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
 import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
 import { preparePriceAssistantConfig } from "./price-assistant/helper";
+import { TokenPriceFeed } from "./price-assistant/token-price-feed";
 
 export const WalletRebalancingConfigSchema = z.object({
   enabled: z.boolean(),
@@ -143,7 +144,7 @@ export class WalletManager {
   private emitter: EventEmitter = new EventEmitter();
   private managers: Record<ChainName, ChainWalletManager>;
   private exporter?: PrometheusExporter;
-
+  private priceAssistant?: TokenPriceFeed;
   protected logger: winston.Logger;
 
   constructor(config: WalletManagerConfig, options?: WalletManagerOptions) {
@@ -161,8 +162,8 @@ export class WalletManager {
       }
     }
 
-    // Prepare Price Assistant config and start worker
-    const PriceAssistantConfig = preparePriceAssistantConfig(config, options?.priceAssistantOptions);
+    // Initialize Price Assistant
+    this.initPriceAssistant(config, options?.priceAssistantOptions)
 
     for (const [chainName, chainConfig] of Object.entries(config)) {
       if (!isChain(chainName)) {
@@ -188,6 +189,7 @@ export class WalletManager {
       const chainManager = new ChainWalletManager(
         chainManagerConfig,
         chainConfig.wallets,
+        this.priceAssistant
       );
 
       chainManager.on("error", error => {
@@ -198,6 +200,7 @@ export class WalletManager {
       chainManager.on(
         "balances",
         (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
+
           this.logger.verbose(`Balances updated for ${chainName} (${network})`);
           this.exporter?.updateBalances(chainName, network, balances);
 
@@ -249,8 +252,25 @@ export class WalletManager {
     }
   }
 
+  private initPriceAssistant(config: WalletManagerConfig, priceAssistantOptions?: WalletPriceAssistantOptions) {
+    // Prepare Price Assistant config and start worker
+    const priceAssistantConfig = preparePriceAssistantConfig(config, priceAssistantOptions);
+    
+    if (priceAssistantConfig.supportedTokens.length) {
+      this.logger.info(`Starting Price Assistant worker with ${priceAssistantConfig.supportedTokens.length} tokens`);
+
+      this.priceAssistant = new TokenPriceFeed(priceAssistantConfig, this.logger, this.getRegistry());
+      this.priceAssistant.start();
+    }
+  }
+
+  public fetchTokenPrice(token: string): bigint | undefined {
+    return this.priceAssistant?.getKey(token);
+  }
+
   public stop() {
     Object.values(this.managers).forEach(manager => manager.stop());
+    this.priceAssistant?.stop();
   }
 
   public on(event: string, listener: (...args: any[]) => void) {

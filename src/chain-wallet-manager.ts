@@ -17,6 +17,7 @@ import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
 import { WalletRebalancingConfig } from "./wallet-manager";
+import { TokenPriceFeed } from "./price-assistant/token-price-feed";
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
@@ -71,14 +72,17 @@ export class ChainWalletManager {
   // store acquiredAt for each {wallet_address__chain_name} to calculate lock period
   protected walletAcquiredAt: Record<string, number> = {};
   public walletToolbox: Wallet;
+  protected priceAssistant?: TokenPriceFeed;
 
-  constructor(options: any, private wallets: WalletConfig[]) {
+  constructor(options: any, private wallets: WalletConfig[], priceAssistant?: TokenPriceFeed) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
 
     if (this.options.rebalance.enabled) {
       this.validateRebalanceConfiguration(this.options.rebalance, wallets);
     }
+
+    this.priceAssistant = priceAssistant;
 
     this.logger = createLogger(this.options.logger);
     this.walletToolbox = createWalletToolbox(
@@ -217,7 +221,10 @@ export class ChainWalletManager {
 
   protected mapBalances(balances: WalletBalance[]) {
     return balances.reduce((acc, balance) => {
-      if (!acc[balance.address]) acc[balance.address] = balance;
+      if (!acc[balance.address]) acc[balance.address] = {
+        ...balance,
+        usd: this.priceAssistant?.getKey(balance.address)
+      };
       else
         this.logger.warn(
           `Duplicate balance found for address ${balance.address} (${this.options.chainName})`,

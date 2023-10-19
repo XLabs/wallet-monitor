@@ -41,20 +41,25 @@ export class TokenPriceFeed extends PriceFeed<string, bigint | undefined> {
     const coingekoTokenIds = this.supportedTokens.map((token) => token.coingeckoId);
     const coingeckoData = await getCoingeckoPrices(coingekoTokenIds, this.logger);
     for (const token of this.supportedTokens) {
-      const { coingeckoId, symbol } = token;
-      if (coingeckoId in coingeckoData) {
-        const tokenPrice = (coingeckoData as Required<typeof coingeckoData>)[coingeckoId]!.usd;
-        this.data[coingeckoId] = BigInt(Math.round(tokenPrice * 10 ** this.pricePrecision));
-        this.tokenPriceGauge?.labels({ symbol }).set(Number(tokenPrice));
-      } else {
+      const { coingeckoId, symbol, tokenContract } = token;
+
+      if (!(coingeckoId in coingeckoData)) {
         this.logger.warn(`Token ${symbol} (coingecko: ${coingeckoId}) not found in coingecko response data`);
+        continue;
+      }
+
+      const tokenPrice = coingeckoData?.[coingeckoId]?.usd;
+      if (tokenPrice) {
+        // Token Price is stored by token contract address
+        this.data[tokenContract] = BigInt(Math.round(tokenPrice * 10 ** this.pricePrecision));
+        this.tokenPriceGauge?.labels({ symbol }).set(Number(tokenPrice));
       }
     }
     this.logger.debug(`Updated price feed token prices: ${inspect(this.data)}`);
   }
 
-  protected get(token: string): bigint | undefined {
-    return this.data[token];
+  protected get(tokenContract: string): bigint | undefined {
+    return this.data[tokenContract];
   }
 }
 

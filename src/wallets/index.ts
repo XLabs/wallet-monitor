@@ -34,7 +34,7 @@ export type Balance = {
   isNative: boolean;
   rawBalance: string;
   formattedBalance: string;
-  usd?: number;
+  usd?: bigint;
 }
 
 export type TokenBalance = Balance & {
