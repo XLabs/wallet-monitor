@@ -7,6 +7,7 @@ import { WalletBalance, TokenBalance, WalletConfig, WalletOptions } from "../ind
 import { pullSolanaNativeBalance, getSolanaAddressFromPrivateKey } from "../../balances/solana";
 import { getMint, Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { findMedian, mapConcurrent } from "../../utils";
+import { TokenPriceFeed } from "../../price-assistant/token-price-feed";
 
 
 export type SolanaChainConfig = {
@@ -51,12 +52,14 @@ export class SolanaWalletToolbox extends WalletToolbox {
   private options: SolanaWalletOptions;
   private tokenData: Record<string, Mint> = {};
   private connection: Connection;
+  private priceAssistant?: TokenPriceFeed;
 
   constructor(
     public network: string,
     public chainName: SolanaChainName,
     public rawConfig: WalletConfig[],
     options: WalletOptions,
+    priceAssistant?: TokenPriceFeed
   ) {
     super(network, chainName, rawConfig, options);
 
@@ -64,6 +67,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
 
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
     this.options = { ...defaultOptions, ...options };
+    this.priceAssistant = priceAssistant;
 
     if (!this.options.nodeUrl)
       throw new Error(`No default node url provided.`)
@@ -125,12 +129,18 @@ export class SolanaWalletToolbox extends WalletToolbox {
 
       // We are choosing to show a balance of 0 for a token that is not owned by the address.
       const tokenBalance = tokenBalancesDistinct.get(token) ?? 0;
+      const formattedBalance = (tokenBalance / 10 ** tokenData.decimals).toString();
+
+      const tokenPrice = this.priceAssistant?.getKey(token);
+      const tokenBalanceInUsd = tokenPrice ? BigInt(formattedBalance) * tokenPrice : undefined;
+
       return {
         isNative: false,
         rawBalance: tokenBalance.toString(),
         address,
-        formattedBalance: (tokenBalance / 10 ** tokenData.decimals).toString(),
+        formattedBalance,
         symbol: tokenKnownSymbol ?? 'unknown',
+        usd: tokenBalanceInUsd,
       }
     })
   }

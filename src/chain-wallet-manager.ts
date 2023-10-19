@@ -68,21 +68,22 @@ export class ChainWalletManager {
   private rebalanceInterval: ReturnType<typeof setInterval> | null = null;
   private options: ChainWalletManagerOptions;
   private emitter = new EventEmitter();
-  protected availableWalletsByChainName: Record<string, number> =  {};
+  protected availableWalletsByChainName: Record<string, number> = {};
   // store acquiredAt for each {wallet_address__chain_name} to calculate lock period
   protected walletAcquiredAt: Record<string, number> = {};
   public walletToolbox: Wallet;
-  protected priceAssistant?: TokenPriceFeed;
 
-  constructor(options: any, private wallets: WalletConfig[], priceAssistant?: TokenPriceFeed) {
+  constructor(
+    options: any,
+    private wallets: WalletConfig[],
+    priceAssistant?: TokenPriceFeed,
+  ) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
 
     if (this.options.rebalance.enabled) {
       this.validateRebalanceConfiguration(this.options.rebalance, wallets);
     }
-
-    this.priceAssistant = priceAssistant;
 
     this.logger = createLogger(this.options.logger);
     this.walletToolbox = createWalletToolbox(
@@ -94,10 +95,16 @@ export class ChainWalletManager {
         logger: this.logger,
         failOnInvalidTokens: this.options.failOnInvalidTokens,
       },
+      priceAssistant,
     );
 
     this.availableWalletsByChainName[options.chainName] = wallets.length;
-    this.emitter.emit('active-wallets-count', options.chainName, options.network, this.availableWalletsByChainName[options.chainName]);
+    this.emitter.emit(
+      "active-wallets-count",
+      options.chainName,
+      options.network,
+      this.availableWalletsByChainName[options.chainName],
+    );
   }
 
   private validateOptions(options: any): options is ChainWalletManagerOptions {
@@ -135,7 +142,10 @@ export class ChainWalletManager {
     };
   }
 
-  private validateRebalanceConfiguration(rebalanceConfig: any, wallets: WalletConfig[]): rebalanceConfig is WalletRebalancingConfig {
+  private validateRebalanceConfiguration(
+    rebalanceConfig: any,
+    wallets: WalletConfig[],
+  ): rebalanceConfig is WalletRebalancingConfig {
     if (!rebalanceConfig.enabled) return true;
 
     if (!rebalanceStrategies[rebalanceConfig.strategy])
@@ -221,10 +231,10 @@ export class ChainWalletManager {
 
   protected mapBalances(balances: WalletBalance[]) {
     return balances.reduce((acc, balance) => {
-      if (!acc[balance.address]) acc[balance.address] = {
-        ...balance,
-        usd: this.priceAssistant?.getKey(balance.address)
-      };
+      if (!acc[balance.address])
+        acc[balance.address] = {
+          ...balance,
+        };
       else
         this.logger.warn(
           `Duplicate balance found for address ${balance.address} (${this.options.chainName})`,
@@ -278,7 +288,7 @@ export class ChainWalletManager {
     return {
       address,
       rawWallet,
-      walletToolbox: this.walletToolbox
+      walletToolbox: this.walletToolbox,
     };
   }
 
@@ -357,7 +367,7 @@ export class ChainWalletManager {
   }
 
   private updateActiveWalletsMetric(walletAddress: string, isReleased = false) {
-    const {chainName, network} = this.walletToolbox;
+    const { chainName, network } = this.walletToolbox;
     const key = `${walletAddress}__${chainName}`;
 
     if (isReleased) {
@@ -365,12 +375,23 @@ export class ChainWalletManager {
       const acquiredAt = this.walletAcquiredAt[key];
       const releasedAt = Date.now();
       const timeLocked = (releasedAt - acquiredAt) / 1000;
-      this.emitter.emit('wallets-lock-period', chainName, network, walletAddress, timeLocked);
+      this.emitter.emit(
+        "wallets-lock-period",
+        chainName,
+        network,
+        walletAddress,
+        timeLocked,
+      );
     } else {
       // wallet acquired/locked
       this.availableWalletsByChainName[chainName]--;
       this.walletAcquiredAt[key] = Date.now();
     }
-    this.emitter.emit('active-wallets-count', chainName, network, this.availableWalletsByChainName[chainName]);
+    this.emitter.emit(
+      "active-wallets-count",
+      chainName,
+      network,
+      this.availableWalletsByChainName[chainName],
+    );
   }
 }

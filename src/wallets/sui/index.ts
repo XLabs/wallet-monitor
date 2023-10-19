@@ -22,6 +22,7 @@ import {
 import { getSuiAddressFromPrivateKey } from "../../balances/sui";
 import {mapConcurrent} from "../../utils";
 import { formatFixed } from "@ethersproject/bignumber";
+import { TokenPriceFeed } from "../../price-assistant/token-price-feed";
 
 export const SUI_CHAINS = {
   [SUI]: 1,
@@ -58,12 +59,14 @@ export class SuiWalletToolbox extends WalletToolbox {
   private chainConfig: SuiChainConfig;
   private tokenData: Record<string, SuiTokenData> = {};
   private options: SuiWalletOptions;
+  private priceAssistant?: TokenPriceFeed;
 
   constructor(
     public network: string,
     public chainName: SuiChainName,
     public rawConfig: WalletConfig[],
-    options: SuiWalletOptions
+    options: SuiWalletOptions,
+    priceAssistant?: TokenPriceFeed
   ) {
     super(network, chainName, rawConfig, options);
     this.chainConfig = SUI_CHAIN_CONFIGS[this.chainName];
@@ -71,6 +74,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as SuiWalletOptions;
+    this.priceAssistant = priceAssistant;
 
     const nodeUrlOrigin = this.options.nodeUrl && new URL(this.options.nodeUrl).origin
     this.logger.debug(`SUI rpc url: ${nodeUrlOrigin}`);
@@ -188,6 +192,9 @@ export class SuiWalletToolbox extends WalletToolbox {
               tokenData?.decimals ? tokenData.decimals : 9
           );
 
+          const tokenPrice = this.priceAssistant?.getKey(tokenAddress);
+          const tokenBalanceInUsd = tokenPrice ? BigInt(formattedBalance) * tokenPrice : undefined;
+
           return {
             tokenAddress,
             address,
@@ -195,6 +202,7 @@ export class SuiWalletToolbox extends WalletToolbox {
             rawBalance: balance.totalBalance,
             formattedBalance,
             symbol,
+            usd: tokenBalanceInUsd,
           };
         }
       }

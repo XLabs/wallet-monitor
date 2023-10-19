@@ -47,6 +47,7 @@ import {
 } from "./optimism.config";
 import { KlaytnNetwork, KLAYTN, KLAYTN_CHAIN_CONFIG } from "./klaytn.config";
 import { BaseNetwork, BASE, BASE_CHAIN_CONFIG } from "./base.config";
+import { TokenPriceFeed } from "../../price-assistant/token-price-feed";
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
@@ -130,12 +131,14 @@ export class EvmWalletToolbox extends WalletToolbox {
   private chainConfig: EvmChainConfig;
   private tokenData: Record<string, EvmTokenData> = {};
   private options: EvmWalletOptions;
+  private priceAssistant?: TokenPriceFeed;
 
   constructor(
     public network: string,
     public chainName: EVMChainName,
     public rawConfig: WalletConfig[],
     options: EvmWalletOptions,
+    priceAssistant?: TokenPriceFeed
   ) {
     super(network, chainName, rawConfig, options);
     this.chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
@@ -143,6 +146,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
+    this.priceAssistant = priceAssistant;
 
     const nodeUrlOrigin = this.options.nodeUrl && new URL(this.options.nodeUrl).origin
     this.logger.debug(`EVM rpc url: ${nodeUrlOrigin}`);
@@ -225,6 +229,7 @@ export class EvmWalletToolbox extends WalletToolbox {
   public async pullNativeBalance(address: string): Promise<WalletBalance> {
     const balance = await pullEvmNativeBalance(this.provider, address);
     const formattedBalance = ethers.utils.formatEther(balance.rawBalance);
+
     return {
       ...balance,
       address,
@@ -251,12 +256,17 @@ export class EvmWalletToolbox extends WalletToolbox {
           balance.rawBalance,
           tokenData.decimals,
         );
+
+        const tokenPrice = this.priceAssistant?.getKey(tokenAddress);
+        const tokenBalanceInUsd = tokenPrice ? BigInt(formattedBalance) * tokenPrice : undefined;
+
         return {
           ...balance,
           address,
           tokenAddress,
           formattedBalance,
           symbol: tokenData.symbol,
+          usd: tokenBalanceInUsd,
         };
       },
       this.options.tokenPollConcurrency,
