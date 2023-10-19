@@ -186,10 +186,12 @@ export class WalletManager {
         failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
       };
 
+      const isPriceAssistantEnabled = chainConfig?.priceAssistantChainConfig?.enabled ?? false;
+
       const chainManager = new ChainWalletManager(
         chainManagerConfig,
         chainConfig.wallets,
-        this.priceAssistant
+        isPriceAssistantEnabled ? this.priceAssistant: undefined
       );
 
       chainManager.on("error", error => {

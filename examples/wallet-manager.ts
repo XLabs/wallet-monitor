@@ -1,6 +1,6 @@
-import { buildWalletManager } from 'wallet-monitor';
+import { buildWalletManager, WalletManagerFullConfig } from 'wallet-monitor';
 
-const allChainWallets = {
+const allChainWallets: WalletManagerFullConfig['config'] = {
   ethereum: {
     rebalance: {
       enabled: false,
@@ -17,7 +17,22 @@ const allChainWallets = {
         address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
         tokens: ["DAI"]
       }
-    ]
+    ],
+    priceAssistantChainConfig: {
+      supportedTokens: [{
+        chainId: 2,
+        tokenContract: "0x07865c6e87b9f70255377e024ace6630c1eaa37f",
+        coingeckoId: "usd-coin",
+        symbol: "USDC"
+      },
+      {
+        chainId: 2,
+        tokenContract: "00000000000000000000000011fE4B6AE13d2a6055C8D9cF65c55bac32B5d844",
+        coingeckoId: "dai",
+        symbol: "DAI"
+      }],
+      enabled: true
+    }
   },
   solana: {
     wallets: [
