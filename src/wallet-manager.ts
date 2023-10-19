@@ -20,7 +20,8 @@ import {
 } from "./wallets";
 import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
-import { CoinGeckoIdsSchema } from "./wallets/price-assistant/supported-tokens.config";
+import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
+import { preparePriceAssistantConfig } from "./price-assistant/helper";
 
 export const WalletRebalancingConfigSchema = z.object({
   enabled: z.boolean(),
@@ -43,7 +44,6 @@ export type TokenInfo = z.infer<
 >
 
 export const WalletPriceAssistantConfigSchema = z.object({
-  enabled: z.boolean(),
   interval: z.number().optional(),
   pricePrecision: z.number().optional(),
   supportedTokens: z.array(TokenInfoSchema)
@@ -51,6 +51,24 @@ export const WalletPriceAssistantConfigSchema = z.object({
 
 export type WalletPriceAssistantConfig = z.infer<
   typeof WalletPriceAssistantConfigSchema
+>;
+
+export const WalletPriceAssistantChainConfigSchema = z.object({
+  enabled: z.boolean(),
+  supportedTokens: z.array(TokenInfoSchema)
+})
+
+export const WalletPriceAssistantOptionsSchema = z.object({
+  interval: z.number().optional(),
+  pricePrecision: z.number().optional(),
+})
+
+export type WalletPriceAssistantOptions = z.infer<
+  typeof WalletPriceAssistantOptionsSchema
+>;
+
+export type WalletPriceAssistantChainConfig = z.infer<
+  typeof WalletPriceAssistantChainConfigSchema
 >;
 
 export type WalletRebalancingConfig = z.infer<
@@ -63,7 +81,7 @@ export const WalletManagerChainConfigSchema = z.object({
   chainConfig: z.any().optional(),
   rebalance: WalletRebalancingConfigSchema.optional(),
   wallets: z.array(WalletConfigSchema),
-  priceAssistantConfig: WalletPriceAssistantConfigSchema.optional()
+  priceAssistantChainConfig: WalletPriceAssistantChainConfigSchema.optional()
 });
 
 export const WalletManagerConfigSchema = z.record(
@@ -96,6 +114,7 @@ export const WalletManagerOptionsSchema = z.object({
     .optional(),
   failOnInvalidChain: z.boolean().default(true),
   failOnInvalidTokens: z.boolean().default(true).optional(),
+  priceAssistantOptions: WalletPriceAssistantOptionsSchema.optional(),
 });
 
 export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
@@ -141,6 +160,9 @@ export class WalletManager {
         this.exporter.startMetricsServer();
       }
     }
+
+    // Prepare Price Assistant config and start worker
+    const PriceAssistantConfig = preparePriceAssistantConfig(config, options?.priceAssistantOptions);
 
     for (const [chainName, chainConfig] of Object.entries(config)) {
       if (!isChain(chainName)) {

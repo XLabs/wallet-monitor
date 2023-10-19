@@ -4,7 +4,7 @@ import { Gauge, Registry } from "prom-client";
 import { Logger } from "winston";
 import { PriceFeed } from "./price-feed";
 import { CoinGeckoIds } from "./supported-tokens.config";
-import { TokenInfo, WalletPriceAssistantConfig } from "../../wallet-manager";
+import { TokenInfo, WalletPriceAssistantConfig } from "../wallet-manager";
 
 export type TokenPriceData = Partial<Record<string, bigint>>;
 

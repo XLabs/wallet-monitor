@@ -1,6 +1,6 @@
 import { Counter, Registry } from "prom-client";
 import { Logger } from "winston";
-import { printError } from "../../utils";
+import { printError } from "../utils";
 
 const DEFAULT_FEED_INTERVAL = 10_000;
 const DEFAULT_PRICE_PRECISION = 8;
