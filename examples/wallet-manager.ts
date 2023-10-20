@@ -15,21 +15,21 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
       },
       {
         address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
-        tokens: ["DAI"]
+        tokens: ["WBTC"]
       }
     ],
     priceAssistantChainConfig: {
       supportedTokens: [{
         chainId: 2,
-        tokenContract: "0x07865c6e87b9f70255377e024ace6630c1eaa37f",
+        tokenContract: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
         coingeckoId: "usd-coin",
         symbol: "USDC"
       },
       {
         chainId: 2,
-        tokenContract: "00000000000000000000000011fE4B6AE13d2a6055C8D9cF65c55bac32B5d844",
-        coingeckoId: "dai",
-        symbol: "DAI"
+        tokenContract: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+        coingeckoId: "wrapped-bitcoin",
+        symbol: "WBTC"
       }],
       enabled: true
     }
@@ -58,7 +58,16 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         address: '0x8f11fe7121be742f46e2b3bc2eba081efdc3027697c317a917a2d16fd9b59ab1', 
         tokens: ['USDC', 'USDT', '0x5d1f47ea69bb0de31c313d7acf89b890dbb8991ea8e03c6c355171f84bb1ba4a::turbos::TURBOS'] 
       },
-    ]
+    ],
+    priceAssistantChainConfig: {
+      supportedTokens: [{
+        chainId: 21,
+        tokenContract: "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf",
+        coingeckoId: "usd-coin",
+        symbol: "USDC"
+      }],
+      enabled: true
+    }
   },
   klatyn: {
     rebalance: {

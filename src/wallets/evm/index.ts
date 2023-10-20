@@ -258,7 +258,7 @@ export class EvmWalletToolbox extends WalletToolbox {
         );
 
         const tokenPrice = this.priceAssistant?.getKey(tokenAddress);
-        const tokenBalanceInUsd = tokenPrice ? BigInt(formattedBalance) * tokenPrice : undefined;
+        const tokenBalanceInUsd = tokenPrice ? BigInt(Number(formattedBalance) * Number(tokenPrice)) : undefined;
 
         return {
           ...balance,
