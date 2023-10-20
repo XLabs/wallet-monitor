@@ -55,7 +55,7 @@ export class TokenPriceFeed extends PriceFeed<string, bigint | undefined> {
         this.tokenPriceGauge?.labels({ symbol }).set(Number(tokenPrice));
       }
     }
-    this.logger.debug(`Updated price feed token prices: ${inspect(this.data)}`);
+    // this.logger.debug(`Updated price feed token prices: ${inspect(this.data)}`);
   }
 
   protected get(tokenContract: string): bigint | undefined {
