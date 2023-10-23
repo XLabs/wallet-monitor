@@ -56,7 +56,7 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
       { address: '0xcb39d897bf0561af7531d37db9781e54528269fed4761275931ce32f20352977' },
       { 
         address: '0x8f11fe7121be742f46e2b3bc2eba081efdc3027697c317a917a2d16fd9b59ab1', 
-        tokens: ['USDC', 'USDT', '0x5d1f47ea69bb0de31c313d7acf89b890dbb8991ea8e03c6c355171f84bb1ba4a::turbos::TURBOS'] 
+        tokens: ['USDC', 'USDT'] 
       },
     ],
     priceAssistantChainConfig: {
@@ -69,24 +69,24 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
       enabled: true
     }
   },
-  klatyn: {
-    rebalance: {
-      enabled: false,
-      strategy: 'default',
-      interval: 10000,
-      minBalanceThreshold: 0.1,
-    },
-    wallets: [
-      {
-        address: "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
-        tokens: ["USDC", "DAI"]
-      },
-      {
-        address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
-        tokens: []
-      }
-    ]
-  }
+  // klatyn: {
+  //   rebalance: {
+  //     enabled: false,
+  //     strategy: 'default',
+  //     interval: 10000,
+  //     minBalanceThreshold: 0.1,
+  //   },
+  //   wallets: [
+  //     {
+  //       address: "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
+  //       tokens: ["USDC", "DAI"]
+  //     },
+  //     {
+  //       address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
+  //       tokens: []
+  //     }
+  //   ]
+  // }
 }
 
 export const manager = buildWalletManager({
