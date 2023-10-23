@@ -302,4 +302,8 @@ export class EvmWalletToolbox extends WalletToolbox {
   protected getAddressFromPrivateKey(privateKey: string): string {
     return getEvmAddressFromPrivateKey(privateKey);
   }
+
+  public async getBlockHeight(): Promise<number> {
+    return this.provider.getBlockNumber();
+  }
 }

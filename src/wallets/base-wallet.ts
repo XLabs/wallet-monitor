@@ -62,6 +62,8 @@ export abstract class WalletToolbox {
 
   public abstract getGasPrice (): Promise<bigint>;
 
+  public abstract getBlockHeight(): Promise<number>;
+
   constructor(
     protected network: string,
     protected chainName: string,

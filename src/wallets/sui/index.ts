@@ -249,4 +249,10 @@ export class SuiWalletToolbox extends WalletToolbox {
   protected isValidNativeTokenAddress(token: string): boolean {
     return SUI_HEX_ADDRESS_REGEX.test(token)
   }
+
+  public async getBlockHeight(): Promise<number> {
+    const suiJsonProvider = new JsonRpcProvider(this.connection);
+    const sequenceNumber = await suiJsonProvider.getLatestCheckpointSequenceNumber();
+    return Number(sequenceNumber);
+  }
 }
