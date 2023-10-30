@@ -1,9 +1,9 @@
-import { DEVNET } from '../index';
+import { DEVNET } from "../index";
 
-export const PYTHNET = 'pythnet';
+export const PYTHNET = "pythnet";
 
 // TODO: reference this page to add a full list of networks.
-export const PYTHNET_MAINNET = 'mainnet-beta'
+export const PYTHNET_MAINNET = "mainnet-beta";
 export const PYTHNET_NETWORKS = {
   [DEVNET]: 1,
   [PYTHNET_MAINNET]: 2,
@@ -16,7 +16,7 @@ export const PYTHNET_KNOWN_TOKENS = {
 
 export const PYTHNET_CHAIN_CONFIG = {
   chainName: PYTHNET,
-  nativeCurrencySymbol: 'PGAS',
+  nativeCurrencySymbol: "PGAS",
   knownTokens: PYTHNET_KNOWN_TOKENS,
   networks: PYTHNET_NETWORKS,
   defaultNetwork: PYTHNET_MAINNET,

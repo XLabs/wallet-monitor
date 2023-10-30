@@ -14,16 +14,14 @@ export class LocalWalletPool implements WalletPool {
 
   constructor(walletAddresses: string[]) {
     for (const address of walletAddresses) {
-      this.resources[address] = new Resource(address)
+      this.resources[address] = new Resource(address);
     }
   }
 
   private async acquire(resourceId?: string): Promise<string> {
     const resource = resourceId
       ? this.resources[resourceId]
-      : Object.values(this.resources).find(
-          resource => resource.isAvailable(),
-        );
+      : Object.values(this.resources).find(resource => resource.isAvailable());
 
     if (!resource || !resource?.isAvailable())
       throw new Error("Resource not available");
@@ -42,7 +40,10 @@ export class LocalWalletPool implements WalletPool {
   }
 
   public addWalletBackToPoolIfRequired(resourceId: string): void {
-    if (resourceId in this.resources && this.resources[resourceId].isDiscarded()) {
+    if (
+      resourceId in this.resources &&
+      this.resources[resourceId].isDiscarded()
+    ) {
       this.resources[resourceId].retain();
     }
   }
@@ -50,10 +51,14 @@ export class LocalWalletPool implements WalletPool {
   /**
    * @param blockTimeout Milliseconds until the operation is timed out.
    */
-  public blockAndAcquire(blockTimeout: number, resourceId?: string): Promise<string> {
+  public blockAndAcquire(
+    blockTimeout: number,
+    resourceId?: string,
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       // `process.hrtime` provides the closest we can get to a monotonically increasing clock.
-      const timeoutTimestamp = process.hrtime.bigint() + (BigInt(blockTimeout) * 10n ** 6n);
+      const timeoutTimestamp =
+        process.hrtime.bigint() + BigInt(blockTimeout) * 10n ** 6n;
       // We create an error here to get the stack trace up until this point and preserve it into the asynchronous events.
       const errorWithCtx = new Error();
 
@@ -65,11 +70,11 @@ export class LocalWalletPool implements WalletPool {
           if (process.hrtime.bigint() < timeoutTimestamp) {
             setTimeout(acquire, 5);
           } else {
-            errorWithCtx.message = 'Timed out waiting for resource';
+            errorWithCtx.message = "Timed out waiting for resource";
             reject(errorWithCtx);
           }
         }
-      }
+      };
 
       acquire();
     });

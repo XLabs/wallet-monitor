@@ -1,4 +1,10 @@
-import {Providers, WalletExecuteOptions, WalletInterface, Wallets, WithWalletExecutor} from "./chain-wallet-manager";
+import {
+  Providers,
+  WalletExecuteOptions,
+  WalletInterface,
+  Wallets,
+  WithWalletExecutor,
+} from "./chain-wallet-manager";
 import { ChainName } from "./wallets";
 
 /*
@@ -16,13 +22,20 @@ import { ChainName } from "./wallets";
 */
 
 interface IWMContextManagedLocks {
-    withWallet<P extends Providers, W extends Wallets>(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void>
+  withWallet<P extends Providers, W extends Wallets>(
+    chainName: ChainName,
+    fn: WithWalletExecutor,
+    opts?: WalletExecuteOptions,
+  ): Promise<void>;
 }
 interface IWMBareLocks {
-    acquireLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<WalletInterface>
-    releaseLock(chainName: ChainName, address: string): Promise<void>
+  acquireLock(
+    chainName: ChainName,
+    opts?: WalletExecuteOptions,
+  ): Promise<WalletInterface>;
+  releaseLock(chainName: ChainName, address: string): Promise<void>;
 }
 
-export type ILibraryWalletManager = IWMContextManagedLocks
-export type IClientWalletManager = IWMContextManagedLocks
-export type IServiceWalletManager = IWMBareLocks
+export type ILibraryWalletManager = IWMContextManagedLocks;
+export type IClientWalletManager = IWMContextManagedLocks;
+export type IServiceWalletManager = IWMBareLocks;

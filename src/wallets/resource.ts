@@ -1,41 +1,41 @@
 export class Resource {
-    private id: string;
-    private locked = false;
-    private discarded = false;
+  private id: string;
+  private locked = false;
+  private discarded = false;
 
-    constructor (id: string) {
-        this.id = id;
-    }
+  constructor(id: string) {
+    this.id = id;
+  }
 
-    getId () {
-        return this.id;
-    }
+  getId() {
+    return this.id;
+  }
 
-    discard () {
-        this.discarded = true;
-    }
+  discard() {
+    this.discarded = true;
+  }
 
-    retain () {
-        this.discarded = false;
-    }
+  retain() {
+    this.discarded = false;
+  }
 
-    lock () {
-        this.locked = true;
-    }
+  lock() {
+    this.locked = true;
+  }
 
-    unlock () {
-        this.locked = false;
-    }
+  unlock() {
+    this.locked = false;
+  }
 
-    isAvailable () {
-        return !(this.locked || this.discarded);
-    }
+  isAvailable() {
+    return !(this.locked || this.discarded);
+  }
 
-    isLocked () {
-        return this.locked;
-    }
+  isLocked() {
+    return this.locked;
+  }
 
-    isDiscarded () {
-        return this.discarded;
-    }
+  isDiscarded() {
+    return this.discarded;
+  }
 }

@@ -191,11 +191,19 @@ export class WalletManager {
 
       chainManager.on("active-wallets-count", (chainName, network, count) => {
         this.exporter?.updateActiveWallets(chainName, network, count);
-      })
+      });
 
-      chainManager.on("wallets-lock-period", (chainName, network, walletAddress, lockTime) => {
-        this.exporter?.updateWalletsLockPeriod(chainName, network, walletAddress, lockTime);
-      })
+      chainManager.on(
+        "wallets-lock-period",
+        (chainName, network, walletAddress, lockTime) => {
+          this.exporter?.updateWalletsLockPeriod(
+            chainName,
+            network,
+            walletAddress,
+            lockTime,
+          );
+        },
+      );
 
       this.managers[chainName] = chainManager;
 

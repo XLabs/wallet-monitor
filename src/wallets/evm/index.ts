@@ -83,7 +83,7 @@ export type EvmDefaultConfigs = Record<string, EvmDefaultConfig>;
 
 export type EVMChainName = keyof typeof EVM_CHAINS;
 export type EVMWallet = ethers.Wallet;
-export type EVMProvider = ethers.providers.JsonRpcProvider;
+export type EVMProvider = ethers.providers.Provider;
 
 export const EVM_CHAIN_CONFIGS: Record<EVMChainName, EvmChainConfig> = {
   [ETHEREUM]: ETHEREUM_CHAIN_CONFIG,
@@ -100,7 +100,7 @@ export const EVM_CHAIN_CONFIGS: Record<EVMChainName, EvmChainConfig> = {
 };
 
 export type EvmWalletOptions = BaseWalletOptions & {
-  nodeUrl?: string;
+  nodeUrls?: string[] | string;
   tokenPollConcurrency?: number;
 };
 
@@ -143,10 +143,25 @@ export class EvmWalletToolbox extends WalletToolbox {
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
-
-    const nodeUrlOrigin = this.options.nodeUrl && new URL(this.options.nodeUrl).origin
-    this.logger.debug(`EVM rpc url: ${nodeUrlOrigin}`);
-    this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
+    if (Array.isArray(this.options.nodeUrls)) {
+      const nodeUrlOrigin = this.options.nodeUrls
+        .map(u => new URL(u).origin)
+        .join(", ");
+      this.logger.debug(`EVM rpc urls: ${nodeUrlOrigin}`);
+      const providerConfigs: ethers.providers.FallbackProviderConfig[] =
+        this.options.nodeUrls.map((url, i) => ({
+          provider: new ethers.providers.JsonRpcProvider(url),
+          priority: i + 1,
+        }));
+      this.provider = new ethers.providers.FallbackProvider(providerConfigs);
+    } else {
+      const nodeUrlOrigin =
+        this.options.nodeUrls && new URL(this.options.nodeUrls).origin;
+      this.logger.debug(`EVM rpc url: ${nodeUrlOrigin}`);
+      this.provider = new ethers.providers.JsonRpcProvider(
+        this.options.nodeUrls,
+      );
+    }
   }
 
   protected validateChainName(chainName: string): chainName is EVMChainName {
@@ -280,11 +295,11 @@ export class EvmWalletToolbox extends WalletToolbox {
     return receipt;
   }
 
-  protected async getRawWallet (privateKey: string) {
+  protected async getRawWallet(privateKey: string) {
     return new ethers.Wallet(privateKey, this.provider);
   }
 
-  public async getGasPrice () {
+  public async getGasPrice() {
     const gasPrice = await this.provider.getGasPrice();
     return BigInt(gasPrice.toString());
   }
