@@ -1,5 +1,4 @@
-import { WalletBalancesByAddress, WalletManagerOptions, WalletManagerConfig, WalletInterface } from 'wallet-monitor';
-import {WalletManager} from "../src/wallet-manager";
+import { WalletBalancesByAddress, WalletManagerOptions, WalletManagerConfig, WalletInterface, buildWalletManager } from 'wallet-monitor';
 
 const options: WalletManagerOptions = {
   logLevel: 'debug',
@@ -48,7 +47,7 @@ const allChainWallets: WalletManagerConfig = {
   },
 }
 
-export const manager = new WalletManager(allChainWallets, options)
+export const manager = new buildWalletManager(allChainWallets, options)
 
 // if metrics.enabled=true, metrics.serve=false, you can use:
 manager.getRegistry();
