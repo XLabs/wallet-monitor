@@ -5,7 +5,7 @@ import { printError } from "../utils";
 const DEFAULT_FEED_INTERVAL = 10_000;
 const DEFAULT_PRICE_PRECISION = 8;
 
-export abstract class PriceFeed<K, V> {
+export abstract class ScheduledPriceFeed<K, V> {
   private name: string;
   private interval?: NodeJS.Timeout;
   private locked: boolean;

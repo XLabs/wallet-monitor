@@ -80,3 +80,33 @@ export function printError(error: unknown): string {
   // Prints nested properties until a depth of 2 by default.
   return inspect(error);
 }
+
+interface TTL<T> {
+  value: T;
+  timerId: NodeJS.Timeout;
+}
+
+export class TimeLimitedCache<K, V> {
+  private readonly cache: Map<K, TTL<V>>
+  constructor() {
+      this.cache = new Map<K, TTL<V>>();
+  }
+
+  delete (key: K) {
+      this.cache.delete(key);
+  }
+
+  set(key: K, value: V, duration: number): boolean {
+      const doesKeyExists = this.cache.has(key);
+      if (doesKeyExists) {
+          clearTimeout(this.cache.get(key)?.timerId);
+      }
+      const timerId = setTimeout(() => this.delete(key), duration)
+      this.cache.set(key, {value, timerId})
+      return !!doesKeyExists
+  }
+
+  get(key: K): V | undefined {
+      return this.cache.get(key)?.value;
+  }
+}
