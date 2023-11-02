@@ -21,8 +21,9 @@ import {
 import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
 import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
-import { preparePriceAssistantConfig } from "./price-assistant/helper";
+import { preparePriceFeedConfig } from "./price-assistant/helper";
 import { TokenPriceFeed } from "./price-assistant/token-price-feed";
+import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
 export const WalletRebalancingConfigSchema = z.object({
   enabled: z.boolean(),
@@ -44,32 +45,35 @@ export type TokenInfo = z.infer<
   typeof TokenInfoSchema
 >
 
-export const WalletPriceAssistantConfigSchema = z.object({
+export const WalletPriceFeedConfigSchema = z.object({
   interval: z.number().optional(),
   pricePrecision: z.number().optional(),
   supportedTokens: z.array(TokenInfoSchema)
 })
 
-export type WalletPriceAssistantConfig = z.infer<
-  typeof WalletPriceAssistantConfigSchema
+export type WalletPriceFeedConfig = z.infer<
+  typeof WalletPriceFeedConfigSchema
 >;
 
-export const WalletPriceAssistantChainConfigSchema = z.object({
+export const WalletPriceFeedChainConfigSchema = z.object({
   enabled: z.boolean(),
   supportedTokens: z.array(TokenInfoSchema)
 })
 
-export const WalletPriceAssistantOptionsSchema = z.object({
-  interval: z.number().optional(),
+export const WalletPriceFeedOptionsSchema = z.object({
   pricePrecision: z.number().optional(),
+  scheduled: z.object({
+    enabled: z.boolean().default(false),
+    interval: z.number().optional(),
+  }),
 })
 
-export type WalletPriceAssistantOptions = z.infer<
-  typeof WalletPriceAssistantOptionsSchema
+export type WalletPriceFeedOptions = z.infer<
+  typeof WalletPriceFeedOptionsSchema
 >;
 
-export type WalletPriceAssistantChainConfig = z.infer<
-  typeof WalletPriceAssistantChainConfigSchema
+export type WalletPriceFeedChainConfig = z.infer<
+  typeof WalletPriceFeedChainConfigSchema
 >;
 
 export type WalletRebalancingConfig = z.infer<
@@ -82,7 +86,7 @@ export const WalletManagerChainConfigSchema = z.object({
   chainConfig: z.any().optional(),
   rebalance: WalletRebalancingConfigSchema.optional(),
   wallets: z.array(WalletConfigSchema),
-  priceAssistantChainConfig: WalletPriceAssistantChainConfigSchema.optional()
+  priceFeedChainConfig: WalletPriceFeedChainConfigSchema.optional()
 });
 
 export const WalletManagerConfigSchema = z.record(
@@ -115,7 +119,7 @@ export const WalletManagerOptionsSchema = z.object({
     .optional(),
   failOnInvalidChain: z.boolean().default(true),
   failOnInvalidTokens: z.boolean().default(true).optional(),
-  priceAssistantOptions: WalletPriceAssistantOptionsSchema.optional(),
+  priceFeedOptions: WalletPriceFeedOptionsSchema.optional(),
 });
 
 export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
@@ -140,11 +144,13 @@ export function getDefaultNetwork(chainName: ChainName) {
   return KNOWN_CHAINS[chainName]!.defaultNetwork;
 }
 
+export type PriceFeed = TokenPriceFeed | OnDemandPriceFeed;
+
 export class WalletManager {
   private emitter: EventEmitter = new EventEmitter();
   private managers: Record<ChainName, ChainWalletManager>;
   private exporter?: PrometheusExporter;
-  private priceAssistant?: TokenPriceFeed;
+  private priceFeed?: PriceFeed;
   protected logger: winston.Logger;
 
   constructor(config: WalletManagerConfig, options?: WalletManagerOptions) {
@@ -163,7 +169,7 @@ export class WalletManager {
     }
 
     // Initialize Price Assistant
-    this.initPriceAssistant(config, options?.priceAssistantOptions)
+    this.initPriceFeed(config, options?.priceFeedOptions)
 
     for (const [chainName, chainConfig] of Object.entries(config)) {
       if (!isChain(chainName)) {
@@ -186,12 +192,12 @@ export class WalletManager {
         failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
       };
 
-      const isPriceAssistantEnabled = chainConfig?.priceAssistantChainConfig?.enabled ?? false;
+      const isPriceFeedEnabled = chainConfig?.priceFeedChainConfig?.enabled ?? false;
 
       const chainManager = new ChainWalletManager(
         chainManagerConfig,
         chainConfig.wallets,
-        isPriceAssistantEnabled ? this.priceAssistant: undefined
+        isPriceFeedEnabled ? this.priceFeed: undefined
       );
 
       chainManager.on("error", error => {
@@ -254,25 +260,29 @@ export class WalletManager {
     }
   }
 
-  private initPriceAssistant(config: WalletManagerConfig, priceAssistantOptions?: WalletPriceAssistantOptions) {
+  private initPriceFeed(config: WalletManagerConfig, priceFeedOptions?: WalletPriceFeedOptions) {
     // Prepare Price Assistant config and start worker
-    const priceAssistantConfig = preparePriceAssistantConfig(config, priceAssistantOptions);
+    const priceFeedConfig = preparePriceFeedConfig(config, priceFeedOptions);
     
-    if (priceAssistantConfig.supportedTokens.length) {
-      this.logger.info(`Starting Price Assistant worker with ${priceAssistantConfig.supportedTokens.length} tokens`);
+    if (priceFeedConfig.supportedTokens.length) {
+      this.logger.info(`Starting Price Assistant worker with ${priceFeedConfig.supportedTokens.length} tokens`);
 
-      this.priceAssistant = new TokenPriceFeed(priceAssistantConfig, this.logger, this.getRegistry());
-      this.priceAssistant.start();
+      if (priceFeedOptions?.scheduled.enabled) {
+        this.priceFeed = new TokenPriceFeed({...priceFeedConfig, interval: priceFeedOptions.scheduled.interval}, this.logger);
+      } else {
+        this.priceFeed = new OnDemandPriceFeed(priceFeedConfig, this.logger);
+      }
+      this.priceFeed.start();
     }
   }
 
-  public fetchTokenPrice(token: string): bigint | undefined {
-    return this.priceAssistant?.getKey(token);
+  public async fetchTokenPrice(token: string): Promise<bigint | undefined> {
+    return await this.priceFeed?.getKey(token);
   }
 
   public stop() {
     Object.values(this.managers).forEach(manager => manager.stop());
-    this.priceAssistant?.stop();
+    this.priceFeed?.stop();
   }
 
   public on(event: string, listener: (...args: any[]) => void) {

@@ -1,22 +1,21 @@
 import { Gauge, Registry } from "prom-client";
 import { Logger } from "winston";
 import { ScheduledPriceFeed } from "./price-feed";
-import { TokenInfo, WalletPriceAssistantConfig } from "../wallet-manager";
+import { TokenInfo, WalletPriceFeedConfig } from "../wallet-manager";
 import { getCoingeckoPrices } from "./helper";
 
 export type TokenPriceData = Partial<Record<string, bigint>>;
 
 /**
- * TokenPriceFeed is a price feed that fetches token prices from coingecko
- *
+ * TokenPriceFeed is a price feed that periodically fetches token prices from coingecko
  */
 export class TokenPriceFeed extends ScheduledPriceFeed<string, bigint | undefined> {
   private data = {} as TokenPriceData;
   supportedTokens: TokenInfo[];
   tokenPriceGauge?: Gauge;
 
-  constructor(priceAssistantConfig: WalletPriceAssistantConfig, logger: Logger, registry?: Registry) {
-    const {interval, supportedTokens, pricePrecision} = priceAssistantConfig;
+  constructor(priceFeedConfig: WalletPriceFeedConfig, logger: Logger, registry?: Registry) {
+    const {interval, supportedTokens, pricePrecision} = priceFeedConfig;
     super("TOKEN_PRICE", logger, registry, interval, pricePrecision);
     this.supportedTokens = supportedTokens;
     if (registry) {

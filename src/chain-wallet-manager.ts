@@ -18,6 +18,7 @@ import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
 import { WalletRebalancingConfig } from "./wallet-manager";
 import { TokenPriceFeed } from "./price-assistant/token-price-feed";
+import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
@@ -76,7 +77,7 @@ export class ChainWalletManager {
   constructor(
     options: any,
     private wallets: WalletConfig[],
-    priceAssistant?: TokenPriceFeed,
+    priceAssistant?: TokenPriceFeed | OnDemandPriceFeed,
   ) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);

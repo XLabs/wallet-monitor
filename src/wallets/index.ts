@@ -27,7 +27,7 @@ import { SolanaNetworks } from "./solana/solana.config";
 import { EvmChainConfig } from "./evm";
 import { SuiChainConfig } from "./sui";
 import { SolanaChainConfig } from "./solana";
-import { TokenPriceFeed } from "../price-assistant/token-price-feed";
+import { PriceFeed } from "../wallet-manager";
 
 export const KNOWN_CHAINS: Partial<{
   [key in ChainName]: EvmChainConfig | SuiChainConfig | SolanaChainConfig;
@@ -94,7 +94,7 @@ export function createWalletToolbox(
   chainName: string,
   wallets: WalletConfig[],
   walletOptions: WalletOptions,
-  priceAssistant?: TokenPriceFeed,
+  priceFeed?:PriceFeed,
 ): Wallet {
   if (!isChain(chainName)) throw new Error("Unknown chain name " + chainName);
 
@@ -105,7 +105,7 @@ export function createWalletToolbox(
         chainName as EVMChainName,
         wallets,
         walletOptions,
-        priceAssistant,
+        priceFeed,
       );
 
     case isSolanaChain(chainName):
@@ -114,7 +114,7 @@ export function createWalletToolbox(
         chainName as SolanaChainName,
         wallets,
         walletOptions,
-        priceAssistant,
+        priceFeed,
       );
 
     case isSuiChain(chainName):
@@ -123,7 +123,7 @@ export function createWalletToolbox(
         chainName as SuiChainName,
         wallets,
         walletOptions as SuiWalletOptions,
-        priceAssistant,
+        priceFeed,
       );
 
     default:

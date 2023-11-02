@@ -1,30 +1,29 @@
 import axios from "axios";
 import { inspect } from "util";
 import { Logger } from "winston";
-import { WalletManagerConfig, WalletPriceAssistantConfig, WalletPriceAssistantOptions } from "../wallet-manager";
+import { WalletManagerConfig, WalletPriceFeedConfig, WalletPriceFeedOptions } from "../wallet-manager";
 import { CoinGeckoIds } from "./supported-tokens.config";
 
-type CoinGeckoPriceDict = Partial<{
+export type CoinGeckoPriceDict = Partial<{
     [k in CoinGeckoIds]: {
         usd: number;
     };
 }>;
 
-export const preparePriceAssistantConfig = (config: WalletManagerConfig, options?: WalletPriceAssistantOptions): WalletPriceAssistantConfig => {
-    const priceAssistantConfig: WalletPriceAssistantConfig = {
+export const preparePriceFeedConfig = (config: WalletManagerConfig, options?: WalletPriceFeedOptions): WalletPriceFeedConfig => {
+    const priceFeedConfig: WalletPriceFeedConfig = {
         supportedTokens: [],
-        interval: options?.interval,
         pricePrecision: options?.pricePrecision,
     };
 
     for (const [_, chainConfig] of Object.entries(config)) {
-        const {priceAssistantChainConfig} = chainConfig;
-        if (priceAssistantChainConfig?.enabled) {
-            priceAssistantConfig.supportedTokens.push(...priceAssistantChainConfig.supportedTokens)
+        const {priceFeedChainConfig} = chainConfig;
+        if (priceFeedChainConfig?.enabled) {
+            priceFeedConfig.supportedTokens.push(...priceFeedChainConfig.supportedTokens)
         }
     }
 
-    return priceAssistantConfig;
+    return priceFeedConfig;
 }
 
 /**
