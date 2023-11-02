@@ -31,10 +31,7 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         coingeckoId: "wrapped-bitcoin",
         symbol: "WBTC"
       }],
-      enabled: true,
-      scheduled: {
-        enabled: false
-      },
+      enabled: true
     }
   },
   solana: {
@@ -70,9 +67,6 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         symbol: "USDC"
       }],
       enabled: true,
-      scheduled: {
-        enabled: false
-      },
     }
   },
   klatyn: {

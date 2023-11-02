@@ -91,7 +91,7 @@ export class ChainWalletManager {
     const {priceFeedConfig} = this.options;
 
     if (priceFeedConfig?.enabled) {
-      if (priceFeedConfig?.scheduled.enabled) {
+      if (priceFeedConfig?.scheduled?.enabled) {
         this.priceFeed = new ScheduledPriceFeed(priceFeedConfig, this.logger);
       } else {
         this.priceFeed = new OnDemandPriceFeed(priceFeedConfig, this.logger);

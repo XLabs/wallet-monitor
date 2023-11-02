@@ -51,7 +51,7 @@ export const WalletPriceFeedConfigSchema = z.object({
   scheduled: z.object({
     enabled: z.boolean().default(false),
     interval: z.number().optional(),
-  }),
+  }).optional(),
 })
 
 export type WalletPriceFeedConfig = z.infer<

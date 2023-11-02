@@ -14,7 +14,7 @@ export class ScheduledPriceFeed extends PriceFeed<string, bigint | undefined> {
 
   constructor(priceFeedConfig: WalletPriceFeedConfig, logger: Logger, registry?: Registry) {
     const {scheduled, supportedTokens, pricePrecision} = priceFeedConfig;
-    super("SCHEDULED_TOKEN_PRICE", logger, registry, scheduled.interval, pricePrecision);
+    super("SCHEDULED_TOKEN_PRICE", logger, registry, scheduled?.interval, pricePrecision);
     this.supportedTokens = supportedTokens;
     if (registry) {
       this.tokenPriceGauge = new Gauge({
