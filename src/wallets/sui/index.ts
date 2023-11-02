@@ -181,7 +181,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     const uniqueTokens = [...new Set(tokens)];
     const allBalances = await pullSuiTokenBalances(this.connection, address);
 
-    return mapConcurrent(uniqueTokens, async (tokenAddress: string) => {
+    const tokenBalances = await mapConcurrent(uniqueTokens, async (tokenAddress: string) => {
       const tokenData = this.tokenData[tokenAddress];
       const symbol: string = tokenData?.symbol ? tokenData.symbol : "";
 
@@ -193,9 +193,6 @@ export class SuiWalletToolbox extends WalletToolbox {
               tokenData?.decimals ? tokenData.decimals : 9
           );
 
-          const tokenPrice = await this.priceFeed?.getKey(tokenAddress);
-          const tokenBalanceInUsd = tokenPrice ? BigInt(formattedBalance) * tokenPrice : undefined;
-
           return {
             tokenAddress,
             address,
@@ -203,7 +200,6 @@ export class SuiWalletToolbox extends WalletToolbox {
             rawBalance: balance.totalBalance,
             formattedBalance,
             symbol,
-            usd: tokenBalanceInUsd,
           };
         }
       }
@@ -216,7 +212,25 @@ export class SuiWalletToolbox extends WalletToolbox {
         formattedBalance: "0",
         symbol,
       }
-    }, this.options.tokenPollConcurrency);
+    }, this.options.tokenPollConcurrency) as TokenBalance[];
+
+    // Pull prices in USD for all the tokens in single network call
+    await this.priceFeed?.pullTokenPrices(tokens);
+
+    // Add USD price to each token balance
+    return mapConcurrent(
+      tokenBalances,
+      async balance => {
+        const tokenPrice = await this.priceFeed?.getKey(balance.tokenAddress!);
+        const tokenBalanceInUsd = tokenPrice ? BigInt(balance.formattedBalance) * tokenPrice : undefined;
+    
+        return {
+          ...balance,
+          usd: tokenBalanceInUsd,
+        };
+      },
+      this.options.tokenPollConcurrency,
+    );
   }
 
   protected async transferNativeBalance(

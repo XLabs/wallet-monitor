@@ -4,14 +4,14 @@ import { TimeLimitedCache } from "../utils";
 import { TokenInfo, WalletPriceFeedConfig } from "../wallet-manager";
 import { getCoingeckoPrices } from "./helper";
 import { CoinGeckoIds } from "./supported-tokens.config";
-import { TokenPriceData } from "./token-price-feed";
+import { PriceFeed, TokenPriceData } from "./price-feed";
 
 const DEFAULT_PRICE_PRECISION = 8;
 const DEFAULT_TOKEN_PRICE_RETENSION_TIME = 5 * 1000; // 5 seconds
 /**
  * OnDemandPriceFeed is a price feed that fetches token prices from coingecko on-demand
  */
-export class OnDemandPriceFeed {
+export class OnDemandPriceFeed extends PriceFeed<string, bigint | undefined>{
   // here cache key is tokenContractAddress
   private cache = new TimeLimitedCache<string, bigint>();
   supportedTokens: TokenInfo[];
@@ -24,6 +24,7 @@ export class OnDemandPriceFeed {
     logger: Logger,
     registry?: Registry,
   ) {
+    super("ONDEMAND_TOKEN_PRICE", logger, registry, undefined, priceAssistantConfig.pricePrecision)
     const { supportedTokens, pricePrecision } = priceAssistantConfig;
     this.supportedTokens = supportedTokens;
     this.pricePrecision = pricePrecision || DEFAULT_PRICE_PRECISION;
@@ -47,7 +48,20 @@ export class OnDemandPriceFeed {
     // no op
   }
 
-  async pullTokenPrices(tokens: string[]): Promise<TokenPriceData> {
+  async update () {
+    // no op
+  }
+
+  protected async get (tokenContract: string): Promise<bigint | undefined> {
+    const cachedPrice = this.cache.get(tokenContract);
+    if (cachedPrice) {
+        return cachedPrice;
+    }
+    const tokenPrices = await this.pullTokenPrices([tokenContract]);
+    return tokenPrices[tokenContract];
+  }
+
+  public async pullTokenPrices(tokens: string[]): Promise<TokenPriceData> {
     const coingekoTokens = [];
     const priceDict = {} as TokenPriceData;
     for (const token of tokens) {
@@ -89,14 +103,5 @@ export class OnDemandPriceFeed {
     }
 
     return priceDict;
-  }
-
-  async getKey (tokenContract: string): Promise<bigint | undefined> {
-    const cachedPrice = this.cache.get(tokenContract);
-    if (cachedPrice) {
-        return cachedPrice;
-    }
-    const tokenPrices = await this.pullTokenPrices([tokenContract]);
-    return tokenPrices[tokenContract];
   }
 }

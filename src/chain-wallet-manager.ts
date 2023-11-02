@@ -16,8 +16,8 @@ import {
 import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
-import { WalletRebalancingConfig } from "./wallet-manager";
-import { TokenPriceFeed } from "./price-assistant/token-price-feed";
+import { PriceFeed, WalletPriceFeedConfig, WalletRebalancingConfig } from "./wallet-manager";
+import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
@@ -37,6 +37,7 @@ export type ChainWalletManagerOptions = {
     maxGasPrice?: number;
     gasLimit?: number;
   };
+  priceFeedConfig: WalletPriceFeedConfig;
   balancePollInterval?: number;
   walletOptions?: WalletOptions;
   failOnInvalidTokens: boolean;
@@ -73,11 +74,11 @@ export class ChainWalletManager {
   // store acquiredAt for each {wallet_address__chain_name} to calculate lock period
   protected walletAcquiredAt: Record<string, number> = {};
   public walletToolbox: Wallet;
+  protected priceFeed?: PriceFeed;
 
   constructor(
     options: any,
-    private wallets: WalletConfig[],
-    priceAssistant?: TokenPriceFeed | OnDemandPriceFeed,
+    private wallets: WalletConfig[]
   ) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
@@ -87,6 +88,16 @@ export class ChainWalletManager {
     }
 
     this.logger = createLogger(this.options.logger);
+    const {priceFeedConfig} = this.options;
+
+    if (priceFeedConfig?.enabled) {
+      if (priceFeedConfig?.scheduled.enabled) {
+        this.priceFeed = new ScheduledPriceFeed(priceFeedConfig, this.logger);
+      } else {
+        this.priceFeed = new OnDemandPriceFeed(priceFeedConfig, this.logger);
+      }
+    }
+
     this.walletToolbox = createWalletToolbox(
       options.network,
       options.chainName,
@@ -96,7 +107,7 @@ export class ChainWalletManager {
         logger: this.logger,
         failOnInvalidTokens: this.options.failOnInvalidTokens,
       },
-      priceAssistant,
+      this.priceFeed,
     );
 
     this.availableWalletsByChainName[options.chainName] = wallets.length;
@@ -251,6 +262,8 @@ export class ChainWalletManager {
 
   public async start() {
     this.logger.info(`Starting Manager for chain: ${this.options.chainName}`);
+    this.logger.info(`Starting PriceFeed for chain: ${this.options.chainName}`);
+    this.priceFeed?.start();
     this.interval = setInterval(async () => {
       await this.refreshBalances();
     }, this.options.balancePollInterval);
@@ -271,6 +284,7 @@ export class ChainWalletManager {
     if (this.interval) clearInterval(this.interval);
     if (this.rebalanceInterval) clearInterval(this.rebalanceInterval);
     this.emitter.removeAllListeners();
+    this.priceFeed?.stop();
   }
 
   public getBalances(): WalletBalancesByAddress {

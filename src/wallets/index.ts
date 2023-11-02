@@ -94,7 +94,7 @@ export function createWalletToolbox(
   chainName: string,
   wallets: WalletConfig[],
   walletOptions: WalletOptions,
-  priceFeed?:PriceFeed,
+  priceFeed?: PriceFeed,
 ): Wallet {
   if (!isChain(chainName)) throw new Error("Unknown chain name " + chainName);
 

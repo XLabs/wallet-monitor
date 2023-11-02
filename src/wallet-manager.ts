@@ -21,8 +21,7 @@ import {
 import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
 import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
-import { preparePriceFeedConfig } from "./price-assistant/helper";
-import { TokenPriceFeed } from "./price-assistant/token-price-feed";
+import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
 export const WalletRebalancingConfigSchema = z.object({
@@ -46,21 +45,8 @@ export type TokenInfo = z.infer<
 >
 
 export const WalletPriceFeedConfigSchema = z.object({
-  interval: z.number().optional(),
-  pricePrecision: z.number().optional(),
-  supportedTokens: z.array(TokenInfoSchema)
-})
-
-export type WalletPriceFeedConfig = z.infer<
-  typeof WalletPriceFeedConfigSchema
->;
-
-export const WalletPriceFeedChainConfigSchema = z.object({
   enabled: z.boolean(),
-  supportedTokens: z.array(TokenInfoSchema)
-})
-
-export const WalletPriceFeedOptionsSchema = z.object({
+  supportedTokens: z.array(TokenInfoSchema),
   pricePrecision: z.number().optional(),
   scheduled: z.object({
     enabled: z.boolean().default(false),
@@ -68,12 +54,8 @@ export const WalletPriceFeedOptionsSchema = z.object({
   }),
 })
 
-export type WalletPriceFeedOptions = z.infer<
-  typeof WalletPriceFeedOptionsSchema
->;
-
-export type WalletPriceFeedChainConfig = z.infer<
-  typeof WalletPriceFeedChainConfigSchema
+export type WalletPriceFeedConfig = z.infer<
+  typeof WalletPriceFeedConfigSchema
 >;
 
 export type WalletRebalancingConfig = z.infer<
@@ -86,7 +68,7 @@ export const WalletManagerChainConfigSchema = z.object({
   chainConfig: z.any().optional(),
   rebalance: WalletRebalancingConfigSchema.optional(),
   wallets: z.array(WalletConfigSchema),
-  priceFeedChainConfig: WalletPriceFeedChainConfigSchema.optional()
+  priceFeedConfig: WalletPriceFeedConfigSchema.optional()
 });
 
 export const WalletManagerConfigSchema = z.record(
@@ -119,7 +101,6 @@ export const WalletManagerOptionsSchema = z.object({
     .optional(),
   failOnInvalidChain: z.boolean().default(true),
   failOnInvalidTokens: z.boolean().default(true).optional(),
-  priceFeedOptions: WalletPriceFeedOptionsSchema.optional(),
 });
 
 export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
@@ -144,13 +125,12 @@ export function getDefaultNetwork(chainName: ChainName) {
   return KNOWN_CHAINS[chainName]!.defaultNetwork;
 }
 
-export type PriceFeed = TokenPriceFeed | OnDemandPriceFeed;
+export type PriceFeed = ScheduledPriceFeed | OnDemandPriceFeed;
 
 export class WalletManager {
   private emitter: EventEmitter = new EventEmitter();
   private managers: Record<ChainName, ChainWalletManager>;
   private exporter?: PrometheusExporter;
-  private priceFeed?: PriceFeed;
   protected logger: winston.Logger;
 
   constructor(config: WalletManagerConfig, options?: WalletManagerOptions) {
@@ -167,9 +147,6 @@ export class WalletManager {
         this.exporter.startMetricsServer();
       }
     }
-
-    // Initialize Price Assistant
-    this.initPriceFeed(config, options?.priceFeedOptions)
 
     for (const [chainName, chainConfig] of Object.entries(config)) {
       if (!isChain(chainName)) {
@@ -188,16 +165,14 @@ export class WalletManager {
         logger: this.logger,
         rebalance: chainConfig.rebalance,
         walletOptions: chainConfig.chainConfig,
+        priceFeedConfig: chainConfig.priceFeedConfig,
         balancePollInterval: options?.balancePollInterval,
         failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
       };
 
-      const isPriceFeedEnabled = chainConfig?.priceFeedChainConfig?.enabled ?? false;
-
       const chainManager = new ChainWalletManager(
         chainManagerConfig,
-        chainConfig.wallets,
-        isPriceFeedEnabled ? this.priceFeed: undefined
+        chainConfig.wallets
       );
 
       chainManager.on("error", error => {
@@ -260,29 +235,8 @@ export class WalletManager {
     }
   }
 
-  private initPriceFeed(config: WalletManagerConfig, priceFeedOptions?: WalletPriceFeedOptions) {
-    // Prepare Price Assistant config and start worker
-    const priceFeedConfig = preparePriceFeedConfig(config, priceFeedOptions);
-    
-    if (priceFeedConfig.supportedTokens.length) {
-      this.logger.info(`Starting Price Assistant worker with ${priceFeedConfig.supportedTokens.length} tokens`);
-
-      if (priceFeedOptions?.scheduled.enabled) {
-        this.priceFeed = new TokenPriceFeed({...priceFeedConfig, interval: priceFeedOptions.scheduled.interval}, this.logger);
-      } else {
-        this.priceFeed = new OnDemandPriceFeed(priceFeedConfig, this.logger);
-      }
-      this.priceFeed.start();
-    }
-  }
-
-  public async fetchTokenPrice(token: string): Promise<bigint | undefined> {
-    return await this.priceFeed?.getKey(token);
-  }
-
   public stop() {
     Object.values(this.managers).forEach(manager => manager.stop());
-    this.priceFeed?.stop();
   }
 
   public on(event: string, listener: (...args: any[]) => void) {

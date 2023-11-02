@@ -5,7 +5,9 @@ import { printError } from "../utils";
 const DEFAULT_FEED_INTERVAL = 10_000;
 const DEFAULT_PRICE_PRECISION = 8;
 
-export abstract class ScheduledPriceFeed<K, V> {
+export type TokenPriceData = Partial<Record<string, bigint>>;
+
+export abstract class PriceFeed<K, V> {
   private name: string;
   private interval?: NodeJS.Timeout;
   private locked: boolean;
@@ -25,7 +27,9 @@ export abstract class ScheduledPriceFeed<K, V> {
 
   protected abstract update(): Promise<void>;
 
-  protected abstract get(key: K): V;
+  protected abstract get(key: K): Promise<V>;
+
+  public abstract pullTokenPrices (tokens: string[]): Promise<TokenPriceData>;
 
   public start(): void {
     this.interval = setInterval(() => this.run(), this.runIntervalMs);
@@ -36,7 +40,7 @@ export abstract class ScheduledPriceFeed<K, V> {
     clearInterval(this.interval);
   }
 
-  public getKey(key: K): V {
+  public async getKey(key: K): Promise<V> {
     const result = this.get(key);
     if (result === undefined || result === null) throw new Error(`Key Not Found: ${key}`);
     return result;

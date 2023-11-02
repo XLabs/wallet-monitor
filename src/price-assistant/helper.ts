@@ -1,7 +1,6 @@
 import axios from "axios";
 import { inspect } from "util";
 import { Logger } from "winston";
-import { WalletManagerConfig, WalletPriceFeedConfig, WalletPriceFeedOptions } from "../wallet-manager";
 import { CoinGeckoIds } from "./supported-tokens.config";
 
 export type CoinGeckoPriceDict = Partial<{
@@ -9,22 +8,6 @@ export type CoinGeckoPriceDict = Partial<{
         usd: number;
     };
 }>;
-
-export const preparePriceFeedConfig = (config: WalletManagerConfig, options?: WalletPriceFeedOptions): WalletPriceFeedConfig => {
-    const priceFeedConfig: WalletPriceFeedConfig = {
-        supportedTokens: [],
-        pricePrecision: options?.pricePrecision,
-    };
-
-    for (const [_, chainConfig] of Object.entries(config)) {
-        const {priceFeedChainConfig} = chainConfig;
-        if (priceFeedChainConfig?.enabled) {
-            priceFeedConfig.supportedTokens.push(...priceFeedChainConfig.supportedTokens)
-        }
-    }
-
-    return priceFeedConfig;
-}
 
 /**
  * @param tokens - array of coingecko ids for tokens

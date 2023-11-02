@@ -1,22 +1,20 @@
 import { Gauge, Registry } from "prom-client";
 import { Logger } from "winston";
-import { ScheduledPriceFeed } from "./price-feed";
+import { PriceFeed, TokenPriceData } from "./price-feed";
 import { TokenInfo, WalletPriceFeedConfig } from "../wallet-manager";
 import { getCoingeckoPrices } from "./helper";
 
-export type TokenPriceData = Partial<Record<string, bigint>>;
-
 /**
- * TokenPriceFeed is a price feed that periodically fetches token prices from coingecko
+ * ScheduledPriceFeed is a price feed that periodically fetches token prices from coingecko
  */
-export class TokenPriceFeed extends ScheduledPriceFeed<string, bigint | undefined> {
+export class ScheduledPriceFeed extends PriceFeed<string, bigint | undefined> {
   private data = {} as TokenPriceData;
   supportedTokens: TokenInfo[];
   tokenPriceGauge?: Gauge;
 
   constructor(priceFeedConfig: WalletPriceFeedConfig, logger: Logger, registry?: Registry) {
-    const {interval, supportedTokens, pricePrecision} = priceFeedConfig;
-    super("TOKEN_PRICE", logger, registry, interval, pricePrecision);
+    const {scheduled, supportedTokens, pricePrecision} = priceFeedConfig;
+    super("SCHEDULED_TOKEN_PRICE", logger, registry, scheduled.interval, pricePrecision);
     this.supportedTokens = supportedTokens;
     if (registry) {
       this.tokenPriceGauge = new Gauge({
@@ -26,6 +24,14 @@ export class TokenPriceFeed extends ScheduledPriceFeed<string, bigint | undefine
         registers: [registry],
       });
     }
+  }
+
+  public async pullTokenPrices(tokens: string[]): Promise<TokenPriceData> {
+    const tokenPrices = {} as TokenPriceData;
+    for await (const token of tokens) {
+      tokenPrices[token] = await this.get(token);
+    }
+    return tokenPrices;
   }
 
   async update() {
@@ -49,7 +55,7 @@ export class TokenPriceFeed extends ScheduledPriceFeed<string, bigint | undefine
     // this.logger.debug(`Updated price feed token prices: ${inspect(this.data)}`);
   }
 
-  protected get(tokenContract: string): bigint | undefined {
+  protected async get(tokenContract: string): Promise<bigint | undefined> {
     return this.data[tokenContract];
   }
 }

@@ -148,7 +148,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     });
 
     // Assuming that tokens[] is actually an array of mint account addresses.
-    return mapConcurrent(
+    const balances = await mapConcurrent(
       tokens,
       async token => {
         const tokenData = this.tokenData[token];
@@ -164,17 +164,31 @@ export class SolanaWalletToolbox extends WalletToolbox {
           10 ** tokenData.decimals
         ).toString();
 
-        const tokenPrice = await this.priceFeed?.getKey(token);
-        const tokenBalanceInUsd = tokenPrice
-          ? BigInt(formattedBalance) * tokenPrice
-          : undefined;
-
         return {
           isNative: false,
           rawBalance: tokenBalance.toString(),
           address,
           formattedBalance,
           symbol: tokenKnownSymbol ?? "unknown",
+        };
+      },
+      this.options.tokenPollConcurrency,
+    ) as TokenBalance[];
+
+    // Pull prices in USD for all the tokens in single network call
+    await this.priceFeed?.pullTokenPrices(tokens);
+
+    // Add USD price to each token balance
+    return mapConcurrent(
+      balances,
+      async balance => {
+        const tokenPrice = await this.priceFeed?.getKey(balance.tokenAddress!);
+        const tokenBalanceInUsd = tokenPrice
+          ? BigInt(balance.formattedBalance) * tokenPrice
+          : undefined;
+    
+        return {
+          ...balance,
           usd: tokenBalanceInUsd,
         };
       },
