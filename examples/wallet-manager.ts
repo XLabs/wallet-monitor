@@ -18,7 +18,7 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         tokens: ["WBTC"]
       }
     ],
-    priceAssistantChainConfig: {
+    priceFeedConfig: {
       supportedTokens: [{
         chainId: 2,
         tokenContract: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
@@ -31,7 +31,10 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         coingeckoId: "wrapped-bitcoin",
         symbol: "WBTC"
       }],
-      enabled: true
+      enabled: true,
+      scheduled: {
+        enabled: false
+      },
     }
   },
   solana: {
@@ -59,34 +62,37 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         tokens: ['USDC', 'USDT'] 
       },
     ],
-    priceAssistantChainConfig: {
+    priceFeedConfig: {
       supportedTokens: [{
         chainId: 21,
         tokenContract: "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf",
         coingeckoId: "usd-coin",
         symbol: "USDC"
       }],
-      enabled: true
+      enabled: true,
+      scheduled: {
+        enabled: false
+      },
     }
   },
-  // klatyn: {
-  //   rebalance: {
-  //     enabled: false,
-  //     strategy: 'default',
-  //     interval: 10000,
-  //     minBalanceThreshold: 0.1,
-  //   },
-  //   wallets: [
-  //     {
-  //       address: "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
-  //       tokens: ["USDC", "DAI"]
-  //     },
-  //     {
-  //       address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
-  //       tokens: []
-  //     }
-  //   ]
-  // }
+  klatyn: {
+    rebalance: {
+      enabled: false,
+      strategy: 'default',
+      interval: 10000,
+      minBalanceThreshold: 0.1,
+    },
+    wallets: [
+      {
+        address: "0x80C67432656d59144cEFf962E8fAF8926599bCF8",
+        tokens: ["USDC", "DAI"]
+      },
+      {
+        address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
+        tokens: []
+      }
+    ]
+  }
 }
 
 export const manager = buildWalletManager({
@@ -103,3 +109,11 @@ export const manager = buildWalletManager({
     }
   }
 });
+
+
+// manager.withWallet('ethereum', async (wallet) => {
+//   console.log('Address', wallet.address);
+//   console.log('Block height', wallet.walletToolbox.getBlockHeight());
+//   console.log('Native balances', await wallet.walletToolbox.pullNativeBalance(wallet.address));
+//   console.log('Token balances', await wallet.walletToolbox.pullTokenBalances(wallet.address, ['0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']));
+// })
