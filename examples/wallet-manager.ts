@@ -111,6 +111,7 @@ export const manager = buildWalletManager({
 });
 
 
+// Note: Below code needs wallet's private key to be set in config abopve for aquiring wallet
 // manager.withWallet('ethereum', async (wallet) => {
 //   console.log('Address', wallet.address);
 //   console.log('Block height', wallet.walletToolbox.getBlockHeight());
