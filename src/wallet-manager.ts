@@ -20,6 +20,9 @@ import {
 } from "./wallets";
 import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
+import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
+import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
+import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
 export const WalletRebalancingConfigSchema = z.object({
   enabled: z.boolean(),
@@ -29,6 +32,31 @@ export const WalletRebalancingConfigSchema = z.object({
   maxGasPrice: z.number().optional(),
   gasLimit: z.number().optional(),
 });
+
+const TokenInfoSchema = z.object({
+  tokenContract: z.string(),
+  chainId: z.number(),
+  coingeckoId: CoinGeckoIdsSchema,
+  symbol: z.string().optional(),
+})
+
+export type TokenInfo = z.infer<
+  typeof TokenInfoSchema
+>
+
+export const WalletPriceFeedConfigSchema = z.object({
+  enabled: z.boolean(),
+  supportedTokens: z.array(TokenInfoSchema),
+  pricePrecision: z.number().optional(),
+  scheduled: z.object({
+    enabled: z.boolean().default(false),
+    interval: z.number().optional(),
+  }).optional(),
+})
+
+export type WalletPriceFeedConfig = z.infer<
+  typeof WalletPriceFeedConfigSchema
+>;
 
 export type WalletRebalancingConfig = z.infer<
   typeof WalletRebalancingConfigSchema
@@ -40,6 +68,7 @@ export const WalletManagerChainConfigSchema = z.object({
   chainConfig: z.any().optional(),
   rebalance: WalletRebalancingConfigSchema.optional(),
   wallets: z.array(WalletConfigSchema),
+  priceFeedConfig: WalletPriceFeedConfigSchema.optional()
 });
 
 export const WalletManagerConfigSchema = z.record(
@@ -96,11 +125,12 @@ export function getDefaultNetwork(chainName: ChainName) {
   return KNOWN_CHAINS[chainName]!.defaultNetwork;
 }
 
+export type PriceFeed = ScheduledPriceFeed | OnDemandPriceFeed;
+
 export class WalletManager {
   private emitter: EventEmitter = new EventEmitter();
   private managers: Record<ChainName, ChainWalletManager>;
   private exporter?: PrometheusExporter;
-
   protected logger: winston.Logger;
 
   constructor(config: WalletManagerConfig, options?: WalletManagerOptions) {
@@ -135,13 +165,14 @@ export class WalletManager {
         logger: this.logger,
         rebalance: chainConfig.rebalance,
         walletOptions: chainConfig.chainConfig,
+        priceFeedConfig: chainConfig.priceFeedConfig,
         balancePollInterval: options?.balancePollInterval,
         failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
       };
 
       const chainManager = new ChainWalletManager(
         chainManagerConfig,
-        chainConfig.wallets,
+        chainConfig.wallets
       );
 
       chainManager.on("error", error => {
@@ -152,6 +183,7 @@ export class WalletManager {
       chainManager.on(
         "balances",
         (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
+
           this.logger.verbose(`Balances updated for ${chainName} (${network})`);
           this.exporter?.updateBalances(chainName, network, balances);
 

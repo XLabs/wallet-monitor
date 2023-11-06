@@ -16,7 +16,9 @@ import {
 import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
-import { WalletRebalancingConfig } from "./wallet-manager";
+import { PriceFeed, WalletPriceFeedConfig, WalletRebalancingConfig } from "./wallet-manager";
+import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
+import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
@@ -35,6 +37,7 @@ export type ChainWalletManagerOptions = {
     maxGasPrice?: number;
     gasLimit?: number;
   };
+  priceFeedConfig: WalletPriceFeedConfig;
   balancePollInterval?: number;
   walletOptions?: WalletOptions;
   failOnInvalidTokens: boolean;
@@ -67,12 +70,16 @@ export class ChainWalletManager {
   private rebalanceInterval: ReturnType<typeof setInterval> | null = null;
   private options: ChainWalletManagerOptions;
   private emitter = new EventEmitter();
-  protected availableWalletsByChainName: Record<string, number> =  {};
+  protected availableWalletsByChainName: Record<string, number> = {};
   // store acquiredAt for each {wallet_address__chain_name} to calculate lock period
   protected walletAcquiredAt: Record<string, number> = {};
   public walletToolbox: Wallet;
+  protected priceFeed?: PriceFeed;
 
-  constructor(options: any, private wallets: WalletConfig[]) {
+  constructor(
+    options: any,
+    private wallets: WalletConfig[]
+  ) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
 
@@ -81,6 +88,16 @@ export class ChainWalletManager {
     }
 
     this.logger = createLogger(this.options.logger);
+    const {priceFeedConfig} = this.options;
+
+    if (priceFeedConfig?.enabled) {
+      if (priceFeedConfig?.scheduled?.enabled) {
+        this.priceFeed = new ScheduledPriceFeed(priceFeedConfig, this.logger);
+      } else {
+        this.priceFeed = new OnDemandPriceFeed(priceFeedConfig, this.logger);
+      }
+    }
+
     this.walletToolbox = createWalletToolbox(
       options.network,
       options.chainName,
@@ -90,10 +107,16 @@ export class ChainWalletManager {
         logger: this.logger,
         failOnInvalidTokens: this.options.failOnInvalidTokens,
       },
+      this.priceFeed,
     );
 
     this.availableWalletsByChainName[options.chainName] = wallets.length;
-    this.emitter.emit('active-wallets-count', options.chainName, options.network, this.availableWalletsByChainName[options.chainName]);
+    this.emitter.emit(
+      "active-wallets-count",
+      options.chainName,
+      options.network,
+      this.availableWalletsByChainName[options.chainName],
+    );
   }
 
   private validateOptions(options: any): options is ChainWalletManagerOptions {
@@ -131,7 +154,10 @@ export class ChainWalletManager {
     };
   }
 
-  private validateRebalanceConfiguration(rebalanceConfig: any, wallets: WalletConfig[]): rebalanceConfig is WalletRebalancingConfig {
+  private validateRebalanceConfiguration(
+    rebalanceConfig: any,
+    wallets: WalletConfig[],
+  ): rebalanceConfig is WalletRebalancingConfig {
     if (!rebalanceConfig.enabled) return true;
 
     if (!rebalanceStrategies[rebalanceConfig.strategy])
@@ -217,7 +243,10 @@ export class ChainWalletManager {
 
   protected mapBalances(balances: WalletBalance[]) {
     return balances.reduce((acc, balance) => {
-      if (!acc[balance.address]) acc[balance.address] = balance;
+      if (!acc[balance.address])
+        acc[balance.address] = {
+          ...balance,
+        };
       else
         this.logger.warn(
           `Duplicate balance found for address ${balance.address} (${this.options.chainName})`,
@@ -233,6 +262,8 @@ export class ChainWalletManager {
 
   public async start() {
     this.logger.info(`Starting Manager for chain: ${this.options.chainName}`);
+    this.logger.info(`Starting PriceFeed for chain: ${this.options.chainName}`);
+    this.priceFeed?.start();
     this.interval = setInterval(async () => {
       await this.refreshBalances();
     }, this.options.balancePollInterval);
@@ -253,6 +284,7 @@ export class ChainWalletManager {
     if (this.interval) clearInterval(this.interval);
     if (this.rebalanceInterval) clearInterval(this.rebalanceInterval);
     this.emitter.removeAllListeners();
+    this.priceFeed?.stop();
   }
 
   public getBalances(): WalletBalancesByAddress {
@@ -271,7 +303,7 @@ export class ChainWalletManager {
     return {
       address,
       rawWallet,
-      walletToolbox: this.walletToolbox
+      walletToolbox: this.walletToolbox,
     };
   }
 
@@ -350,7 +382,7 @@ export class ChainWalletManager {
   }
 
   private updateActiveWalletsMetric(walletAddress: string, isReleased = false) {
-    const {chainName, network} = this.walletToolbox;
+    const { chainName, network } = this.walletToolbox;
     const key = `${walletAddress}__${chainName}`;
 
     if (isReleased) {
@@ -358,12 +390,23 @@ export class ChainWalletManager {
       const acquiredAt = this.walletAcquiredAt[key];
       const releasedAt = Date.now();
       const timeLocked = (releasedAt - acquiredAt) / 1000;
-      this.emitter.emit('wallets-lock-period', chainName, network, walletAddress, timeLocked);
+      this.emitter.emit(
+        "wallets-lock-period",
+        chainName,
+        network,
+        walletAddress,
+        timeLocked,
+      );
     } else {
       // wallet acquired/locked
       this.availableWalletsByChainName[chainName]--;
       this.walletAcquiredAt[key] = Date.now();
     }
-    this.emitter.emit('active-wallets-count', chainName, network, this.availableWalletsByChainName[chainName]);
+    this.emitter.emit(
+      "active-wallets-count",
+      chainName,
+      network,
+      this.availableWalletsByChainName[chainName],
+    );
   }
 }

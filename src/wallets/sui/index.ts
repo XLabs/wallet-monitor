@@ -22,6 +22,7 @@ import {
 import { getSuiAddressFromPrivateKey } from "../../balances/sui";
 import {mapConcurrent} from "../../utils";
 import { formatFixed } from "@ethersproject/bignumber";
+import { PriceFeed } from "../../wallet-manager";
 
 export const SUI_CHAINS = {
   [SUI]: 1,
@@ -34,6 +35,7 @@ export const SUI_CHAIN_CONFIGS: Record<SuiChainName, SuiChainConfig> = {
 export type SuiWalletOptions = BaseWalletOptions & {
   nodeUrl: string;
   faucetUrl?: string;
+  tokenPollConcurrency?: number | undefined;
 };
 
 export type SuiChainConfig = {
@@ -58,12 +60,14 @@ export class SuiWalletToolbox extends WalletToolbox {
   private chainConfig: SuiChainConfig;
   private tokenData: Record<string, SuiTokenData> = {};
   private options: SuiWalletOptions;
+  private priceFeed?: PriceFeed;
 
   constructor(
     public network: string,
     public chainName: SuiChainName,
     public rawConfig: WalletConfig[],
-    options: SuiWalletOptions
+    options: SuiWalletOptions,
+    priceFeed?: PriceFeed
   ) {
     super(network, chainName, rawConfig, options);
     this.chainConfig = SUI_CHAIN_CONFIGS[this.chainName];
@@ -71,6 +75,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as SuiWalletOptions;
+    this.priceFeed = priceFeed;
 
     const nodeUrlOrigin = this.options.nodeUrl && new URL(this.options.nodeUrl).origin
     this.logger.debug(`SUI rpc url: ${nodeUrlOrigin}`);
@@ -176,7 +181,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     const uniqueTokens = [...new Set(tokens)];
     const allBalances = await pullSuiTokenBalances(this.connection, address);
 
-    return uniqueTokens.map((tokenAddress: string) => {
+    const tokenBalances = await mapConcurrent(uniqueTokens, async (tokenAddress: string) => {
       const tokenData = this.tokenData[tokenAddress];
       const symbol: string = tokenData?.symbol ? tokenData.symbol : "";
 
@@ -207,7 +212,25 @@ export class SuiWalletToolbox extends WalletToolbox {
         formattedBalance: "0",
         symbol,
       }
-    });
+    }, this.options.tokenPollConcurrency) as TokenBalance[];
+
+    // Pull prices in USD for all the tokens in single network call
+    await this.priceFeed?.pullTokenPrices(tokens);
+
+    // Add USD price to each token balance
+    return mapConcurrent(
+      tokenBalances,
+      async balance => {
+        const tokenPrice = await this.priceFeed?.getKey(balance.tokenAddress!);
+        const tokenBalanceInUsd = tokenPrice ? BigInt(balance.formattedBalance) * tokenPrice : undefined;
+    
+        return {
+          ...balance,
+          usd: tokenBalanceInUsd,
+        };
+      },
+      this.options.tokenPollConcurrency,
+    );
   }
 
   protected async transferNativeBalance(
@@ -240,5 +263,11 @@ export class SuiWalletToolbox extends WalletToolbox {
 
   protected isValidNativeTokenAddress(token: string): boolean {
     return SUI_HEX_ADDRESS_REGEX.test(token)
+  }
+
+  public async getBlockHeight(): Promise<number> {
+    const suiJsonProvider = new JsonRpcProvider(this.connection);
+    const sequenceNumber = await suiJsonProvider.getLatestCheckpointSequenceNumber();
+    return Number(sequenceNumber);
   }
 }

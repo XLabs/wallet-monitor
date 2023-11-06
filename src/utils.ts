@@ -1,5 +1,6 @@
 import { map } from 'bluebird';
 import winston from 'winston';
+import { inspect } from "util";
 import {
   WalletManager, WalletManagerFullConfig, WalletManagerFullConfigSchema
 } from "./wallet-manager";
@@ -69,4 +70,43 @@ export function findMedian<T>(arr: T[], accessor: Accessor<T>): number | undefin
     }
     const mid = Math.floor(len / 2);
     return len % 2 === 0 ? (accessor(sortedArr[mid - 1]) + accessor(sortedArr[mid])) / 2 : accessor(sortedArr[mid]);
+}
+
+export function printError(error: unknown): string {
+  if (error instanceof Error) {
+    return `${error?.stack || error.message}`;
+  }
+
+  // Prints nested properties until a depth of 2 by default.
+  return inspect(error);
+}
+
+interface TTL<T> {
+  value: T;
+  timerId: NodeJS.Timeout;
+}
+
+export class TimeLimitedCache<K, V> {
+  private readonly cache: Map<K, TTL<V>>
+  constructor() {
+      this.cache = new Map<K, TTL<V>>();
+  }
+
+  delete (key: K) {
+      this.cache.delete(key);
+  }
+
+  set(key: K, value: V, duration: number): boolean {
+      const doesKeyExists = this.cache.has(key);
+      if (doesKeyExists) {
+          clearTimeout(this.cache.get(key)?.timerId);
+      }
+      const timerId = setTimeout(() => this.delete(key), duration)
+      this.cache.set(key, {value, timerId})
+      return !!doesKeyExists
+  }
+
+  get(key: K): V | undefined {
+      return this.cache.get(key)?.value;
+  }
 }

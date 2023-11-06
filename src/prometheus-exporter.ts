@@ -13,6 +13,17 @@ function updateBalancesGauge(gauge: Gauge, chainName: string, network: string, b
     .set(parseFloat(balance.formattedBalance));
 }
 
+function updateBalancesInUsdGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance | TokenBalance) {
+  const { symbol, address, isNative, usd } = balance;
+
+  if (!usd) return;
+
+  const tokenAddress = (balance as TokenBalance).tokenAddress || '';
+  gauge
+    .labels(chainName, network, symbol, isNative.toString(), tokenAddress, address)
+    .set(Number(usd.toString()));
+}
+
 function updateAvailableWalletsGauge(gauge: Gauge, chainName: string, network: string, count: number) {
   gauge
     .labels(chainName, network)
@@ -61,6 +72,15 @@ function createBalancesGauge(registry: Registry, gaugeName: string) {
   });
 }
 
+function createBalancesInUsdGauge(registry: Registry, gaugeName: string) {
+  return new Gauge({
+    name: gaugeName,
+    help: "Balances pulled for each configured wallet in USD",
+    labelNames: ["chain_name", "network", "symbol", "is_native", "token_address", "wallet_address"],
+    registers: [registry],
+  });
+}
+
 function createAvailableWalletsGauge(registry: Registry, gaugeName: string) {
   return new Gauge({
     name: gaugeName,
@@ -103,6 +123,7 @@ export class PrometheusExporter {
   public app?: Koa;
 
   private balancesGauge: Gauge;
+  private balancesUsdGauge: Gauge;
   private availableWalletsGauge: Gauge;
   private walletsLockPeriodGauge: Gauge;
   private rebalanceExpenditureCounter: Counter;
@@ -120,6 +141,7 @@ export class PrometheusExporter {
     this.prometheusPath = path || '/metrics';
 
     this.balancesGauge = createBalancesGauge(this.registry, 'wallet_monitor_balance');
+    this.balancesUsdGauge = createBalancesInUsdGauge(this.registry, 'wallet_monitor_balance_usd')
     this.availableWalletsGauge = createAvailableWalletsGauge(this.registry, 'wallet_monitor_available_wallets');
     this.walletsLockPeriodGauge = createWalletsLockPeriodGauge(this.registry, 'wallet_monitor_wallets_lock_period')
     this.rebalanceExpenditureCounter = createRebalanceExpenditureCounter(this.registry, 'wallet_monitor_rebalance_expenditure');
@@ -141,6 +163,8 @@ export class PrometheusExporter {
 
       balance.tokens?.forEach((tokenBalance: TokenBalance) => {
         updateBalancesGauge(this.balancesGauge, chainName, network, tokenBalance);
+        // Only added for token balances as of now
+        updateBalancesInUsdGauge(this.balancesUsdGauge, chainName, network, tokenBalance)
       });
     });
   }

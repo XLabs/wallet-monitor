@@ -47,6 +47,7 @@ import {
 } from "./optimism.config";
 import { KlaytnNetwork, KLAYTN, KLAYTN_CHAIN_CONFIG } from "./klaytn.config";
 import { BaseNetwork, BASE, BASE_CHAIN_CONFIG } from "./base.config";
+import { PriceFeed } from "../../wallet-manager";
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
@@ -130,12 +131,14 @@ export class EvmWalletToolbox extends WalletToolbox {
   private chainConfig: EvmChainConfig;
   private tokenData: Record<string, EvmTokenData> = {};
   private options: EvmWalletOptions;
+  private priceFeed?: PriceFeed;
 
   constructor(
     public network: string,
     public chainName: EVMChainName,
     public rawConfig: WalletConfig[],
     options: EvmWalletOptions,
+    priceFeed?: PriceFeed
   ) {
     super(network, chainName, rawConfig, options);
     this.chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
@@ -143,6 +146,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
+    this.priceFeed = priceFeed;
 
     const nodeUrlOrigin = this.options.nodeUrl && new URL(this.options.nodeUrl).origin
     this.logger.debug(`EVM rpc url: ${nodeUrlOrigin}`);
@@ -225,6 +229,7 @@ export class EvmWalletToolbox extends WalletToolbox {
   public async pullNativeBalance(address: string): Promise<WalletBalance> {
     const balance = await pullEvmNativeBalance(this.provider, address);
     const formattedBalance = ethers.utils.formatEther(balance.rawBalance);
+
     return {
       ...balance,
       address,
@@ -238,7 +243,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     address: string,
     tokens: string[],
   ): Promise<TokenBalance[]> {
-    return mapConcurrent(
+    const tokenBalances = await mapConcurrent(
       tokens,
       async tokenAddress => {
         const tokenData = this.tokenData[tokenAddress];
@@ -251,6 +256,7 @@ export class EvmWalletToolbox extends WalletToolbox {
           balance.rawBalance,
           tokenData.decimals,
         );
+
         return {
           ...balance,
           address,
@@ -261,6 +267,19 @@ export class EvmWalletToolbox extends WalletToolbox {
       },
       this.options.tokenPollConcurrency,
     );
+    
+    // Pull prices in USD for all the tokens in single network call
+    await this.priceFeed?.pullTokenPrices(tokens);
+
+    // Add USD price to each token balance
+    return mapConcurrent(tokenBalances, async balance => {
+      const tokenPrice = await this.priceFeed?.getKey(balance.tokenAddress);
+      const tokenBalanceInUsd = tokenPrice ? Number(balance.formattedBalance) * Number(tokenPrice) : undefined;
+      return {
+        ...balance,
+        usd: tokenBalanceInUsd,
+      };
+    }, this.options.tokenPollConcurrency);
   }
 
   protected async transferNativeBalance(
@@ -291,5 +310,9 @@ export class EvmWalletToolbox extends WalletToolbox {
 
   protected getAddressFromPrivateKey(privateKey: string): string {
     return getEvmAddressFromPrivateKey(privateKey);
+  }
+
+  public async getBlockHeight(): Promise<number> {
+    return this.provider.getBlockNumber();
   }
 }

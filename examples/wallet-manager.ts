@@ -1,6 +1,6 @@
-import { buildWalletManager } from 'wallet-monitor';
+import { buildWalletManager, WalletManagerFullConfig } from 'wallet-monitor';
 
-const allChainWallets = {
+const allChainWallets: WalletManagerFullConfig['config'] = {
   ethereum: {
     rebalance: {
       enabled: false,
@@ -15,9 +15,24 @@ const allChainWallets = {
       },
       {
         address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
-        tokens: ["DAI"]
+        tokens: ["WBTC"]
       }
-    ]
+    ],
+    priceFeedConfig: {
+      supportedTokens: [{
+        chainId: 2,
+        tokenContract: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        coingeckoId: "usd-coin",
+        symbol: "USDC"
+      },
+      {
+        chainId: 2,
+        tokenContract: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+        coingeckoId: "wrapped-bitcoin",
+        symbol: "WBTC"
+      }],
+      enabled: true
+    }
   },
   solana: {
     wallets: [
@@ -41,9 +56,18 @@ const allChainWallets = {
       { address: '0xcb39d897bf0561af7531d37db9781e54528269fed4761275931ce32f20352977' },
       { 
         address: '0x8f11fe7121be742f46e2b3bc2eba081efdc3027697c317a917a2d16fd9b59ab1', 
-        tokens: ['USDC', 'USDT', '0x5d1f47ea69bb0de31c313d7acf89b890dbb8991ea8e03c6c355171f84bb1ba4a::turbos::TURBOS'] 
+        tokens: ['USDC', 'USDT'] 
       },
-    ]
+    ],
+    priceFeedConfig: {
+      supportedTokens: [{
+        chainId: 21,
+        tokenContract: "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf",
+        coingeckoId: "usd-coin",
+        symbol: "USDC"
+      }],
+      enabled: true,
+    }
   },
   klatyn: {
     rebalance: {
@@ -79,3 +103,12 @@ export const manager = buildWalletManager({
     }
   }
 });
+
+
+// Note: Below code needs wallet's private key to be set in config abopve for aquiring wallet
+// manager.withWallet('ethereum', async (wallet) => {
+//   console.log('Address', wallet.address);
+//   console.log('Block height', wallet.walletToolbox.getBlockHeight());
+//   console.log('Native balances', await wallet.walletToolbox.pullNativeBalance(wallet.address));
+//   console.log('Token balances', await wallet.walletToolbox.pullTokenBalances(wallet.address, ['0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']));
+// })
