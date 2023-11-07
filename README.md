@@ -44,12 +44,33 @@ export const WalletManagerChainConfigSchema = z.object({
     gasLimit: z.number().optional(),
   }).optional(),
   wallets: z.array(WalletConfigSchema),
+  priceFeedConfig: WalletPriceFeedConfigSchema.optional()
+})
+
+export const TokenInfoSchema = z.object({
+  tokenContract: z.string(),
+  chainId: z.number(),
+  coingeckoId: CoinGeckoIdsSchema,
+  symbol: z.string().optional(),
+})
+
+export const WalletPriceFeedConfigSchema = z.object({
+  enabled: z.boolean(),
+  supportedTokens: z.array(TokenInfoSchema),
+  pricePrecision: z.number().optional(),
+  scheduled: z.object({
+    enabled: z.boolean().default(false),
+    interval: z.number().optional(),
+  }).optional(),
 })
 
 export const WalletManagerConfigSchema = z.record(z.string(), WalletManagerChainConfigSchema)
 ```
 In short, each record keys is the name of a chain. The value within that record is a network name, an optional rebalancing strategy and a collection of wallets.  
 **Also, check out the [rebalancing example](examples/rebalancing.ts).**
+
+To enable, token prices in USD, use price feed config in `WalletManagerChainConfig`, which can be configured per chain. Furthermore, we can also control whether the token prices needs to be synced in the background periodically (i.e with `scheduled` option) or whether the prices needs to be fetched on-demand in real-time.
+**Checkout the [pricefeed configuration example](examples/wallet-manager.ts).**
 
 ### WalletManagerOptions
 ```typescript
