@@ -262,8 +262,10 @@ export class ChainWalletManager {
 
   public async start() {
     this.logger.info(`Starting Manager for chain: ${this.options.chainName}`);
-    this.logger.info(`Starting PriceFeed for chain: ${this.options.chainName}`);
-    this.priceFeed?.start();
+    if (this.priceFeed) {
+      this.logger.info(`Starting PriceFeed for chain: ${this.options.chainName}`);
+      this.priceFeed?.start();
+    }
     this.interval = setInterval(async () => {
       await this.refreshBalances();
     }, this.options.balancePollInterval);

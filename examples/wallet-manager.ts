@@ -19,6 +19,9 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
       }
     ],
     priceFeedConfig: {
+      scheduled: {
+        enabled: true
+      },
       supportedTokens: [{
         chainId: 2,
         tokenContract: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
@@ -66,7 +69,7 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         coingeckoId: "usd-coin",
         symbol: "USDC"
       }],
-      enabled: true,
+      enabled: false,
     }
   },
   klatyn: {
