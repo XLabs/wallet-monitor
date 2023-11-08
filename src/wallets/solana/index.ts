@@ -304,6 +304,6 @@ export class SolanaWalletToolbox extends WalletToolbox {
   }
 
   public async getBlockHeight(): Promise<number> {
-    return (await this.connection.getSlot()) - 1;
+    return this.connection.getBlockHeight();
   }
 }
