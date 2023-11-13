@@ -44,6 +44,7 @@
   "homepage": "https://github.com/xlabs/wallet-monitor#readme",
   "dependencies": {
     "@cosmjs/proto-signing": "^0.31.1",
+    "@cosmjs/stargate": "^0.31.3",
     "@ethersproject/bignumber": "^5.7.0",
     "@mysten/sui.js": "^0.32.2",
     "@solana/spl-token": "^0.3.7",
