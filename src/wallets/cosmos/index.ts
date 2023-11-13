@@ -17,6 +17,7 @@ import {
   createSigner,
   getCosmosAddressFromPrivateKey,
   pullCosmosNativeBalance,
+  transferCosmosNativeBalance,
 } from "../../balances/cosmos";
 import { ethers } from "ethers";
 
@@ -79,14 +80,7 @@ export class CosmosWalletToolbox extends WalletToolbox {
     this.priceFeed = priceFeed;
 
     this.logger.debug(`Cosmos rpc url: ${this.options.nodeUrl}`);
-
-    const nodeUrl = this.options.nodeUrl!;
-
     this.provider = null;
-
-    StargateClient.connect(nodeUrl).then(provider => {
-      this.provider = provider;
-    });
   }
 
   protected validateChainName(chainName: string): chainName is CosmosChainName {
@@ -133,7 +127,7 @@ export class CosmosWalletToolbox extends WalletToolbox {
   }
 
   protected async warmup() {
-    return;
+    this.provider = await StargateClient.connect(this.options.nodeUrl!);
   }
 
   public async pullNativeBalance(address: string): Promise<WalletBalance> {
@@ -171,12 +165,20 @@ export class CosmosWalletToolbox extends WalletToolbox {
     maxGasPrice?: number | undefined,
     gasLimit?: number | undefined,
   ): Promise<TransferRecepit> {
-    return {
-      transactionHash: "",
-      formattedCost: "",
-      gasUsed: "0",
-      gasPrice: "0",
+    const { addressPrefix, defaultDecimals, nativeDenom } =
+      this.chainConfig.defaultConfigs[this.network];
+    const nodeUrl = this.options.nodeUrl!;
+    const txDetails = {
+      targetAddress,
+      amount,
+      addressPrefix,
+      defaultDecimals,
+      nativeDenom,
+      nodeUrl,
     };
+    const receipt = await transferCosmosNativeBalance(privateKey, txDetails);
+
+    return receipt;
   }
 
   protected async getRawWallet(privateKey: string): Promise<Wallets> {
