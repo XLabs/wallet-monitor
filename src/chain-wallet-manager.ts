@@ -13,10 +13,15 @@ import {
   rebalanceStrategies,
   RebalanceStrategyName,
 } from "./rebalance-strategies";
+import { CosmosProvider, CosmosWallet } from "./wallets/cosmos";
 import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
-import { PriceFeed, WalletPriceFeedConfig, WalletRebalancingConfig } from "./wallet-manager";
+import {
+  PriceFeed,
+  WalletPriceFeedConfig,
+  WalletRebalancingConfig,
+} from "./wallet-manager";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
@@ -57,8 +62,12 @@ export type WalletInterface = {
   walletToolbox: Wallet;
 };
 
-export type Providers = EVMProvider | SolanaProvider | SuiProvider;
-export type Wallets = EVMWallet | SolanaWallet | SuiWallet;
+export type Providers =
+  | EVMProvider
+  | SolanaProvider
+  | SuiProvider
+  | CosmosProvider;
+export type Wallets = EVMWallet | SolanaWallet | SuiWallet | CosmosWallet;
 export type WithWalletExecutor = (wallet: WalletInterface) => Promise<void>;
 
 export class ChainWalletManager {
@@ -76,10 +85,7 @@ export class ChainWalletManager {
   public walletToolbox: Wallet;
   protected priceFeed?: PriceFeed;
 
-  constructor(
-    options: any,
-    private wallets: WalletConfig[]
-  ) {
+  constructor(options: any, private wallets: WalletConfig[]) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
 
@@ -88,7 +94,7 @@ export class ChainWalletManager {
     }
 
     this.logger = createLogger(this.options.logger);
-    const {priceFeedConfig} = this.options;
+    const { priceFeedConfig } = this.options;
 
     if (priceFeedConfig?.enabled) {
       if (priceFeedConfig?.scheduled?.enabled) {
@@ -263,7 +269,9 @@ export class ChainWalletManager {
   public async start() {
     this.logger.info(`Starting Manager for chain: ${this.options.chainName}`);
     if (this.priceFeed) {
-      this.logger.info(`Starting PriceFeed for chain: ${this.options.chainName}`);
+      this.logger.info(
+        `Starting PriceFeed for chain: ${this.options.chainName}`,
+      );
       this.priceFeed?.start();
     }
     this.interval = setInterval(async () => {
