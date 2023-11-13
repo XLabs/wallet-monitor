@@ -11,7 +11,7 @@
     "build": "npm run build-grpc && tsc",
     "watch": "tsc -w",
     "lint": "eslint --ignore-path .gitignore --ext .js,.ts .",
-    "prettier": "prettier --ignore-path .gitignore --write .",
+    "prettier": "prettier --write $(git diff main --name-only --diff-filter u | grep '.ts$' | xargs)",
     "test": "jest --silent=false",
     "start-ganache": "npx ganache -i 5777 --wallet.accounts=0xf9fdbcbcdb4c7c72642be9fe7c09ad5869a961a8ae3c3374841cb6ead5fd34b1,200000000000000000 --wallet.accounts=0xe94000d730b9655850afc8e39facb7058678f11e765075d4806d27ed619f258c,10000000000000000000"
   },
