@@ -12,7 +12,6 @@ import {
   OsmosisNetwork,
 } from "./osmosis.config";
 import { SigningStargateClient, StargateClient } from "@cosmjs/stargate";
-import { DirectSecp256k1Wallet } from "@cosmjs/proto-signing";
 import {
   createSigner,
   getCosmosAddressFromPrivateKey,
@@ -29,8 +28,6 @@ export type CosmosChainConfig = {
   nativeCurrencySymbol: string;
   defaultNetwork: string;
 };
-
-export const COSMOS_DEFAULT_DECIMALS = 6;
 
 const COSMOS_CHAINS = {
   [OSMOSIS]: 1,
@@ -57,6 +54,9 @@ export const COSMOS_CHAIN_CONFIGS: Record<CosmosChainName, CosmosChainConfig> =
 export type CosmosWalletOptions = BaseWalletOptions & {
   nodeUrl?: string;
   tokenPollConcurrency?: number;
+  nativeDenom: string;
+  addressPrefix: string;
+  defaultDecimals: number;
 };
 
 export type CosmosNetworks = OsmosisNetwork;
@@ -72,14 +72,28 @@ export class CosmosWalletToolbox extends WalletToolbox {
     private options: CosmosWalletOptions,
     private priceFeed?: PriceFeed,
   ) {
-    super(network, chainName, rawConfig, options);
-    this.chainConfig = COSMOS_CHAIN_CONFIGS[this.chainName as CosmosChainName];
+    // Need to do all this before calling `super` because some options are needed
+    // when the parent class calls `buildWalletConfig`.
+    // The bad thing about all this is that now configuration is duplicated. In one
+    // hand we will have the chainConfig which later is associated to `this.chainConfig`
+    // but it is not available when the parent class is instantiated. And on the other
+    // hand we are forced to pass the same options to the parent class, for some abstract
+    // functions that are implemented in this class but are called from the parent class.
+    // Specifically for the Cosmos ecosystem, the `addressPrefix` is needed to derive
+    // and address based on a private key. Other options might be needed in the future.
+    // So, for now, we will have to live with duplicated options.
+    // TODO: Refactor wallet initialization
+    const chainConfig = COSMOS_CHAIN_CONFIGS[chainName as CosmosChainName];
+    const defaultOptions = chainConfig.defaultConfigs[network];
+    options.addressPrefix = defaultOptions.addressPrefix;
+    options.defaultDecimals = defaultOptions.defaultDecimals;
+    options.nativeDenom = defaultOptions.nativeDenom;
 
-    const defaultOptions = this.chainConfig.defaultConfigs[this.network];
+    super(network, chainName, rawConfig, options);
+    this.chainConfig = chainConfig;
+
     this.options = { ...defaultOptions, ...options } as CosmosWalletOptions;
     this.priceFeed = priceFeed;
-
-    this.logger.debug(`Cosmos rpc url: ${this.options.nodeUrl}`);
     this.provider = null;
   }
 
@@ -199,11 +213,11 @@ export class CosmosWalletToolbox extends WalletToolbox {
     return this.provider?.getHeight() || 0;
   }
 
-  protected getAddressFromPrivateKey(privateKey: string): string {
-    const { addressPrefix } = this.chainConfig.defaultConfigs[this.network];
-    const address = new String(
-      getCosmosAddressFromPrivateKey(privateKey, addressPrefix),
-    );
-    return address.toString() || "";
+  protected getAddressFromPrivateKey(
+    privateKey: string,
+    options?: CosmosWalletOptions,
+  ): string {
+    const { addressPrefix } = options!;
+    return getCosmosAddressFromPrivateKey(privateKey, addressPrefix);
   }
 }
