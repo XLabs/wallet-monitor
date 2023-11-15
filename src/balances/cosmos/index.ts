@@ -1,11 +1,16 @@
 import { rawSecp256k1PubkeyToRawAddress } from "@cosmjs/amino";
 import { Secp256k1 } from "@cosmjs/crypto";
 import { fromHex, toBech32 } from "@cosmjs/encoding";
-import { SigningStargateClient } from "@cosmjs/stargate";
+import {
+  calculateFee,
+  GasPrice,
+  MsgSendEncodeObject,
+  SigningStargateClient,
+} from "@cosmjs/stargate";
 import { DirectSecp256k1Wallet } from "@cosmjs/proto-signing";
 import { CosmosProvider } from "../../wallets/cosmos";
 import { Balance } from "..";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import BN from "bn.js";
 import elliptic from "elliptic";
 
@@ -54,12 +59,23 @@ export async function transferCosmosNativeBalance(
   };
 
   const accounts = await signer.getAccounts();
-  const receipt = await wallet.sendTokens(
-    accounts[0].address,
-    targetAddress,
-    [encodedAmount],
-    "auto",
-  );
+  const fromAddress = accounts[0].address;
+
+  const sendMsg: MsgSendEncodeObject = {
+    typeUrl: "/cosmos.bank.v1beta1.MsgSend",
+    value: {
+      fromAddress,
+      toAddress: targetAddress,
+      amount: [encodedAmount],
+    },
+  };
+
+  const gasPrice = GasPrice.fromString("0.0025uosmo");
+  const gasEstimated = await wallet.simulate(fromAddress, [sendMsg], undefined);
+  const gas = BigNumber.from(gasEstimated * 1.5).toString();
+  const fee = calculateFee(parseInt(gas), gasPrice);
+
+  const receipt = await wallet.signAndBroadcast(fromAddress, [sendMsg], fee);
 
   return {
     transactionHash: receipt.transactionHash,
@@ -123,7 +139,7 @@ function makeKeypair(privkey: Uint8Array): Secp256k1Keypair {
 }
 
 export async function createSigner(privateKey: string, addressPrefix: string) {
-  const pk = new Uint8Array(Buffer.from(JSON.parse(privateKey)));
+  const pk = new Uint8Array(fromHex(privateKey));
   return await DirectSecp256k1Wallet.fromKey(pk, addressPrefix);
 }
 
