@@ -19,6 +19,7 @@ import {
   transferCosmosNativeBalance,
 } from "../../balances/cosmos";
 import { ethers } from "ethers";
+import { COSMOSHUB, COSMOSHUB_CHAIN_CONFIG } from "./cosmoshub.config";
 
 export type CosmosChainConfig = {
   chainName: string;
@@ -31,6 +32,7 @@ export type CosmosChainConfig = {
 
 const COSMOS_CHAINS = {
   [OSMOSIS]: 1,
+  [COSMOSHUB]: 2,
 };
 
 export type CosmosDefaultConfig = {
@@ -49,6 +51,7 @@ export type CosmosProvider = StargateClient;
 export const COSMOS_CHAIN_CONFIGS: Record<CosmosChainName, CosmosChainConfig> =
   {
     [OSMOSIS]: OSMOSIS_CHAIN_CONFIG,
+    [COSMOSHUB]: COSMOSHUB_CHAIN_CONFIG,
   };
 
 export type CosmosWalletOptions = BaseWalletOptions & {
