@@ -19,7 +19,12 @@ import {
   transferCosmosNativeBalance,
 } from "../../balances/cosmos";
 import { ethers } from "ethers";
-import { COSMOSHUB, COSMOSHUB_CHAIN_CONFIG } from "./cosmoshub.config";
+import {
+  COSMOSHUB,
+  COSMOSHUB_CHAIN_CONFIG,
+  CosmoshubNetwork,
+} from "./cosmoshub.config";
+import { EVMOS, EVMOS_CHAIN_CONFIG, EvmosNetwork } from "./evmos.config";
 
 export type CosmosChainConfig = {
   chainName: string;
@@ -33,6 +38,7 @@ export type CosmosChainConfig = {
 const COSMOS_CHAINS = {
   [OSMOSIS]: 1,
   [COSMOSHUB]: 2,
+  [EVMOS]: 3,
 };
 
 export type CosmosDefaultConfig = {
@@ -52,6 +58,7 @@ export const COSMOS_CHAIN_CONFIGS: Record<CosmosChainName, CosmosChainConfig> =
   {
     [OSMOSIS]: OSMOSIS_CHAIN_CONFIG,
     [COSMOSHUB]: COSMOSHUB_CHAIN_CONFIG,
+    [EVMOS]: EVMOS_CHAIN_CONFIG,
   };
 
 export type CosmosWalletOptions = BaseWalletOptions & {
@@ -62,7 +69,7 @@ export type CosmosWalletOptions = BaseWalletOptions & {
   defaultDecimals: number;
 };
 
-export type CosmosNetworks = OsmosisNetwork;
+export type CosmosNetworks = OsmosisNetwork | CosmoshubNetwork | EvmosNetwork;
 
 export class CosmosWalletToolbox extends WalletToolbox {
   private provider: CosmosProvider | null;
