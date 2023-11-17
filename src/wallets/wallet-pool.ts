@@ -1,3 +1,4 @@
+import { printError } from "../utils";
 import { Resource } from "./resource";
 
 export interface WalletPool {
@@ -65,7 +66,7 @@ export class LocalWalletPool implements WalletPool {
           if (process.hrtime.bigint() < timeoutTimestamp) {
             setTimeout(acquire, 5);
           } else {
-            errorWithCtx.message = 'Timed out waiting for resource';
+            errorWithCtx.message = `Timed out waiting for resource. Wrapped error: ${printError(error)}`;
             reject(errorWithCtx);
           }
         }
