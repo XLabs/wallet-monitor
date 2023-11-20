@@ -56,7 +56,15 @@ export async function pullSuiTokenData(
 export async function pullSuiTokenBalances(
     conn: Connection,
     address: string
-): Promise<any> {
+): Promise<{
+  coinType: string;
+  coinObjectCount: number;
+  totalBalance: string;
+  lockedBalance: {
+      number?: number | undefined;
+      epochId?: number | undefined;
+  };
+}[]> {
   const provider = new JsonRpcProvider(conn);
 
   return provider.getAllBalances({ owner: address });

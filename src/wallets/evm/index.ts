@@ -243,7 +243,9 @@ export class EvmWalletToolbox extends WalletToolbox {
     address: string,
     tokens: string[],
   ): Promise<TokenBalance[]> {
-    const tokenBalances = await mapConcurrent(
+    // Pull prices in USD for all the tokens in single network call
+    await this.priceFeed?.pullTokenPrices(tokens);
+    return mapConcurrent(
       tokens,
       async tokenAddress => {
         const tokenData = this.tokenData[tokenAddress];
@@ -256,6 +258,10 @@ export class EvmWalletToolbox extends WalletToolbox {
           balance.rawBalance,
           tokenData.decimals,
         );
+        
+        // Add USD price to each token balance
+        const tokenPrice = await this.priceFeed?.getKey(tokenAddress);
+        const tokenBalanceInUsd = tokenPrice ? Number(formattedBalance) * Number(tokenPrice) : undefined;
 
         return {
           ...balance,
@@ -263,23 +269,11 @@ export class EvmWalletToolbox extends WalletToolbox {
           tokenAddress,
           formattedBalance,
           symbol: tokenData.symbol,
+          usd: tokenBalanceInUsd,
         };
       },
       this.options.tokenPollConcurrency,
     );
-    
-    // Pull prices in USD for all the tokens in single network call
-    await this.priceFeed?.pullTokenPrices(tokens);
-
-    // Add USD price to each token balance
-    return mapConcurrent(tokenBalances, async balance => {
-      const tokenPrice = await this.priceFeed?.getKey(balance.tokenAddress);
-      const tokenBalanceInUsd = tokenPrice ? Number(balance.formattedBalance) * Number(tokenPrice) : undefined;
-      return {
-        ...balance,
-        usd: tokenBalanceInUsd,
-      };
-    }, this.options.tokenPollConcurrency);
   }
 
   protected async transferNativeBalance(
