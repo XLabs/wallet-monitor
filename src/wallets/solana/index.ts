@@ -6,7 +6,7 @@ import {
   RecentPrioritizationFees,
 } from "@solana/web3.js";
 import { decode } from "bs58";
-import { SOLANA, SOLANA_CHAIN_CONFIG, SolanaNetworks } from "./solana.config";
+import { SOLANA, SOLANA_CHAIN_CONFIG, SOLANA_DEFAULT_COMMITMENT, SolanaNetworks } from "./solana.config";
 import { PYTHNET, PYTHNET_CHAIN_CONFIG } from "./pythnet.config";
 import {
   BaseWalletOptions,
@@ -304,6 +304,6 @@ export class SolanaWalletToolbox extends WalletToolbox {
   }
 
   public async getBlockHeight(): Promise<number> {
-    return this.connection.getBlockHeight();
+    return this.connection.getBlockHeight(SOLANA_DEFAULT_COMMITMENT);
   }
 }
