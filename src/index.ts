@@ -14,6 +14,7 @@ import {
 export type WalletBalancesByAddress = WBBA;
 export type WalletInterface = WI;
 export type {ChainName} from "./wallets";
+export type {Environment} from './price-assistant/supported-tokens.config';
 
 export {isEvmChain, isSolanaChain, isSuiChain} from './wallets';
 

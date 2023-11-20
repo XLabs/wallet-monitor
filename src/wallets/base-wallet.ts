@@ -1,20 +1,20 @@
-import winston from 'winston';
+import winston from "winston";
 import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
 import { LocalWalletPool, WalletPool } from "./wallet-pool";
-import { createLogger } from '../utils';
-import { Wallets } from '../chain-wallet-manager';
+import { createLogger } from "../utils";
+import { Wallets } from "../chain-wallet-manager";
 
 export type BaseWalletOptions = {
   logger: winston.Logger;
   failOnInvalidTokens: boolean;
-}
+};
 
 export type TransferRecepit = {
-  transactionHash: string,
-  gasUsed: string,
-  gasPrice: string,
-  formattedCost: string,
-}
+  transactionHash: string;
+  gasUsed: string;
+  gasPrice: string;
+  formattedCost: string;
+};
 
 const DEFAULT_WALLET_ACQUIRE_TIMEOUT = 5000;
 
@@ -42,7 +42,10 @@ export abstract class WalletToolbox {
   // Should parse tokens received from the user.
   // The tokens returned should be a list of token addresses used by the chain client
   // Example: ["DAI", "USDC"] => ["0x00000000", "0x00000001"];
-  protected abstract parseTokensConfig(tokens: string[], failOnInvalidTokens: boolean): string[];
+  protected abstract parseTokensConfig(
+    tokens: string[],
+    failOnInvalidTokens: boolean,
+  ): string[];
 
   // Should instantiate provider for the chain
   // calculate data which could be re-utilized (for example token's local addresses, symbol and decimals in evm chains)
@@ -51,16 +54,28 @@ export abstract class WalletToolbox {
   protected abstract getAddressFromPrivateKey(privateKey: string): string;
 
   // Should return balances for a native address in the chain
-  abstract pullNativeBalance(address: string): Promise<WalletBalance>;
+  abstract pullNativeBalance(
+    address: string,
+    blockHeight?: number,
+  ): Promise<WalletBalance>;
 
   // Should return balances for tokens in the list for the address specified
-  abstract pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]>;
+  abstract pullTokenBalances(
+    address: string,
+    tokens: string[],
+  ): Promise<TokenBalance[]>;
 
-  protected abstract transferNativeBalance(privateKey: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number): Promise<TransferRecepit>;
+  protected abstract transferNativeBalance(
+    privateKey: string,
+    targetAddress: string,
+    amount: number,
+    maxGasPrice?: number,
+    gasLimit?: number,
+  ): Promise<TransferRecepit>;
 
-  protected abstract getRawWallet (privateKey: string): Promise<Wallets>;
+  protected abstract getRawWallet(privateKey: string): Promise<Wallets>;
 
-  public abstract getGasPrice (): Promise<bigint>;
+  public abstract getGasPrice(): Promise<bigint>;
 
   public abstract getBlockHeight(): Promise<number>;
 
@@ -77,7 +92,7 @@ export abstract class WalletToolbox {
     this.validateOptions(options);
 
     const wallets = {} as Record<string, WalletData>;
-    
+
     for (const raw of rawConfig) {
       const config = this.buildWalletConfig(raw, options.failOnInvalidTokens);
       this.validateConfig(config, options.failOnInvalidTokens);
@@ -92,13 +107,18 @@ export abstract class WalletToolbox {
   public async pullBalances(
     isRebalancingEnabled = false,
     minBalanceThreshold?: number,
+    blockHeight?: number,
   ): Promise<WalletBalance[]> {
     if (!this.warm) {
-      this.logger.debug(`Warming up wallet toolbox for chain ${this.chainName}...`);
+      this.logger.debug(
+        `Warming up wallet toolbox for chain ${this.chainName}...`,
+      );
       try {
         await this.warmup();
       } catch (error) {
-        this.logger.error(`Error warming up wallet toolbox for chain (${this.chainName}): ${error}`);
+        this.logger.error(
+          `Error warming up wallet toolbox for chain (${this.chainName}): ${error}`,
+        );
         return [];
       }
       this.warm = true;
@@ -114,7 +134,7 @@ export abstract class WalletToolbox {
       let nativeBalance: WalletBalance;
 
       try {
-        nativeBalance = await this.pullNativeBalance(address);
+        nativeBalance = await this.pullNativeBalance(address, blockHeight);
 
         this.addOrDiscardWalletIfRequired(
           isRebalancingEnabled,
@@ -123,11 +143,15 @@ export abstract class WalletToolbox {
           minBalanceThreshold ?? 0,
         );
 
-        balances.push(nativeBalance);
+        balances.push({...nativeBalance, blockHeight});
 
-        this.logger.debug(`Balances for ${address} pulled: ${JSON.stringify(nativeBalance)}`)
+        this.logger.debug(
+          `Balances for ${address} pulled: ${JSON.stringify(nativeBalance)}`,
+        );
       } catch (error) {
-        this.logger.error(`Error pulling native balance for ${address}: ${error}`);
+        this.logger.error(
+          `Error pulling native balance for ${address}: ${error}`,
+        );
         continue;
       }
 
@@ -136,32 +160,53 @@ export abstract class WalletToolbox {
         continue;
       }
 
-      this.logger.verbose(`Pulling tokens (${tokens.join(', ')}) for ${address}...`);
+      this.logger.verbose(
+        `Pulling tokens (${tokens.join(", ")}) for ${address}...`,
+      );
 
       try {
         const tokenBalances = await this.pullTokenBalances(address, tokens);
 
-        this.logger.debug(`Token balances for ${address} pulled: ${JSON.stringify(tokenBalances)}`);
+        this.logger.debug(
+          `Token balances for ${address} pulled: ${JSON.stringify(
+            tokenBalances,
+          )}`,
+        );
 
         nativeBalance.tokens.push(...tokenBalances);
       } catch (error) {
-        this.logger.error(`Error pulling token balances for ${address}: ${error}`);
+        this.logger.error(
+          `Error pulling token balances for ${address}: ${error}`,
+        );
       }
     }
 
     return balances;
   }
 
+  public async pullBalancesAtBlockHeight(
+  ) {
+    const blockHeight = await this.getBlockHeight();
+    return this.pullBalances(
+      false,
+      undefined,
+      blockHeight,
+    );
+  }
+
   public async acquire(address?: string, acquireTimeout?: number) {
     const timeout = acquireTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
     // this.grpcClient.acquireWallet(address);
-    const walletAddress = await this.walletPool.blockAndAcquire(timeout, address);
+    const walletAddress = await this.walletPool.blockAndAcquire(
+      timeout,
+      address,
+    );
 
     const privateKey = this.wallets[walletAddress].privateKey;
 
     return {
       address: walletAddress,
-      rawWallet: await this.getRawWallet(privateKey!)
+      rawWallet: await this.getRawWallet(privateKey!),
     };
   }
 
@@ -169,18 +214,33 @@ export abstract class WalletToolbox {
     await this.walletPool.release(address);
   }
 
-  public async transferBalance(sourceAddress: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number) {
+  public async transferBalance(
+    sourceAddress: string,
+    targetAddress: string,
+    amount: number,
+    maxGasPrice?: number,
+    gasLimit?: number,
+  ) {
     const privateKey = this.wallets[sourceAddress].privateKey;
 
     if (!privateKey) {
       throw new Error(`Private key for ${sourceAddress} not found`);
     }
 
-    await this.walletPool.blockAndAcquire(DEFAULT_WALLET_ACQUIRE_TIMEOUT, sourceAddress);
+    await this.walletPool.blockAndAcquire(
+      DEFAULT_WALLET_ACQUIRE_TIMEOUT,
+      sourceAddress,
+    );
 
     let receipt;
     try {
-      receipt = await this.transferNativeBalance(privateKey, targetAddress, amount, maxGasPrice, gasLimit);
+      receipt = await this.transferNativeBalance(
+        privateKey,
+        targetAddress,
+        amount,
+        maxGasPrice,
+        gasLimit,
+      );
     } catch (error) {
       await this.walletPool.release(sourceAddress);
       throw error;
@@ -193,12 +253,16 @@ export abstract class WalletToolbox {
 
   private validateConfig(rawConfig: any, failOnInvalidTokens: boolean) {
     if (!rawConfig.address && !rawConfig.privateKey)
-      throw new Error(`Invalid config for chain: ${this.chainName}: Missing address`);
+      throw new Error(
+        `Invalid config for chain: ${this.chainName}: Missing address`,
+      );
 
     if (failOnInvalidTokens && rawConfig.tokens?.length) {
       rawConfig.tokens.forEach((token: any) => {
         if (!this.validateTokenAddress(token)) {
-          throw new Error(`Token not supported for ${this.chainName}[${this.network}]: ${token}`)
+          throw new Error(
+            `Token not supported for ${this.chainName}[${this.network}]: ${token}`,
+          );
         }
       });
     }
@@ -206,12 +270,18 @@ export abstract class WalletToolbox {
     return true;
   }
 
-  private buildWalletConfig(rawConfig: any, failOnInvalidTokens: boolean): WalletData {
+  private buildWalletConfig(
+    rawConfig: any,
+    failOnInvalidTokens: boolean,
+  ): WalletData {
     const privateKey = rawConfig.privateKey;
 
-    const address = rawConfig.address || this.getAddressFromPrivateKey(privateKey);
+    const address =
+      rawConfig.address || this.getAddressFromPrivateKey(privateKey);
 
-    const tokens = rawConfig.tokens ? this.parseTokensConfig(rawConfig.tokens, failOnInvalidTokens) : [];
+    const tokens = rawConfig.tokens
+      ? this.parseTokensConfig(rawConfig.tokens, failOnInvalidTokens)
+      : [];
 
     return { address, privateKey, tokens };
   }

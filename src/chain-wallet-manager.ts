@@ -16,7 +16,7 @@ import {
 import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
-import { PriceFeed, WalletPriceFeedConfig, WalletRebalancingConfig } from "./wallet-manager";
+import { PriceFeed, WalletBalanceConfig, WalletPriceFeedConfig, WalletRebalancingConfig } from "./wallet-manager";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
@@ -37,6 +37,7 @@ export type ChainWalletManagerOptions = {
     maxGasPrice?: number;
     gasLimit?: number;
   };
+  balanceConfig: WalletBalanceConfig;
   priceFeedConfig: WalletPriceFeedConfig;
   balancePollInterval?: number;
   walletOptions?: WalletOptions;
@@ -266,9 +267,20 @@ export class ChainWalletManager {
       this.logger.info(`Starting PriceFeed for chain: ${this.options.chainName}`);
       this.priceFeed?.start();
     }
-    this.interval = setInterval(async () => {
-      await this.refreshBalances();
-    }, this.options.balancePollInterval);
+
+    if (this.options.balanceConfig?.enabled) {
+      if (this.options.balanceConfig?.scheduled?.enabled) {
+        this.interval = setInterval(async () => {
+          await this.refreshBalances();
+        }, this.options.balanceConfig?.scheduled?.interval ?? this.options.balancePollInterval);
+      } else {
+        // no op: Don't poll balances, fetch on demand instead
+      }
+    } else {
+      this.interval = setInterval(async () => {
+        await this.refreshBalances();
+      }, this.options.balancePollInterval);
+    }
 
     if (this.options.rebalance.enabled) {
       this.logger.info(
@@ -410,5 +422,20 @@ export class ChainWalletManager {
       network,
       this.availableWalletsByChainName[chainName],
     );
+  }
+
+  public getBlockHeight () {
+    return this.walletToolbox.getBlockHeight();
+  }
+  /** Pull balances on demand */
+  public async pullBalances () {
+    const balances = await this.walletToolbox.pullBalances();
+    return this.mapBalances(balances);
+  }
+
+  /** Pull balances on demand with block height */
+  public async pullBalancesAtBlockHeight() {
+    const balances = await this.walletToolbox.pullBalancesAtBlockHeight();
+    return this.mapBalances(balances);
   }
 }

@@ -42,9 +42,10 @@ export async function pullEvmTokenBalance(
 export async function pullEvmNativeBalance(
   provider: ethers.providers.JsonRpcProvider,
   address: string,
+  blockHeight?: number,
 ): Promise<Balance>{
-  const weiAmount = await provider.getBalance(address);
-  
+  const weiAmount = await provider.getBalance(address, blockHeight);
+
   return {
     isNative: true,
     rawBalance: weiAmount.toString(),

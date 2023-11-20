@@ -2,7 +2,7 @@ import { EventEmitter } from "stream";
 
 import { z } from "zod";
 import winston from "winston";
-import { createLogger } from "./utils";
+import { createLogger, mapConcurrent } from "./utils";
 import { PrometheusExporter } from "./prometheus-exporter";
 import {
   ChainWalletManager,
@@ -38,25 +38,37 @@ const TokenInfoSchema = z.object({
   chainId: z.number(),
   coingeckoId: CoinGeckoIdsSchema,
   symbol: z.string().optional(),
-})
+});
 
-export type TokenInfo = z.infer<
-  typeof TokenInfoSchema
->
+export type TokenInfo = z.infer<typeof TokenInfoSchema>;
 
 export const WalletPriceFeedConfigSchema = z.object({
   enabled: z.boolean(),
   supportedTokens: z.array(TokenInfoSchema),
   pricePrecision: z.number().optional(),
-  scheduled: z.object({
-    enabled: z.boolean().default(false),
-    interval: z.number().optional(),
-  }).optional(),
-})
+  scheduled: z
+    .object({
+      enabled: z.boolean().default(false),
+      interval: z.number().optional(),
+    })
+    .optional(),
+});
 
-export type WalletPriceFeedConfig = z.infer<
-  typeof WalletPriceFeedConfigSchema
->;
+export const WalletBalanceConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    scheduled: z
+      .object({
+        enabled: z.boolean().default(false),
+        interval: z.number().optional(),
+      })
+      .optional(),
+  })
+  .optional();
+
+export type WalletBalanceConfig = z.infer<typeof WalletBalanceConfigSchema>;
+
+export type WalletPriceFeedConfig = z.infer<typeof WalletPriceFeedConfigSchema>;
 
 export type WalletRebalancingConfig = z.infer<
   typeof WalletRebalancingConfigSchema
@@ -68,7 +80,7 @@ export const WalletManagerChainConfigSchema = z.object({
   chainConfig: z.any().optional(),
   rebalance: WalletRebalancingConfigSchema.optional(),
   wallets: z.array(WalletConfigSchema),
-  priceFeedConfig: WalletPriceFeedConfigSchema.optional()
+  priceFeedConfig: WalletPriceFeedConfigSchema.optional(),
 });
 
 export const WalletManagerConfigSchema = z.record(
@@ -172,7 +184,7 @@ export class WalletManager {
 
       const chainManager = new ChainWalletManager(
         chainManagerConfig,
-        chainConfig.wallets
+        chainConfig.wallets,
       );
 
       chainManager.on("error", error => {
@@ -183,7 +195,6 @@ export class WalletManager {
       chainManager.on(
         "balances",
         (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
-
           this.logger.verbose(`Balances updated for ${chainName} (${network})`);
           this.exporter?.updateBalances(chainName, network, balances);
 
@@ -223,11 +234,19 @@ export class WalletManager {
 
       chainManager.on("active-wallets-count", (chainName, network, count) => {
         this.exporter?.updateActiveWallets(chainName, network, count);
-      })
+      });
 
-      chainManager.on("wallets-lock-period", (chainName, network, walletAddress, lockTime) => {
-        this.exporter?.updateWalletsLockPeriod(chainName, network, walletAddress, lockTime);
-      })
+      chainManager.on(
+        "wallets-lock-period",
+        (chainName, network, walletAddress, lockTime) => {
+          this.exporter?.updateWalletsLockPeriod(
+            chainName,
+            network,
+            walletAddress,
+            lockTime,
+          );
+        },
+      );
 
       this.managers[chainName] = chainManager;
 
@@ -301,14 +320,48 @@ export class WalletManager {
     }
   }
 
-  public getAllBalances(): Record<string, WalletBalancesByAddress> {
+  private async balanceHandlerMapper(
+    method: "getBalances" | "pullBalancesAtBlockHeight" | "pullBalances",
+  ) {
     const balances: Record<string, WalletBalancesByAddress> = {};
 
-    for (const [chainName, manager] of Object.entries(this.managers)) {
-      balances[chainName] = manager.getBalances();
-    }
+    await mapConcurrent(
+      Object.entries(this.managers),
+      async ([chainName, manager]) => {
+        const balancesByChain = await manager[method]();
+        balances[chainName] = balancesByChain;
+      },
+    );
 
     return balances;
+  }
+
+  public async getAllBalances(): Promise<
+    Record<string, WalletBalancesByAddress>
+  > {
+    return await this.balanceHandlerMapper("getBalances");
+  }
+
+  public getBlockHeight(chainName: ChainName): Promise<number> {
+    const manager = this.managers[chainName];
+    if (!manager)
+      throw new Error(`No wallets configured for chain: ${chainName}`);
+
+    return manager.getBlockHeight();
+  }
+
+  // PullBalances doesn't need balances to be refreshed in the background
+  public async pullBalances(): Promise<
+    Record<string, WalletBalancesByAddress>
+  > {
+    return await this.balanceHandlerMapper("pullBalances");
+  }
+
+  // pullBalancesAtBlockHeight doesn't need balances to be refreshed in the background
+  public async pullBalancesAtBlockHeight(): Promise<
+    Record<string, WalletBalancesByAddress>
+  > {
+    return await this.balanceHandlerMapper("pullBalancesAtBlockHeight");
   }
 
   public getChainBalances(chainName: ChainName): WalletBalancesByAddress {

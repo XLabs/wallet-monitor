@@ -226,8 +226,8 @@ export class EvmWalletToolbox extends WalletToolbox {
     this.logger.debug(`EVM token data: ${JSON.stringify(this.tokenData)}`);
   }
 
-  public async pullNativeBalance(address: string): Promise<WalletBalance> {
-    const balance = await pullEvmNativeBalance(this.provider, address);
+  public async pullNativeBalance(address: string, blockHeight?: number): Promise<WalletBalance> {
+    const balance = await pullEvmNativeBalance(this.provider, address, blockHeight);
     const formattedBalance = ethers.utils.formatEther(balance.rawBalance);
 
     return {

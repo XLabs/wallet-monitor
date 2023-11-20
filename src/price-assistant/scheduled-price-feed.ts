@@ -3,6 +3,7 @@ import { Logger } from "winston";
 import { PriceFeed, TokenPriceData } from "./price-feed";
 import { TokenInfo, WalletPriceFeedConfig } from "../wallet-manager";
 import { getCoingeckoPrices } from "./helper";
+import { mapConcurrent } from "../utils";
 
 /**
  * ScheduledPriceFeed is a price feed that periodically fetches token prices from coingecko
@@ -28,9 +29,9 @@ export class ScheduledPriceFeed extends PriceFeed<string, bigint | undefined> {
 
   public async pullTokenPrices(tokens: string[]): Promise<TokenPriceData> {
     const tokenPrices = {} as TokenPriceData;
-    for await (const token of tokens) {
+    await mapConcurrent(tokens, async (token) => {
       tokenPrices[token] = await this.get(token);
-    }
+    })
     return tokenPrices;
   }
 
