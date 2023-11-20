@@ -37,7 +37,7 @@ export type ChainWalletManagerOptions = {
     maxGasPrice?: number;
     gasLimit?: number;
   };
-  balanceConfig: WalletBalanceConfig;
+  walletBalanceConfig: WalletBalanceConfig;
   priceFeedConfig: WalletPriceFeedConfig;
   balancePollInterval?: number;
   walletOptions?: WalletOptions;
@@ -268,11 +268,11 @@ export class ChainWalletManager {
       this.priceFeed?.start();
     }
 
-    if (this.options.balanceConfig?.enabled) {
-      if (this.options.balanceConfig?.scheduled?.enabled) {
+    if (this.options.walletBalanceConfig?.enabled) {
+      if (this.options.walletBalanceConfig?.scheduled?.enabled) {
         this.interval = setInterval(async () => {
           await this.refreshBalances();
-        }, this.options.balanceConfig?.scheduled?.interval ?? this.options.balancePollInterval);
+        }, this.options.walletBalanceConfig?.scheduled?.interval ?? this.options.balancePollInterval);
       } else {
         // no op: Don't poll balances, fetch on demand instead
       }

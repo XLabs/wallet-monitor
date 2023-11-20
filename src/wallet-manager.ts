@@ -79,6 +79,7 @@ export const WalletManagerChainConfigSchema = z.object({
   // FIXME: This should be a zod schema
   chainConfig: z.any().optional(),
   rebalance: WalletRebalancingConfigSchema.optional(),
+  walletBalanceConfig: WalletBalanceConfigSchema.optional(),
   wallets: z.array(WalletConfigSchema),
   priceFeedConfig: WalletPriceFeedConfigSchema.optional(),
 });
@@ -178,6 +179,7 @@ export class WalletManager {
         rebalance: chainConfig.rebalance,
         walletOptions: chainConfig.chainConfig,
         priceFeedConfig: chainConfig.priceFeedConfig,
+        walletBalanceConfig: chainConfig.walletBalanceConfig,
         balancePollInterval: options?.balancePollInterval,
         failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
       };

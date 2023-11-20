@@ -18,6 +18,12 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         tokens: ["WBTC"]
       }
     ],
+    walletBalanceConfig: {
+      enabled: true,
+      scheduled: {
+        enabled: false,
+      }
+    },
     priceFeedConfig: {
       scheduled: {
         enabled: true
@@ -41,6 +47,12 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
     wallets: [
       { address: "6VnfVsLdLwNuuCmooLTziQ99PFXZ5vc3yyqyb9tMDhhw", tokens: ['usdc'] },
     ],
+    walletBalanceConfig: {
+      enabled: true,
+      scheduled: {
+        enabled: false,
+      }
+    },
   },
   sui: {
     rebalance: {
@@ -62,6 +74,12 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         tokens: ['USDC', 'USDT'] 
       },
     ],
+    walletBalanceConfig: {
+      enabled: true,
+      scheduled: {
+        enabled: false,
+      }
+    },
     priceFeedConfig: {
       supportedTokens: [{
         chainId: 21,
@@ -88,7 +106,13 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         address: "0x8d0d970225597085A59ADCcd7032113226C0419d",
         tokens: []
       }
-    ]
+    ],
+    walletBalanceConfig: {
+      enabled: true,
+      scheduled: {
+        enabled: false,
+      }
+    },
   }
 }
 
@@ -107,11 +131,12 @@ export const manager = buildWalletManager({
   }
 });
 
-
-// Note: Below code needs wallet's private key to be set in config abopve for aquiring wallet
-// manager.withWallet('ethereum', async (wallet) => {
-//   console.log('Address', wallet.address);
-//   console.log('Block height', wallet.walletToolbox.getBlockHeight());
-//   console.log('Native balances', await wallet.walletToolbox.pullNativeBalance(wallet.address));
-//   console.log('Token balances', await wallet.walletToolbox.pullTokenBalances(wallet.address, ['0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']));
-// })
+(async () => {
+  try {
+    console.time('balances')
+    const balances = await manager.pullBalancesAtBlockHeight();
+    console.timeLog('balances', JSON.stringify(balances))
+  } catch (err) {
+    console.error('Failed to pullBalancesAtBlockHeight', err);
+  }
+})();
