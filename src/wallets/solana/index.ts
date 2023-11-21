@@ -165,7 +165,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
         const formattedBalance = (
           tokenBalance /
           10 ** tokenData.decimals
-        ).toString();
+        )
 
         // Add USD price to each token balance
         const tokenPrice = await this.priceFeed?.getKey(token);
@@ -177,7 +177,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
           isNative: false,
           rawBalance: tokenBalance.toString(),
           address,
-          formattedBalance,
+          formattedBalance: formattedBalance.toString(),
           symbol: tokenKnownSymbol ?? "unknown",
           usd: tokenBalanceInUsd,
         };

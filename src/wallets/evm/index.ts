@@ -261,7 +261,8 @@ export class EvmWalletToolbox extends WalletToolbox {
         
         // Add USD price to each token balance
         const tokenPrice = await this.priceFeed?.getKey(tokenAddress);
-        const tokenBalanceInUsd = tokenPrice ? Number(formattedBalance) * Number(tokenPrice) : undefined;
+        // Wrapping with Number below to avoid Bigint issue converting string with decimals, eg: "20.0"
+        const tokenBalanceInUsd = tokenPrice ? Number(formattedBalance) * Number(tokenPrice): undefined;
 
         return {
           ...balance,
@@ -269,7 +270,7 @@ export class EvmWalletToolbox extends WalletToolbox {
           tokenAddress,
           formattedBalance,
           symbol: tokenData.symbol,
-          usd: tokenBalanceInUsd,
+          usd: tokenBalanceInUsd ? BigInt(tokenBalanceInUsd): undefined
         };
       },
       this.options.tokenPollConcurrency,
