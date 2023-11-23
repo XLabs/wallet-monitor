@@ -4,32 +4,33 @@ import { TimeLimitedCache } from "../utils";
 import { TokenInfo, WalletPriceFeedConfig } from "../wallet-manager";
 import { getCoingeckoPrices } from "./helper";
 import { CoinGeckoIds } from "./supported-tokens.config";
-import { PriceFeed, TokenPriceData } from "./price-feed";
+import { PriceFeed } from "./price-feed";
 
-const DEFAULT_PRICE_PRECISION = 8;
 const DEFAULT_TOKEN_PRICE_RETENSION_TIME = 5 * 1000; // 5 seconds
 /**
  * OnDemandPriceFeed is a price feed that fetches token prices from coingecko on-demand
  */
 export class OnDemandPriceFeed extends PriceFeed<string, bigint | undefined>{
   // here cache key is tokenContractAddress
-  private cache = new TimeLimitedCache<string, bigint>();
+  private cache = new TimeLimitedCache<CoinGeckoIds, bigint>();
   supportedTokens: TokenInfo[];
   tokenPriceGauge?: Gauge;
-  protected pricePrecision: number;
-  protected logger: Logger;
+  private tokenContractToCoingeckoId: Record<string, CoinGeckoIds> = {};
 
   constructor(
     priceAssistantConfig: WalletPriceFeedConfig,
     logger: Logger,
     registry?: Registry,
   ) {
-    super("ONDEMAND_TOKEN_PRICE", logger, registry, undefined, priceAssistantConfig.pricePrecision)
-    const { supportedTokens, pricePrecision } = priceAssistantConfig;
+    super("ONDEMAND_TOKEN_PRICE", logger, registry, undefined)
+    const { supportedTokens } = priceAssistantConfig;
     this.supportedTokens = supportedTokens;
-    this.pricePrecision = pricePrecision || DEFAULT_PRICE_PRECISION;
-    this.logger = logger;
-
+  
+    this.tokenContractToCoingeckoId = supportedTokens.reduce((acc, token) => {
+      acc[token.tokenContract] = token.coingeckoId as CoinGeckoIds;
+      return acc;
+    }, {} as Record<string, CoinGeckoIds>);
+  
     if (registry) {
       this.tokenPriceGauge = new Gauge({
         name: "token_usd_price",
@@ -48,60 +49,51 @@ export class OnDemandPriceFeed extends PriceFeed<string, bigint | undefined>{
     // no op
   }
 
+  public getCoinGeckoId (tokenContract: string): CoinGeckoIds | undefined {
+    return this.tokenContractToCoingeckoId[tokenContract];
+  }
+
+  protected get (coingeckoId: string): bigint | undefined {
+    return this.cache.get(coingeckoId as CoinGeckoIds);
+  }
+
+  async pullTokenPrices() {
+    return this.update();
+  }
+
   async update () {
-    // no op
-  }
-
-  protected async get (tokenContract: string): Promise<bigint | undefined> {
-    const cachedPrice = this.cache.get(tokenContract);
-    if (cachedPrice) {
-        return cachedPrice;
-    }
-    const tokenPrices = await this.pullTokenPrices([tokenContract]);
-    return tokenPrices[tokenContract];
-  }
-
-  public async pullTokenPrices(tokens: string[]): Promise<TokenPriceData> {
     const coingekoTokens = [];
-    const priceDict = {} as TokenPriceData;
-    for (const token of tokens) {
-        const supportedToken = this.supportedTokens.find((supportedToken) => supportedToken.tokenContract === token);
-        if (!supportedToken) {
-            this.logger.error(`Token ${token} not supported`);
-            throw new Error(`Token ${token} not supported`);
-        }
+    for (const token of this.supportedTokens) {
+        const { coingeckoId } = token;
 
         // Check if we already have the price for this token
-        const cachedPrice = this.cache.get(token);
+        const cachedPrice = this.cache.get(coingeckoId);
         if (cachedPrice) {            
-            priceDict[token] = cachedPrice
             continue;
         }
-        coingekoTokens.push(supportedToken);
+        coingekoTokens.push(token);
+    }
+
+    if (coingekoTokens.length === 0) {
+      // All the cached tokens price are already available and valid
+      return;
     }
 
     const coingekoTokenIds = coingekoTokens.map(token => token.coingeckoId)
-    // If we don't have the price, fetch it from an external API
     const coingeckoData = await getCoingeckoPrices(coingekoTokenIds, this.logger);
+    for (const token of this.supportedTokens) {
+      const { coingeckoId, symbol } = token;
 
-    for (const token of coingekoTokens) {
-        const {symbol, coingeckoId, tokenContract} = token;
+      if (!(coingeckoId in coingeckoData)) {
+        this.logger.warn(`Token ${symbol} (coingecko: ${coingeckoId}) not found in coingecko response data`);
+        continue;
+      }
 
-        if (!(coingeckoId in coingeckoData)) {
-            this.logger.warn(`coingecko: ${coingeckoId} not found in coingecko response data`);
-            continue;
-        }
-
-        const tokenPrice = coingeckoData?.[coingeckoId as CoinGeckoIds]?.usd;
-        if (tokenPrice) {
-            const preciseTokenPrice = BigInt(Math.round(tokenPrice * 10 ** this.pricePrecision));
-            // Token Price is stored by token contract address
-            this.cache.set(tokenContract, preciseTokenPrice, DEFAULT_TOKEN_PRICE_RETENSION_TIME);
-            priceDict[tokenContract] = preciseTokenPrice;
-            this.tokenPriceGauge?.labels({ symbol }).set(Number(tokenPrice));
-        }
+      const tokenPrice = coingeckoData?.[coingeckoId]?.usd;
+      if (tokenPrice) {
+        this.cache.set(coingeckoId, BigInt(tokenPrice), DEFAULT_TOKEN_PRICE_RETENSION_TIME);
+        this.tokenPriceGauge?.labels({ symbol }).set(Number(tokenPrice));
+      }
     }
-
-    return priceDict;
   }
 }

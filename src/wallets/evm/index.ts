@@ -48,6 +48,7 @@ import {
 import { KlaytnNetwork, KLAYTN, KLAYTN_CHAIN_CONFIG } from "./klaytn.config";
 import { BaseNetwork, BASE, BASE_CHAIN_CONFIG } from "./base.config";
 import { PriceFeed } from "../../wallet-manager";
+import { coinGeckoIdByChainName } from "../../price-assistant/supported-tokens.config";
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
@@ -229,6 +230,12 @@ export class EvmWalletToolbox extends WalletToolbox {
   public async pullNativeBalance(address: string, blockHeight?: number): Promise<WalletBalance> {
     const balance = await pullEvmNativeBalance(this.provider, address, blockHeight);
     const formattedBalance = ethers.utils.formatEther(balance.rawBalance);
+    
+    // Pull prices in USD for all the native tokens in single network call
+    await this.priceFeed?.pullTokenPrices();
+    const coingeckoId = coinGeckoIdByChainName[this.chainName];
+    const tokenUsdPrice = this.priceFeed?.getKey(coingeckoId);
+    const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(18n)) * tokenUsdPrice: undefined;
 
     return {
       ...balance,
@@ -236,6 +243,8 @@ export class EvmWalletToolbox extends WalletToolbox {
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
+      balanceUsd,
+      tokenUsdPrice
     };
   }
 
@@ -244,7 +253,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     tokens: string[],
   ): Promise<TokenBalance[]> {
     // Pull prices in USD for all the tokens in single network call
-    await this.priceFeed?.pullTokenPrices(tokens);
+    await this.priceFeed?.pullTokenPrices();
     return mapConcurrent(
       tokens,
       async tokenAddress => {
@@ -258,11 +267,11 @@ export class EvmWalletToolbox extends WalletToolbox {
           balance.rawBalance,
           tokenData.decimals,
         );
-        
+
         // Add USD price to each token balance
-        const tokenPrice = await this.priceFeed?.getKey(tokenAddress);
-        // Wrapping with Number below to avoid Bigint issue converting string with decimals, eg: "20.0"
-        const tokenBalanceInUsd = tokenPrice ? Number(formattedBalance) * Number(tokenPrice): undefined;
+        const coinGeckoId = this.priceFeed?.getCoinGeckoId(tokenAddress);
+        const tokenUsdPrice = this.priceFeed?.getKey(coinGeckoId!);
+        const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(tokenData.decimals ?? 1n)) * tokenUsdPrice: undefined;
 
         return {
           ...balance,
@@ -270,7 +279,8 @@ export class EvmWalletToolbox extends WalletToolbox {
           tokenAddress,
           formattedBalance,
           symbol: tokenData.symbol,
-          usd: tokenBalanceInUsd ? BigInt(tokenBalanceInUsd): undefined
+          balanceUsd,
+          tokenUsdPrice
         };
       },
       this.options.tokenPollConcurrency,

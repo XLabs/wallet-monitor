@@ -20,7 +20,7 @@ import {
 } from "./wallets";
 import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
-import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
+import { CoinGeckoIdsSchema, Environment, supportedTokensByEnv } from "./price-assistant/supported-tokens.config";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
@@ -45,7 +45,6 @@ export type TokenInfo = z.infer<typeof TokenInfoSchema>;
 export const WalletPriceFeedConfigSchema = z.object({
   enabled: z.boolean(),
   supportedTokens: z.array(TokenInfoSchema),
-  pricePrecision: z.number().optional(),
   scheduled: z
     .object({
       enabled: z.boolean().default(false),
@@ -171,6 +170,19 @@ export class WalletManager {
         }
       }
       const network = chainConfig.network || getDefaultNetwork(chainName);
+
+      // Inject native token into price feed config, if enabled
+      if (chainConfig.priceFeedConfig?.enabled) {
+        const {supportedTokens} = chainConfig.priceFeedConfig;
+        const uniqueChainIds = [...new Set(supportedTokens.map(token => token.chainId))];
+        const nativeTokens = supportedTokensByEnv[network as Environment];
+        for (const chainId of uniqueChainIds) {
+          const nativeTokensByChainId = nativeTokens.filter(token => token.chainId === chainId);
+          if (nativeTokensByChainId.length > 0) {
+            supportedTokens.push(...nativeTokensByChainId);
+          }
+        }
+      }
 
       const chainManagerConfig = {
         network,
