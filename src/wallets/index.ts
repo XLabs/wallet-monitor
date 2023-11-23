@@ -2,6 +2,12 @@ import { z } from "zod";
 
 export const DEVNET = "devnet";
 
+export const enum Environment {
+  MAINNET = "mainnet",
+  TESTNET = "testnet",
+  DEVNET = "devnet",
+}
+
 import {
   EvmWalletOptions,
   EvmWalletToolbox,

@@ -13,6 +13,7 @@ import {
 } from "./chain-wallet-manager";
 import {
   ChainName,
+  Environment,
   isChain,
   KNOWN_CHAINS,
   WalletBalance,
@@ -20,7 +21,7 @@ import {
 } from "./wallets";
 import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
-import { CoinGeckoIdsSchema, Environment, supportedTokensByEnv } from "./price-assistant/supported-tokens.config";
+import { CoinGeckoIdsSchema, supportedTokensByEnv } from "./price-assistant/supported-tokens.config";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 

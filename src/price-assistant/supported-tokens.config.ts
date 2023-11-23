@@ -1,11 +1,5 @@
 import { z } from "zod";
-import { ChainName } from "../wallets";
-
-export declare enum Environment {
-  MAINNET = "mainnet",
-  TESTNET = "testnet",
-  DEVNET = "devnet",
-}
+import { ChainName, Environment } from "../wallets";
 
 export const CoinGeckoIdsSchema = z
 .union([
