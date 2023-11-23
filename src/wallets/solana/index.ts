@@ -6,7 +6,12 @@ import {
   RecentPrioritizationFees,
 } from "@solana/web3.js";
 import { decode } from "bs58";
-import { SOLANA, SOLANA_CHAIN_CONFIG, SOLANA_DEFAULT_COMMITMENT, SolanaNetworks } from "./solana.config";
+import {
+  SOLANA,
+  SOLANA_CHAIN_CONFIG,
+  SOLANA_DEFAULT_COMMITMENT,
+  SolanaNetworks,
+} from "./solana.config";
 import { PYTHNET, PYTHNET_CHAIN_CONFIG } from "./pythnet.config";
 import {
   BaseWalletOptions,
@@ -26,6 +31,7 @@ import {
 import { getMint, Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { findMedian, mapConcurrent } from "../../utils";
 import { PriceFeed } from "../../wallet-manager";
+import { coinGeckoIdByChainName } from "../../price-assistant/supported-tokens.config";
 
 export type SolanaChainConfig = {
   chainName: string;
@@ -115,12 +121,20 @@ export class SolanaWalletToolbox extends WalletToolbox {
       Number(balance.rawBalance) / LAMPORTS_PER_SOL
     ).toString();
 
+    // Pull prices in USD for all the native tokens in single network call
+    await this.priceFeed?.pullTokenPrices();
+    const coingeckoId = coinGeckoIdByChainName[this.chainName];
+    const tokenUsdPrice = this.priceFeed?.getKey(coingeckoId);
+    const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(LAMPORTS_PER_SOL)) * tokenUsdPrice: undefined;
+
     return {
       ...balance,
       address,
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
+      balanceUsd,
+      tokenUsdPrice
     };
   }
 
@@ -148,42 +162,38 @@ export class SolanaWalletToolbox extends WalletToolbox {
     });
 
     // Pull prices in USD for all the tokens in single network call
-    await this.priceFeed?.pullTokenPrices(tokens);
+    await this.priceFeed?.pullTokenPrices();
 
     // Assuming that tokens[] is actually an array of mint account addresses.
-    return mapConcurrent(
-      tokens,
-      async token => {
-        const tokenData = this.tokenData[token];
-        const tokenKnownInfo = Object.entries(
-          this.chainConfig.knownTokens[this.network],
-        ).find(([_, value]) => value === token);
-        const tokenKnownSymbol = tokenKnownInfo ? tokenKnownInfo[0] : undefined;
+    return tokens.map(token => {
+      const tokenData = this.tokenData[token];
+      const tokenKnownInfo = Object.entries(
+        this.chainConfig.knownTokens[this.network],
+      ).find(([_, value]) => value === token);
+      const tokenKnownSymbol = tokenKnownInfo ? tokenKnownInfo[0] : undefined;
 
-        // We are choosing to show a balance of 0 for a token that is not owned by the address.
-        const tokenBalance = tokenBalancesDistinct.get(token) ?? 0;
-        const formattedBalance = (
-          tokenBalance /
-          10 ** tokenData.decimals
-        )
+      // We are choosing to show a balance of 0 for a token that is not owned by the address.
+      const tokenBalance = tokenBalancesDistinct.get(token) ?? 0;
+      const formattedBalance = tokenBalance / 10 ** tokenData.decimals;
 
-        // Add USD price to each token balance
-        const tokenPrice = await this.priceFeed?.getKey(token);
-        const tokenBalanceInUsd = tokenPrice
-          ? BigInt(formattedBalance) * tokenPrice
-          : undefined;
+      // Add USD price to each token balance
+      const coinGeckoId = this.priceFeed?.getCoinGeckoId(token);
+      const tokenUsdPrice = this.priceFeed?.getKey(coinGeckoId!);
+      const balanceUsd = tokenUsdPrice
+        ? (BigInt(tokenBalance) / BigInt(10 ** tokenData.decimals)) *
+          tokenUsdPrice
+        : undefined;
 
-        return {
-          isNative: false,
-          rawBalance: tokenBalance.toString(),
-          address,
-          formattedBalance: formattedBalance.toString(),
-          symbol: tokenKnownSymbol ?? "unknown",
-          usd: tokenBalanceInUsd,
-        };
-      },
-      this.options.tokenPollConcurrency,
-    );
+      return {
+        isNative: false,
+        rawBalance: tokenBalance.toString(),
+        address,
+        formattedBalance: formattedBalance.toString(),
+        symbol: tokenKnownSymbol ?? "unknown",
+        balanceUsd,
+        tokenUsdPrice,
+      };
+    });
   }
 
   protected validateChainName(chainName: string): chainName is SolanaChainName {

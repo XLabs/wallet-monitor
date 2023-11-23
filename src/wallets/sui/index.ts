@@ -23,6 +23,7 @@ import { getSuiAddressFromPrivateKey } from "../../balances/sui";
 import {mapConcurrent} from "../../utils";
 import { formatFixed } from "@ethersproject/bignumber";
 import { PriceFeed } from "../../wallet-manager";
+import { coinGeckoIdByChainName } from "../../price-assistant/supported-tokens.config";
 
 export const SUI_CHAINS = {
   [SUI]: 1,
@@ -165,12 +166,21 @@ export class SuiWalletToolbox extends WalletToolbox {
   public async pullNativeBalance(address: string): Promise<WalletBalance> {
     const balance = await pullSuiNativeBalance(this.connection, address);
     const formattedBalance = String(+balance.rawBalance / 10 ** 9);
+    
+    // Pull prices in USD for all the native tokens in single network call
+    await this.priceFeed?.pullTokenPrices();
+    const coingeckoId = coinGeckoIdByChainName[this.chainName];
+    const tokenUsdPrice = this.priceFeed?.getKey(coingeckoId);
+    const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(10 ** 9)) * tokenUsdPrice: undefined;
+    
     return {
       ...balance,
       address,
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
+      balanceUsd,
+      tokenUsdPrice
     };
   }
 
@@ -181,9 +191,9 @@ export class SuiWalletToolbox extends WalletToolbox {
     const uniqueTokens = [...new Set(tokens)];
     const allBalances = await pullSuiTokenBalances(this.connection, address);
     // Pull prices in USD for all the tokens in single network call
-    await this.priceFeed?.pullTokenPrices(tokens);
+    await this.priceFeed?.pullTokenPrices();
 
-    return mapConcurrent(uniqueTokens, async (tokenAddress: string) => {
+    return uniqueTokens.map(tokenAddress => {
       const tokenData = this.tokenData[tokenAddress];
       const symbol: string = tokenData?.symbol ? tokenData.symbol : "";
 
@@ -199,13 +209,16 @@ export class SuiWalletToolbox extends WalletToolbox {
         }
       }
 
+      const tokenDecimals = tokenData?.decimals ?? 9;
       const formattedBalance = formatFixed(
           balance.totalBalance,
-          tokenData?.decimals ? tokenData.decimals : 9
+          tokenDecimals
       );
 
-      const tokenPrice = await this.priceFeed?.getKey(tokenAddress);
-      const tokenBalanceInUsd = tokenPrice ? BigInt(formattedBalance) * tokenPrice : undefined;
+      // Add USD price to each token balance
+      const coinGeckoId = this.priceFeed?.getCoinGeckoId(tokenAddress);
+      const tokenUsdPrice = this.priceFeed?.getKey(coinGeckoId!);
+      const balanceUsd = tokenUsdPrice ? (BigInt(balance.totalBalance) / BigInt(10 ** tokenDecimals)) * tokenUsdPrice: undefined;
 
       return {
         tokenAddress,
@@ -214,9 +227,10 @@ export class SuiWalletToolbox extends WalletToolbox {
         rawBalance: balance.totalBalance,
         formattedBalance,
         symbol,
-        usd: tokenBalanceInUsd,
+        balanceUsd,
+        tokenUsdPrice
       };
-    }, this.options.tokenPollConcurrency);
+    });
   }
 
   protected async transferNativeBalance(

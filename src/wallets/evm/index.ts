@@ -235,7 +235,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     await this.priceFeed?.pullTokenPrices();
     const coingeckoId = coinGeckoIdByChainName[this.chainName];
     const tokenUsdPrice = this.priceFeed?.getKey(coingeckoId);
-    const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(18n)) * tokenUsdPrice: undefined;
+    const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(10 ** 18)) * tokenUsdPrice: undefined;
 
     return {
       ...balance,
@@ -271,7 +271,7 @@ export class EvmWalletToolbox extends WalletToolbox {
         // Add USD price to each token balance
         const coinGeckoId = this.priceFeed?.getCoinGeckoId(tokenAddress);
         const tokenUsdPrice = this.priceFeed?.getKey(coinGeckoId!);
-        const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(tokenData.decimals ?? 1n)) * tokenUsdPrice: undefined;
+        const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(10 ** tokenData.decimals)) * tokenUsdPrice: undefined;
 
         return {
           ...balance,

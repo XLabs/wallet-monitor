@@ -14,14 +14,14 @@ function updateBalancesGauge(gauge: Gauge, chainName: string, network: string, b
 }
 
 function updateBalancesInUsdGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance | TokenBalance) {
-  const { symbol, address, isNative, usd } = balance;
+  const { symbol, address, isNative, balanceUsd } = balance;
 
-  if (!usd) return;
+  if (!balanceUsd) return;
 
   const tokenAddress = (balance as TokenBalance).tokenAddress || '';
   gauge
     .labels(chainName, network, symbol, isNative.toString(), tokenAddress, address)
-    .set(Number(usd.toString()));
+    .set(Number(balanceUsd.toString()));
 }
 
 function updateAvailableWalletsGauge(gauge: Gauge, chainName: string, network: string, count: number) {
