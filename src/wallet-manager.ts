@@ -23,7 +23,7 @@ import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
 import {
   CoinGeckoIdsSchema,
-  supportedTokensByEnv,
+  supportedNativeTokensByEnv,
 } from "./price-assistant/supported-tokens.config";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
@@ -40,6 +40,7 @@ export const WalletRebalancingConfigSchema = z.object({
 const TokenInfoSchema = z.object({
   tokenContract: z.string(),
   chainId: z.number(),
+  chainName: z.string(),
   coingeckoId: CoinGeckoIdsSchema,
   symbol: z.string().optional(),
 });
@@ -173,21 +174,30 @@ export class WalletManager {
           continue;
         }
       }
-      const network = chainConfig.network || getDefaultNetwork(chainName);
+
+      let network = chainConfig.network || "";
+      // Using below flag to get nativeTokens by key mainnet or testnet only not like mainnet-beta,
+      // if network is not passed in the wallet config
+      // TODO: We can use a mapper that can map the custom network string to Environment enum
+      let isDefaultNetworkUsed = false;
+
+      if (!network) {
+        network = getDefaultNetwork(chainName);
+        isDefaultNetworkUsed = true;
+      }
 
       // Inject native token into price feed config, if enabled
       if (chainConfig.priceFeedConfig?.enabled) {
-        const { supportedTokens } = chainConfig.priceFeedConfig;
-        const uniqueChainIds = [
-          ...new Set(supportedTokens.map(token => token.chainId)),
-        ];
-        const nativeTokens = supportedTokensByEnv[network as Environment];
-        for (const chainId of uniqueChainIds) {
-          const nativeTokensByChainId = nativeTokens.filter(
-            token => token.chainId === chainId,
-          );
-          if (nativeTokensByChainId.length > 0) {
-            supportedTokens.push(...nativeTokensByChainId);
+        const environment: Environment = isDefaultNetworkUsed ? Environment.MAINNET : (network as Environment) ?? Environment.TESTNET;
+        const nativeTokens = supportedNativeTokensByEnv[environment];
+        const nativeTokensByChainId = nativeTokens.filter(
+          (token: TokenInfo) => token.chainName === chainName,
+        );
+
+        for (const nativeToken of nativeTokensByChainId) {
+          const isNativeTokenDefined = chainConfig.priceFeedConfig?.supportedTokens.find(token => token.coingeckoId === nativeToken.coingeckoId);
+          if (!isNativeTokenDefined) {
+            chainConfig.priceFeedConfig.supportedTokens.push(nativeToken);
           }
         }
       }
