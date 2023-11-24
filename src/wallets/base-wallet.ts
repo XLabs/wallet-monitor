@@ -143,7 +143,7 @@ export abstract class WalletToolbox {
           minBalanceThreshold ?? 0,
         );
 
-        balances.push({...nativeBalance, blockHeight});
+        balances.push({ ...nativeBalance, blockHeight });
 
         this.logger.debug(
           `Balances for ${address} pulled: ${JSON.stringify(nativeBalance)}`,
@@ -170,7 +170,11 @@ export abstract class WalletToolbox {
         this.logger.debug(
           `Token balances for ${address} pulled: ${JSON.stringify(
             // usd is a big number, so we need to convert it to string
-            tokenBalances.map(balance => ({...balance, balanceUsd: balance?.balanceUsd?.toString(), tokenUsdPrice: balance?.tokenUsdPrice?.toString()})),
+            tokenBalances.map(balance => ({
+              ...balance,
+              balanceUsd: balance?.balanceUsd?.toString(),
+              tokenUsdPrice: balance?.tokenUsdPrice?.toString(),
+            })),
           )}`,
         );
 
@@ -185,14 +189,8 @@ export abstract class WalletToolbox {
     return balances;
   }
 
-  public async pullBalancesAtBlockHeight(
-  ) {
-    const blockHeight = await this.getBlockHeight();
-    return this.pullBalances(
-      false,
-      undefined,
-      blockHeight,
-    );
+  public async pullBalancesAtBlockHeight(blockHeight: number) {
+    return this.pullBalances(false, undefined, blockHeight);
   }
 
   public async acquire(address?: string, acquireTimeout?: number) {

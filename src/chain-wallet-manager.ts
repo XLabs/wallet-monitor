@@ -434,8 +434,8 @@ export class ChainWalletManager {
   }
 
   /** Pull balances on demand with block height */
-  public async pullBalancesAtBlockHeight() {
-    const balances = await this.walletToolbox.pullBalancesAtBlockHeight();
+  public async pullBalancesAtBlockHeight(blockHeight: number) {
+    const balances = await this.walletToolbox.pullBalancesAtBlockHeight(blockHeight);
     return this.mapBalances(balances);
   }
 }

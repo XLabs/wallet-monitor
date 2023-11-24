@@ -336,7 +336,7 @@ export class WalletManager {
   }
 
   private async balanceHandlerMapper(
-    method: "getBalances" | "pullBalancesAtBlockHeight" | "pullBalances",
+    method: "getBalances" | "pullBalances",
   ) {
     const balances: Record<string, WalletBalancesByAddress> = {};
 
@@ -373,10 +373,29 @@ export class WalletManager {
   }
 
   // pullBalancesAtBlockHeight doesn't need balances to be refreshed in the background
-  public async pullBalancesAtBlockHeight(): Promise<
+  public async pullBalancesAtBlockHeight(blockHeightByChain?: Record<ChainName, number>): Promise<
     Record<string, WalletBalancesByAddress>
   > {
-    return await this.balanceHandlerMapper("pullBalancesAtBlockHeight");
+    const balances: Record<string, WalletBalancesByAddress> = {};
+    if (blockHeightByChain) {
+      // Validate blockHeightByChain
+      for (const chain in blockHeightByChain) {
+        const manager = this.managers[chain as ChainName];
+        if (!manager)
+          throw new Error(`No wallets configured for chain: ${chain}`);
+      }
+    }
+
+    await mapConcurrent(
+      Object.entries(this.managers),
+      async ([chainName, manager]) => {
+        const blockHeight = blockHeightByChain?.[chainName as ChainName] ?? await manager.getBlockHeight();
+        const balancesByChain = await manager.pullBalancesAtBlockHeight(blockHeight)
+        balances[chainName] = balancesByChain;
+      },
+    );
+
+    return balances;
   }
 
   public getChainBalances(chainName: ChainName): WalletBalancesByAddress {
