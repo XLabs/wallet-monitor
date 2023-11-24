@@ -163,7 +163,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     });
 
     // Pull prices in USD for all the tokens in single network call
-    await this.priceFeed?.pullTokenPrices();
+    const tokenPrices = await this.priceFeed?.pullTokenPrices();
 
     // Assuming that tokens[] is actually an array of mint account addresses.
     return tokens.map(token => {
@@ -178,7 +178,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
       const formattedBalance = tokenBalance / 10 ** tokenData.decimals;
 
       const coinGeckoId = this.priceFeed?.getCoinGeckoId(token);
-      const tokenUsdPrice = coinGeckoId && this.priceFeed?.getKey(coinGeckoId);
+      const tokenUsdPrice = coinGeckoId && tokenPrices?.[coinGeckoId];
 
       return {
         isNative: false,

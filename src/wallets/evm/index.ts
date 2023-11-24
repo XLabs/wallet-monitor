@@ -254,7 +254,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     tokens: string[],
   ): Promise<TokenBalance[]> {
     // Pull prices in USD for all the tokens in single network call
-    await this.priceFeed?.pullTokenPrices();
+    const tokenPrices = await this.priceFeed?.pullTokenPrices();
     return mapConcurrent(
       tokens,
       async tokenAddress => {
@@ -270,7 +270,7 @@ export class EvmWalletToolbox extends WalletToolbox {
         );
 
         const coinGeckoId = this.priceFeed?.getCoinGeckoId(tokenAddress);
-        const tokenUsdPrice = coinGeckoId && this.priceFeed?.getKey(coinGeckoId);
+        const tokenUsdPrice = coinGeckoId && tokenPrices?.[coinGeckoId];
 
         return {
           ...balance,

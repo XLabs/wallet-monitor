@@ -98,7 +98,6 @@ describe("sui wallet tests", () => {
                 "rawBalance": "100000000",
                 "formattedBalance": "100.0",
                 "symbol": "USDC",
-                "usd": undefined
             }
         ]);
     });

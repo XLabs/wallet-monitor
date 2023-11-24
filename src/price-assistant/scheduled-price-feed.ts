@@ -39,8 +39,16 @@ export class ScheduledPriceFeed extends PriceFeed<string, number | undefined> {
     return this.tokenContractToCoingeckoId[tokenContract];
   }
 
-  async pullTokenPrices () {
-    // no op
+  async pullTokenPrices (): Promise<TokenPriceData> {
+    const priceDict: TokenPriceData = {};
+    for (const token of this.supportedTokens) {
+      const { coingeckoId } = token;
+      const tokenPrice = this.get(coingeckoId);
+      if (tokenPrice) {
+        priceDict[coingeckoId] = tokenPrice;
+      }
+    }
+    return priceDict
   }
 
   async update() {

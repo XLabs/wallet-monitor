@@ -192,7 +192,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     const uniqueTokens = [...new Set(tokens)];
     const allBalances = await pullSuiTokenBalances(this.connection, address);
     // Pull prices in USD for all the tokens in single network call
-    await this.priceFeed?.pullTokenPrices();
+    const tokenPrices = await this.priceFeed?.pullTokenPrices();
 
     return uniqueTokens.map(tokenAddress => {
       const tokenData = this.tokenData[tokenAddress];
@@ -217,7 +217,7 @@ export class SuiWalletToolbox extends WalletToolbox {
       );
 
       const coinGeckoId = this.priceFeed?.getCoinGeckoId(tokenAddress);
-      const tokenUsdPrice = coinGeckoId && this.priceFeed?.getKey(coinGeckoId);
+      const tokenUsdPrice = coinGeckoId && tokenPrices?.[coinGeckoId];
 
       return {
         tokenAddress,

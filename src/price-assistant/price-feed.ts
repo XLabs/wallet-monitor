@@ -26,7 +26,7 @@ export abstract class PriceFeed<K, V> {
 
   protected abstract get(key: K): V;
 
-  public abstract pullTokenPrices (): Promise<void>;
+  public abstract pullTokenPrices (): Promise<TokenPriceData>;
 
   public start(): void {
     this.interval = setInterval(() => this.run(), this.runIntervalMs);
