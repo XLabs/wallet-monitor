@@ -87,6 +87,7 @@ export const WalletManagerChainConfigSchema = z.object({
   // FIXME: This should be a zod schema
   chainConfig: z.any().optional(),
   rebalance: WalletRebalancingConfigSchema.optional(),
+  // This config can be used to control refresh balances behaviour
   walletBalanceConfig: WalletBalanceConfigSchema.optional(),
   wallets: z.array(WalletConfigSchema),
   priceFeedConfig: WalletPriceFeedConfigSchema.optional(),
