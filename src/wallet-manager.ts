@@ -21,7 +21,10 @@ import {
 } from "./wallets";
 import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
-import { CoinGeckoIdsSchema, supportedTokensByEnv } from "./price-assistant/supported-tokens.config";
+import {
+  CoinGeckoIdsSchema,
+  supportedTokensByEnv,
+} from "./price-assistant/supported-tokens.config";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
@@ -174,11 +177,15 @@ export class WalletManager {
 
       // Inject native token into price feed config, if enabled
       if (chainConfig.priceFeedConfig?.enabled) {
-        const {supportedTokens} = chainConfig.priceFeedConfig;
-        const uniqueChainIds = [...new Set(supportedTokens.map(token => token.chainId))];
+        const { supportedTokens } = chainConfig.priceFeedConfig;
+        const uniqueChainIds = [
+          ...new Set(supportedTokens.map(token => token.chainId)),
+        ];
         const nativeTokens = supportedTokensByEnv[network as Environment];
         for (const chainId of uniqueChainIds) {
-          const nativeTokensByChainId = nativeTokens.filter(token => token.chainId === chainId);
+          const nativeTokensByChainId = nativeTokens.filter(
+            token => token.chainId === chainId,
+          );
           if (nativeTokensByChainId.length > 0) {
             supportedTokens.push(...nativeTokensByChainId);
           }
@@ -335,9 +342,7 @@ export class WalletManager {
     }
   }
 
-  private async balanceHandlerMapper(
-    method: "getBalances" | "pullBalances",
-  ) {
+  private async balanceHandlerMapper(method: "getBalances" | "pullBalances") {
     const balances: Record<string, WalletBalancesByAddress> = {};
 
     await mapConcurrent(
@@ -373,9 +378,9 @@ export class WalletManager {
   }
 
   // pullBalancesAtBlockHeight doesn't need balances to be refreshed in the background
-  public async pullBalancesAtBlockHeight(blockHeightByChain?: Record<ChainName, number>): Promise<
-    Record<string, WalletBalancesByAddress>
-  > {
+  public async pullBalancesAtBlockHeight(
+    blockHeightByChain?: Record<ChainName, number>,
+  ): Promise<Record<string, WalletBalancesByAddress>> {
     const balances: Record<string, WalletBalancesByAddress> = {};
     if (blockHeightByChain) {
       // Validate blockHeightByChain
@@ -389,8 +394,12 @@ export class WalletManager {
     await mapConcurrent(
       Object.entries(this.managers),
       async ([chainName, manager]) => {
-        const blockHeight = blockHeightByChain?.[chainName as ChainName] ?? await manager.getBlockHeight();
-        const balancesByChain = await manager.pullBalancesAtBlockHeight(blockHeight)
+        const blockHeight =
+          blockHeightByChain?.[chainName as ChainName] ??
+          (await manager.getBlockHeight());
+        const balancesByChain = await manager.pullBalancesAtBlockHeight(
+          blockHeight,
+        );
         balances[chainName] = balancesByChain;
       },
     );
