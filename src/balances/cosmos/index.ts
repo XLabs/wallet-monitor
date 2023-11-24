@@ -78,12 +78,13 @@ export async function transferCosmosNativeBalance(
   const fee = calculateFee(parseInt(gas), gasPrice);
 
   const receipt = await wallet.signAndBroadcast(fromAddress, [sendMsg], fee);
+  const txCost = calculateFee(receipt.gasUsed, gasPrice);
 
   return {
     transactionHash: receipt.transactionHash,
     gasUsed: receipt.gasUsed.toString(),
-    gasPrice: "", // TODO: Gas price is not available in the tx receipt
-    formattedCost: "", // TODO: Tx cost is not available in the tx receipt
+    gasPrice: gasPrice.toString(),
+    formattedCost: ethers.utils.formatUnits(txCost.amount[0].amount, defaultDecimals),
   };
 }
 
