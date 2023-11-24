@@ -1,7 +1,7 @@
 import { Gauge, Registry } from "prom-client";
 import { Logger } from "winston";
 import { PriceFeed, TokenPriceData } from "./price-feed";
-import { TokenInfo, WalletPriceFeedConfig } from "../wallet-manager";
+import { TokenInfo, WalletPriceFeedConfig, WalletPriceFeedOptions } from "../wallet-manager";
 import { getCoingeckoPrices } from "./helper";
 import { inspect } from "util";
 import { CoinGeckoIds } from "./supported-tokens.config";
@@ -15,7 +15,7 @@ export class ScheduledPriceFeed extends PriceFeed<string, number | undefined> {
   tokenPriceGauge?: Gauge;
   private tokenContractToCoingeckoId: Record<string, CoinGeckoIds> = {};
 
-  constructor(priceFeedConfig: WalletPriceFeedConfig, logger: Logger, registry?: Registry) {
+  constructor(priceFeedConfig: WalletPriceFeedConfig & WalletPriceFeedOptions, logger: Logger, registry?: Registry) {
     const {scheduled, supportedTokens} = priceFeedConfig;
     super("SCHEDULED_TOKEN_PRICE", logger, registry, scheduled?.interval);
     this.supportedTokens = supportedTokens;

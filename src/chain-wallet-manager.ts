@@ -17,8 +17,6 @@ import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
 import { PriceFeed, WalletBalanceConfig, WalletPriceFeedConfig, WalletRebalancingConfig } from "./wallet-manager";
-import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
-import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
@@ -79,7 +77,8 @@ export class ChainWalletManager {
 
   constructor(
     options: any,
-    private wallets: WalletConfig[]
+    private wallets: WalletConfig[],
+    priceFeedInstance?: PriceFeed,
   ) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
@@ -89,15 +88,7 @@ export class ChainWalletManager {
     }
 
     this.logger = createLogger(this.options.logger);
-    const {priceFeedConfig} = this.options;
-
-    if (priceFeedConfig?.enabled) {
-      if (priceFeedConfig?.scheduled?.enabled) {
-        this.priceFeed = new ScheduledPriceFeed(priceFeedConfig, this.logger);
-      } else {
-        this.priceFeed = new OnDemandPriceFeed(priceFeedConfig, this.logger);
-      }
-    }
+    this.priceFeed = priceFeedInstance
 
     this.walletToolbox = createWalletToolbox(
       options.network,

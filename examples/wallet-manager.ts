@@ -25,10 +25,6 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
       }
     },
     priceFeedConfig: {
-      enabled: true,
-      scheduled: {
-        enabled: false
-      },
       supportedTokens: [{
         chainId: 2,
         chainName: "ethereum",
@@ -56,7 +52,6 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
       }
     },
     priceFeedConfig: {
-      enabled: true,
       supportedTokens: []
     }
   },
@@ -94,7 +89,6 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
         coingeckoId: "usd-coin",
         symbol: "USDC"
       }],
-      enabled: true,
     }
   },
   klatyn: {
@@ -121,7 +115,6 @@ const allChainWallets: WalletManagerFullConfig['config'] = {
       }
     },
     priceFeedConfig: {
-      enabled: true,
       supportedTokens: []
     }
   }
@@ -138,6 +131,12 @@ export const manager = buildWalletManager({
       enabled: true,
       serve: true,
       port: 9091,
+    },
+    priceFeedOptions: {
+      enabled: true,
+      scheduled: {
+        enabled: false,
+      }
     }
   }
 });
