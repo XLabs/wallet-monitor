@@ -4,7 +4,7 @@ import { printError } from "../utils";
 
 const DEFAULT_FEED_INTERVAL = 10_000;
 
-export type TokenPriceData = Partial<Record<string, bigint>>;
+export type TokenPriceData = Partial<Record<string, number>>;
 
 export abstract class PriceFeed<K, V> {
   private name: string;

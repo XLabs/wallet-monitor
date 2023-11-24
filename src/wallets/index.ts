@@ -65,8 +65,8 @@ export type Balance = {
   rawBalance: string;
   formattedBalance: string;
   blockHeight?: number;
-  tokenUsdPrice?: bigint;
-  balanceUsd?: bigint;
+  tokenUsdPrice?: number;
+  balanceUsd?: number;
 };
 
 export type TokenBalance = Balance & {

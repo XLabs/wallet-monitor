@@ -171,7 +171,6 @@ export class SuiWalletToolbox extends WalletToolbox {
     await this.priceFeed?.pullTokenPrices();
     const coingeckoId = coinGeckoIdByChainName[this.chainName];
     const tokenUsdPrice = this.priceFeed?.getKey(coingeckoId);
-    const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(10 ** 9)) * tokenUsdPrice: undefined;
     
     return {
       ...balance,
@@ -179,8 +178,10 @@ export class SuiWalletToolbox extends WalletToolbox {
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
-      balanceUsd,
-      tokenUsdPrice
+      ...(tokenUsdPrice && {
+        balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+        tokenUsdPrice
+      })
     };
   }
 
@@ -215,10 +216,8 @@ export class SuiWalletToolbox extends WalletToolbox {
           tokenDecimals
       );
 
-      // Add USD price to each token balance
       const coinGeckoId = this.priceFeed?.getCoinGeckoId(tokenAddress);
-      const tokenUsdPrice = this.priceFeed?.getKey(coinGeckoId!);
-      const balanceUsd = tokenUsdPrice ? (BigInt(balance.totalBalance) / BigInt(10 ** tokenDecimals)) * tokenUsdPrice: undefined;
+      const tokenUsdPrice = coinGeckoId && this.priceFeed?.getKey(coinGeckoId);
 
       return {
         tokenAddress,
@@ -227,8 +226,10 @@ export class SuiWalletToolbox extends WalletToolbox {
         rawBalance: balance.totalBalance,
         formattedBalance,
         symbol,
-        balanceUsd,
-        tokenUsdPrice
+        ...(tokenUsdPrice && {
+          balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+          tokenUsdPrice
+        })
       };
     });
   }

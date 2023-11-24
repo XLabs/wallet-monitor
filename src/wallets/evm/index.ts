@@ -235,7 +235,6 @@ export class EvmWalletToolbox extends WalletToolbox {
     await this.priceFeed?.pullTokenPrices();
     const coingeckoId = coinGeckoIdByChainName[this.chainName];
     const tokenUsdPrice = this.priceFeed?.getKey(coingeckoId);
-    const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(10 ** 18)) * tokenUsdPrice: undefined;
 
     return {
       ...balance,
@@ -243,8 +242,10 @@ export class EvmWalletToolbox extends WalletToolbox {
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
-      balanceUsd,
-      tokenUsdPrice
+      ...(tokenUsdPrice && {
+        balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+        tokenUsdPrice
+      })
     };
   }
 
@@ -268,10 +269,8 @@ export class EvmWalletToolbox extends WalletToolbox {
           tokenData.decimals,
         );
 
-        // Add USD price to each token balance
         const coinGeckoId = this.priceFeed?.getCoinGeckoId(tokenAddress);
-        const tokenUsdPrice = this.priceFeed?.getKey(coinGeckoId!);
-        const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(10 ** tokenData.decimals)) * tokenUsdPrice: undefined;
+        const tokenUsdPrice = coinGeckoId && this.priceFeed?.getKey(coinGeckoId);
 
         return {
           ...balance,
@@ -279,8 +278,10 @@ export class EvmWalletToolbox extends WalletToolbox {
           tokenAddress,
           formattedBalance,
           symbol: tokenData.symbol,
-          balanceUsd,
-          tokenUsdPrice
+          ...(tokenUsdPrice && {
+            balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+            tokenUsdPrice
+          })
         };
       },
       this.options.tokenPollConcurrency,

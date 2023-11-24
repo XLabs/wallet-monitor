@@ -10,9 +10,9 @@ const DEFAULT_TOKEN_PRICE_RETENSION_TIME = 5 * 1000; // 5 seconds
 /**
  * OnDemandPriceFeed is a price feed that fetches token prices from coingecko on-demand
  */
-export class OnDemandPriceFeed extends PriceFeed<string, bigint | undefined>{
+export class OnDemandPriceFeed extends PriceFeed<string, number | undefined>{
   // here cache key is tokenContractAddress
-  private cache = new TimeLimitedCache<CoinGeckoIds, bigint>();
+  private cache = new TimeLimitedCache<CoinGeckoIds, number>();
   supportedTokens: TokenInfo[];
   tokenPriceGauge?: Gauge;
   private tokenContractToCoingeckoId: Record<string, CoinGeckoIds> = {};
@@ -23,10 +23,9 @@ export class OnDemandPriceFeed extends PriceFeed<string, bigint | undefined>{
     registry?: Registry,
   ) {
     super("ONDEMAND_TOKEN_PRICE", logger, registry, undefined)
-    const { supportedTokens } = priceAssistantConfig;
-    this.supportedTokens = supportedTokens;
+    this.supportedTokens = priceAssistantConfig.supportedTokens;
   
-    this.tokenContractToCoingeckoId = supportedTokens.reduce((acc, token) => {
+    this.tokenContractToCoingeckoId = this.supportedTokens.reduce((acc, token) => {
       acc[token.tokenContract] = token.coingeckoId as CoinGeckoIds;
       return acc;
     }, {} as Record<string, CoinGeckoIds>);
@@ -53,7 +52,7 @@ export class OnDemandPriceFeed extends PriceFeed<string, bigint | undefined>{
     return this.tokenContractToCoingeckoId[tokenContract];
   }
 
-  protected get (coingeckoId: string): bigint | undefined {
+  protected get (coingeckoId: string): number | undefined {
     return this.cache.get(coingeckoId as CoinGeckoIds);
   }
 
@@ -91,8 +90,8 @@ export class OnDemandPriceFeed extends PriceFeed<string, bigint | undefined>{
 
       const tokenPrice = coingeckoData?.[coingeckoId]?.usd;
       if (tokenPrice) {
-        this.cache.set(coingeckoId, BigInt(tokenPrice), DEFAULT_TOKEN_PRICE_RETENSION_TIME);
-        this.tokenPriceGauge?.labels({ symbol }).set(Number(tokenPrice));
+        this.cache.set(coingeckoId, tokenPrice, DEFAULT_TOKEN_PRICE_RETENSION_TIME);
+        this.tokenPriceGauge?.labels({ symbol }).set(tokenPrice);
       }
     }
   }

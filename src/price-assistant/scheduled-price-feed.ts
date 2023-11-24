@@ -9,7 +9,7 @@ import { CoinGeckoIds } from "./supported-tokens.config";
 /**
  * ScheduledPriceFeed is a price feed that periodically fetches token prices from coingecko
  */
-export class ScheduledPriceFeed extends PriceFeed<string, bigint | undefined> {
+export class ScheduledPriceFeed extends PriceFeed<string, number | undefined> {
   private data = {} as TokenPriceData;
   supportedTokens: TokenInfo[];
   tokenPriceGauge?: Gauge;
@@ -56,14 +56,14 @@ export class ScheduledPriceFeed extends PriceFeed<string, bigint | undefined> {
 
       const tokenPrice = coingeckoData?.[coingeckoId]?.usd;
       if (tokenPrice) {
-        this.data[coingeckoId] = BigInt(tokenPrice);
-        this.tokenPriceGauge?.labels({ symbol }).set(Number(tokenPrice));
+        this.data[coingeckoId] = tokenPrice;
+        this.tokenPriceGauge?.labels({ symbol }).set(tokenPrice);
       }
     }
     this.logger.debug(`Updated price feed token prices: ${inspect(this.data)}`);
   }
 
-  protected get(coingeckoId: string): bigint | undefined {
+  protected get(coingeckoId: string): number | undefined {
     return this.data[coingeckoId];
   }
 }

@@ -170,7 +170,7 @@ export abstract class WalletToolbox {
         this.logger.debug(
           `Token balances for ${address} pulled: ${JSON.stringify(
             // usd is a big number, so we need to convert it to string
-            tokenBalances.map(balance => ({...balance, usd: balance?.balanceUsd?.toString(), tokenUsdPrice: balance?.tokenUsdPrice?.toString()})),
+            tokenBalances.map(balance => ({...balance, balanceUsd: balance?.balanceUsd?.toString(), tokenUsdPrice: balance?.tokenUsdPrice?.toString()})),
           )}`,
         );
 

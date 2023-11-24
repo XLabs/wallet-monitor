@@ -125,7 +125,6 @@ export class SolanaWalletToolbox extends WalletToolbox {
     await this.priceFeed?.pullTokenPrices();
     const coingeckoId = coinGeckoIdByChainName[this.chainName];
     const tokenUsdPrice = this.priceFeed?.getKey(coingeckoId);
-    const balanceUsd = tokenUsdPrice ? (BigInt(balance.rawBalance) / BigInt(LAMPORTS_PER_SOL)) * tokenUsdPrice: undefined;
 
     return {
       ...balance,
@@ -133,8 +132,10 @@ export class SolanaWalletToolbox extends WalletToolbox {
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
-      balanceUsd,
-      tokenUsdPrice
+      ...(tokenUsdPrice && {
+        balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+        tokenUsdPrice
+      })
     };
   }
 
@@ -176,13 +177,8 @@ export class SolanaWalletToolbox extends WalletToolbox {
       const tokenBalance = tokenBalancesDistinct.get(token) ?? 0;
       const formattedBalance = tokenBalance / 10 ** tokenData.decimals;
 
-      // Add USD price to each token balance
       const coinGeckoId = this.priceFeed?.getCoinGeckoId(token);
-      const tokenUsdPrice = this.priceFeed?.getKey(coinGeckoId!);
-      const balanceUsd = tokenUsdPrice
-        ? (BigInt(tokenBalance) / BigInt(10 ** tokenData.decimals)) *
-          tokenUsdPrice
-        : undefined;
+      const tokenUsdPrice = coinGeckoId && this.priceFeed?.getKey(coinGeckoId);
 
       return {
         isNative: false,
@@ -190,8 +186,10 @@ export class SolanaWalletToolbox extends WalletToolbox {
         address,
         formattedBalance: formattedBalance.toString(),
         symbol: tokenKnownSymbol ?? "unknown",
-        balanceUsd,
-        tokenUsdPrice,
+        ...(tokenUsdPrice && {
+          balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+          tokenUsdPrice
+        })
       };
     });
   }
