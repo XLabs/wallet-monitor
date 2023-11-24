@@ -13,7 +13,6 @@ import {
 } from "./chain-wallet-manager";
 import {
   ChainName,
-  Environment,
   isChain,
   KNOWN_CHAINS,
   WalletBalance,
@@ -21,12 +20,10 @@ import {
 } from "./wallets";
 import { TransferRecepit } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
-import {
-  CoinGeckoIdsSchema,
-  supportedNativeTokensByEnv,
-} from "./price-assistant/supported-tokens.config";
+import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
+import { preparePriceFeedConfig } from "./price-assistant/helper";
 
 export const WalletRebalancingConfigSchema = z.object({
   enabled: z.boolean(),
@@ -77,7 +74,9 @@ export type WalletBalanceConfig = z.infer<typeof WalletBalanceConfigSchema>;
 
 export type WalletPriceFeedConfig = z.infer<typeof WalletPriceFeedConfigSchema>;
 
-export type WalletPriceFeedOptions = z.infer<typeof WalletPriceFeedOptionsSchema>;
+export type WalletPriceFeedOptions = z.infer<
+  typeof WalletPriceFeedOptionsSchema
+>;
 
 export type WalletRebalancingConfig = z.infer<
   typeof WalletRebalancingConfigSchema
@@ -171,6 +170,24 @@ export class WalletManager {
       }
     }
 
+    const isPriceFeedEnabled = options?.priceFeedOptions?.enabled;
+    // Create PriceFeed instance once for all chains
+    let priceFeedInstance;
+    if (isPriceFeedEnabled) {
+      const allSupportedTokens = preparePriceFeedConfig(config);
+      if (options?.priceFeedOptions?.scheduled?.enabled) {
+        priceFeedInstance = new ScheduledPriceFeed(
+          { supportedTokens: allSupportedTokens, ...options.priceFeedOptions },
+          this.logger,
+        );
+      } else {
+        priceFeedInstance = new OnDemandPriceFeed(
+          { supportedTokens: allSupportedTokens },
+          this.logger,
+        );
+      }
+    }
+
     for (const [chainName, chainConfig] of Object.entries(config)) {
       if (!isChain(chainName)) {
         if (options?.failOnInvalidChain) {
@@ -183,31 +200,6 @@ export class WalletManager {
 
       const network = chainConfig.network || getDefaultNetwork(chainName);
 
-      const isPriceFeedEnabled = options?.priceFeedOptions?.enabled;
-
-      // Inject native token into price feed config, if enabled
-      if (isPriceFeedEnabled) {
-        // Note: It is safe to use "mainnet" fallback here, because we are only using native token's coingeckoId
-        const environment: Environment = chainConfig.network ? network as Environment : Environment.MAINNET;
-        const nativeTokens = supportedNativeTokensByEnv[environment];
-        const nativeTokensByChainId = nativeTokens.filter(
-          (token: TokenInfo) => token.chainName === chainName,
-        );
-
-        if (!chainConfig.priceFeedConfig?.supportedTokens) {
-          chainConfig.priceFeedConfig = {
-            supportedTokens: []
-          }
-        }
-
-        for (const nativeToken of nativeTokensByChainId) {
-          const isNativeTokenDefined = chainConfig.priceFeedConfig?.supportedTokens.find(token => token.coingeckoId === nativeToken.coingeckoId);
-          if (!isNativeTokenDefined) {
-            chainConfig.priceFeedConfig?.supportedTokens.push(nativeToken);
-          }
-        }
-      }
-
       const chainManagerConfig = {
         network,
         chainName,
@@ -219,20 +211,10 @@ export class WalletManager {
         failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
       };
 
-      let priceFeedInstance
-      if (isPriceFeedEnabled && chainConfig.priceFeedConfig) {
-        // TODO: 
-        if (options?.priceFeedOptions?.scheduled?.enabled) {
-          priceFeedInstance = new ScheduledPriceFeed({...chainConfig.priceFeedConfig, ...options.priceFeedOptions}, this.logger);
-        } else {
-          priceFeedInstance = new OnDemandPriceFeed(chainConfig.priceFeedConfig, this.logger);
-        }
-      }
-
       const chainManager = new ChainWalletManager(
         chainManagerConfig,
         chainConfig.wallets,
-        priceFeedInstance
+        priceFeedInstance,
       );
 
       chainManager.on("error", error => {
