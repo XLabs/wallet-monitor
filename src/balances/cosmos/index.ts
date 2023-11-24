@@ -8,11 +8,11 @@ import {
   SigningStargateClient,
 } from "@cosmjs/stargate";
 import { DirectSecp256k1Wallet } from "@cosmjs/proto-signing";
-import { CosmosProvider } from "../../wallets/cosmos";
-import { Balance } from "..";
 import { BigNumber, ethers } from "ethers";
 import BN from "bn.js";
 import elliptic from "elliptic";
+import { CosmosProvider } from "../../wallets/cosmos";
+import { Balance } from "..";
 
 export async function pullCosmosNativeBalance(
   provider: CosmosProvider,
@@ -34,6 +34,7 @@ export type CosmosTransferTransactionDetails = {
   defaultDecimals: number;
   nativeDenom: string;
   nodeUrl: string;
+  defaultGasPrice: string;
 };
 
 export async function transferCosmosNativeBalance(
@@ -47,6 +48,7 @@ export async function transferCosmosNativeBalance(
     defaultDecimals,
     nativeDenom,
     nodeUrl,
+    defaultGasPrice,
   } = txDetails;
   const signer = await createSigner(privateKey, addressPrefix);
   const wallet = await SigningStargateClient.connectWithSigner(nodeUrl, signer);
@@ -70,7 +72,7 @@ export async function transferCosmosNativeBalance(
     },
   };
 
-  const gasPrice = GasPrice.fromString("0.0025uosmo");
+  const gasPrice = GasPrice.fromString(defaultGasPrice);
   const gasEstimated = await wallet.simulate(fromAddress, [sendMsg], undefined);
   const gas = BigNumber.from(gasEstimated * 1.5).toString();
   const fee = calculateFee(parseInt(gas), gasPrice);

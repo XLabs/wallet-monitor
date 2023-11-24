@@ -10,6 +10,10 @@ const EVMOS_CURRENCY_SYMBOL_TESTNET = "TEVMOS";
 const EVMOS_NATIVE_DENOM_TESTNET = "atevmos";
 const EVMOS_DEFAULT_DECIMALS = 18;
 
+// See: https://docs.evmos.org/protocol/modules/feemarket#parameters
+const EVMOS_MIN_GAS_PRICE_MAINNET = "0aevmos";
+const EVMOS_MIN_GAS_PRICE_TESTNET = "0atevmos";
+
 export const EVMOS = "evmos";
 export const EVMOS_NETWORKS = {
   [EVMOS_MAINNET]: 1,
@@ -30,6 +34,7 @@ export const EVMOS_DEFAULT_CONFIGS: CosmosDefaultConfigs = {
     nativeDenom: EVMOS_NATIVE_DENOM,
     addressPrefix: EVMOS_ADDRESS_PREFIX,
     defaultDecimals: EVMOS_DEFAULT_DECIMALS,
+    minGasPrice: EVMOS_MIN_GAS_PRICE_MAINNET,
   },
   [EVMOS_TESTNET]: {
     nodeUrl: "https://evmos-testnet-rpc.publicnode.com:443",
@@ -37,6 +42,7 @@ export const EVMOS_DEFAULT_CONFIGS: CosmosDefaultConfigs = {
     nativeDenom: EVMOS_NATIVE_DENOM_TESTNET,
     addressPrefix: EVMOS_ADDRESS_PREFIX,
     defaultDecimals: EVMOS_DEFAULT_DECIMALS,
+    minGasPrice: EVMOS_MIN_GAS_PRICE_TESTNET,
   },
 };
 

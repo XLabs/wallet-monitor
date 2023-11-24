@@ -7,6 +7,9 @@ const COSMOSHUB_NATIVE_DENOM = "uatom";
 const COSMOSHUB_ADDRESS_PREFIX = "cosmos";
 const COSMOSHUB_DEFAULT_DECIMALS = 6;
 
+// See: https://medium.com/@Pat_who/gas-fees-gas-price-on-cosmos-network-how-do-you-manage-them-bdf304b15a52
+const COSMOSHUB_MIN_GAS_PRICE = "0.025uatom";
+
 export const COSMOSHUB = "cosmoshub";
 export const COSMOSHUB_NETWORKS = {
   [COSMOSHUB_MAINNET]: 1,
@@ -27,6 +30,7 @@ export const COSMOSHUB_DEFAULT_CONFIGS: CosmosDefaultConfigs = {
     nativeDenom: COSMOSHUB_NATIVE_DENOM,
     addressPrefix: COSMOSHUB_ADDRESS_PREFIX,
     defaultDecimals: COSMOSHUB_DEFAULT_DECIMALS,
+    minGasPrice: COSMOSHUB_MIN_GAS_PRICE,
   },
   [COSMOSHUB_TESTNET]: {
     nodeUrl: "https://cosmos-testnet-rpc.polkachu.com",
@@ -34,6 +38,7 @@ export const COSMOSHUB_DEFAULT_CONFIGS: CosmosDefaultConfigs = {
     nativeDenom: COSMOSHUB_NATIVE_DENOM,
     addressPrefix: COSMOSHUB_ADDRESS_PREFIX,
     defaultDecimals: COSMOSHUB_DEFAULT_DECIMALS,
+    minGasPrice: COSMOSHUB_MIN_GAS_PRICE,
   },
 };
 

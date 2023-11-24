@@ -6,6 +6,7 @@ const OSMOSIS_CURRENCY_SYMBOL = "OSMO";
 const OSMOSIS_NATIVE_DENOM = "uosmo";
 const OSMOSIS_ADDRESS_PREFIX = "osmo";
 const OSMOSIS_DEFAULT_DECIMALS = 6;
+const OSMOSIS_MIN_GAS_PRICE = "0.0025uosmo";
 
 export const OSMOSIS = "osmosis";
 export const OSMOSIS_NETWORKS = {
@@ -27,6 +28,7 @@ export const OSMOSIS_DEFAULT_CONFIGS: CosmosDefaultConfigs = {
     nativeDenom: OSMOSIS_NATIVE_DENOM,
     addressPrefix: OSMOSIS_ADDRESS_PREFIX,
     defaultDecimals: OSMOSIS_DEFAULT_DECIMALS,
+    minGasPrice: OSMOSIS_MIN_GAS_PRICE,
   },
   [OSMOSIS_TESTNET]: {
     nodeUrl: "https://rpc.testnet.osmosis.zone",
@@ -34,6 +36,7 @@ export const OSMOSIS_DEFAULT_CONFIGS: CosmosDefaultConfigs = {
     nativeDenom: OSMOSIS_NATIVE_DENOM,
     addressPrefix: OSMOSIS_ADDRESS_PREFIX,
     defaultDecimals: OSMOSIS_DEFAULT_DECIMALS,
+    minGasPrice: OSMOSIS_MIN_GAS_PRICE,
   },
 };
 

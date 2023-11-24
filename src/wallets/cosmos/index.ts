@@ -1,3 +1,5 @@
+import { ethers } from "ethers";
+import { SigningStargateClient, StargateClient } from "@cosmjs/stargate";
 import { TokenBalance, WalletBalance, WalletConfig } from "..";
 import { Wallets } from "../../chain-wallet-manager";
 import { PriceFeed } from "../../wallet-manager";
@@ -11,20 +13,24 @@ import {
   OSMOSIS_CHAIN_CONFIG,
   OsmosisNetwork,
 } from "./osmosis.config";
-import { SigningStargateClient, StargateClient } from "@cosmjs/stargate";
 import {
   createSigner,
   getCosmosAddressFromPrivateKey,
   pullCosmosNativeBalance,
   transferCosmosNativeBalance,
 } from "../../balances/cosmos";
-import { ethers } from "ethers";
 import {
   COSMOSHUB,
   COSMOSHUB_CHAIN_CONFIG,
   CosmoshubNetwork,
 } from "./cosmoshub.config";
 import { EVMOS, EVMOS_CHAIN_CONFIG, EvmosNetwork } from "./evmos.config";
+import { KUJIRA, KUJIRA_CHAIN_CONFIG, KujiraNetwork } from "./kujira.config";
+import {
+  GATEWAY,
+  GATEWAY_CHAIN_CONFIG,
+  GatewayNetwork,
+} from "./gateway.config";
 
 export type CosmosChainConfig = {
   chainName: string;
@@ -39,6 +45,8 @@ const COSMOS_CHAINS = {
   [OSMOSIS]: 1,
   [COSMOSHUB]: 2,
   [EVMOS]: 3,
+  [KUJIRA]: 4,
+  [GATEWAY]: 5,
 };
 
 export type CosmosDefaultConfig = {
@@ -47,6 +55,7 @@ export type CosmosDefaultConfig = {
   nativeDenom: string;
   addressPrefix: string;
   defaultDecimals: number;
+  minGasPrice: string;
 };
 
 export type CosmosDefaultConfigs = Record<string, CosmosDefaultConfig>;
@@ -59,6 +68,8 @@ export const COSMOS_CHAIN_CONFIGS: Record<CosmosChainName, CosmosChainConfig> =
     [OSMOSIS]: OSMOSIS_CHAIN_CONFIG,
     [COSMOSHUB]: COSMOSHUB_CHAIN_CONFIG,
     [EVMOS]: EVMOS_CHAIN_CONFIG,
+    [KUJIRA]: KUJIRA_CHAIN_CONFIG,
+    [GATEWAY]: GATEWAY_CHAIN_CONFIG,
   };
 
 export type CosmosWalletOptions = BaseWalletOptions & {
@@ -69,7 +80,12 @@ export type CosmosWalletOptions = BaseWalletOptions & {
   defaultDecimals: number;
 };
 
-export type CosmosNetworks = OsmosisNetwork | CosmoshubNetwork | EvmosNetwork;
+export type CosmosNetworks =
+  | OsmosisNetwork
+  | CosmoshubNetwork
+  | EvmosNetwork
+  | KujiraNetwork
+  | GatewayNetwork;
 
 export class CosmosWalletToolbox extends WalletToolbox {
   private provider: CosmosProvider | null;
@@ -189,7 +205,7 @@ export class CosmosWalletToolbox extends WalletToolbox {
     maxGasPrice?: number | undefined,
     gasLimit?: number | undefined,
   ): Promise<TransferRecepit> {
-    const { addressPrefix, defaultDecimals, nativeDenom } =
+    const { addressPrefix, defaultDecimals, nativeDenom, minGasPrice } =
       this.chainConfig.defaultConfigs[this.network];
     const nodeUrl = this.options.nodeUrl!;
     const txDetails = {
@@ -199,6 +215,7 @@ export class CosmosWalletToolbox extends WalletToolbox {
       defaultDecimals,
       nativeDenom,
       nodeUrl,
+      defaultGasPrice: minGasPrice,
     };
     const receipt = await transferCosmosNativeBalance(privateKey, txDetails);
 
