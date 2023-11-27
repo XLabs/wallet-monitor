@@ -11,7 +11,7 @@
     "build": "npm run build-grpc && tsc",
     "watch": "tsc -w",
     "lint": "eslint --ignore-path .gitignore --ext .js,.ts .",
-    "prettier": "prettier --ignore-path .gitignore --write .",
+    "prettier": "prettier --write $(git diff main --name-only --diff-filter u | grep '.ts$' | xargs)",
     "test": "jest --silent=false",
     "start-ganache": "npx ganache -i 5777 --wallet.accounts=0xf9fdbcbcdb4c7c72642be9fe7c09ad5869a961a8ae3c3374841cb6ead5fd34b1,200000000000000000 --wallet.accounts=0xe94000d730b9655850afc8e39facb7058678f11e765075d4806d27ed619f258c,10000000000000000000"
   },
@@ -44,13 +44,16 @@
   "homepage": "https://github.com/xlabs/wallet-monitor#readme",
   "dependencies": {
     "@cosmjs/proto-signing": "^0.31.1",
+    "@cosmjs/stargate": "^0.31.3",
     "@ethersproject/bignumber": "^5.7.0",
     "@mysten/sui.js": "^0.32.2",
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.78.0",
     "axios": "^1.5.1",
     "bluebird": "^3.7.2",
+    "bn.js": "^5.2.1",
     "bs58": "^5.0.0",
+    "elliptic": "^6.5.4",
     "ethers": "^5.7.0",
     "koa": "^2.14.1",
     "koa-router": "^12.0.0",
@@ -61,6 +64,7 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.38",
+    "@types/elliptic": "^6.4.17",
     "@types/jest": "^29.5.1",
     "@types/koa": "^2.13.6",
     "@types/koa-router": "^7.4.4",

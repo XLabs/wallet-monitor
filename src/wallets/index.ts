@@ -28,21 +28,43 @@ import { EvmChainConfig } from "./evm";
 import { SuiChainConfig } from "./sui";
 import { SolanaChainConfig } from "./solana";
 import { PriceFeed } from "../wallet-manager";
+import {
+  COSMOS_CHAIN_CONFIGS,
+  CosmosChainConfig,
+  CosmosChainName,
+  CosmosNetworks,
+  CosmosWalletOptions,
+  CosmosWalletToolbox,
+} from "./cosmos";
 
 export const KNOWN_CHAINS: Partial<{
-  [key in ChainName]: EvmChainConfig | SuiChainConfig | SolanaChainConfig;
+  [key in ChainName]:
+    | EvmChainConfig
+    | SuiChainConfig
+    | SolanaChainConfig
+    | CosmosChainConfig;
 }> = {
   ...SUI_CHAIN_CONFIGS,
   ...EVM_CHAIN_CONFIGS,
   ...SOLANA_CHAIN_CONFIGS,
+  ...COSMOS_CHAIN_CONFIGS,
 };
 
-export type ChainName = EVMChainName | SolanaChainName | SuiChainName;
-export type Wallet = EvmWalletToolbox | SolanaWalletToolbox | SuiWalletToolbox;
+export type ChainName =
+  | EVMChainName
+  | SolanaChainName
+  | SuiChainName
+  | CosmosChainName;
+export type Wallet =
+  | EvmWalletToolbox
+  | SolanaWalletToolbox
+  | SuiWalletToolbox
+  | CosmosWalletToolbox;
 export type WalletOptions =
   | EvmWalletOptions
   | SolanaWalletOptions
-  | SuiWalletOptions;
+  | SuiWalletOptions
+  | CosmosWalletOptions;
 
 // TODO: Consider writing a custom validator for an address?
 export const WalletConfigSchema = z.object({
@@ -69,7 +91,7 @@ export type WalletBalance = Balance & {
   tokens: TokenBalance[];
 };
 
-export type AllNetworks = EvmNetworks | SolanaNetworks;
+export type AllNetworks = EvmNetworks | SolanaNetworks | CosmosNetworks;
 
 export function isChain(chainName: string): chainName is ChainName {
   return chainName in KNOWN_CHAINS;
@@ -87,6 +109,12 @@ export function isSolanaChain(
 
 export function isSuiChain(chainName: ChainName): chainName is SuiChainName {
   return chainName in SUI_CHAINS;
+}
+
+export function isCosmosChain(
+  chainName: ChainName,
+): chainName is CosmosChainName {
+  return chainName in COSMOS_CHAIN_CONFIGS;
 }
 
 export function createWalletToolbox(
@@ -126,6 +154,14 @@ export function createWalletToolbox(
         priceFeed,
       );
 
+    case isCosmosChain(chainName):
+      return new CosmosWalletToolbox(
+        network,
+        chainName as CosmosChainName,
+        wallets,
+        walletOptions as CosmosWalletOptions,
+        priceFeed,
+      );
     default:
       throw new Error(`Unknown chain name ${chainName}`);
   }
