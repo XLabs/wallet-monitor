@@ -18,7 +18,7 @@ import { ChainName } from "./wallets";
 interface IWMContextManagedLocks {
     withWallet<P extends Providers, W extends Wallets>(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void>;
     pullBalances: () => Promise<Record<string, WalletBalancesByAddress>>;
-    pullBalancesAtBlockHeight: () => Promise<Record<string, WalletBalancesByAddress>>;
+    pullBalancesAtBlockHeight: (blockHeightByChain?: Record<ChainName, number>) => Promise<Record<string, WalletBalancesByAddress>>;
     getBlockHeight: (chainName: ChainName) => Promise<number>;
 }
 interface IWMBareLocks {
