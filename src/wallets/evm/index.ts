@@ -17,6 +17,11 @@ import {
   ETHEREUM_CHAIN_CONFIG,
   ETHEREUM,
 } from "./ethereum.config";
+import { 
+  SepoliaNetwork,
+  SEPOLIA,
+  SEPOLIA_CHAIN_CONFIG,
+} from "./sepolia.config";
 import {
   PolygonNetwork,
   POLYGON,
@@ -73,6 +78,12 @@ const EVM_CHAINS = {
   [OPTIMISM]: 9,
   [KLAYTN]: 10,
   [BASE]: 11,
+  // We'll need to add sepolia as a different chain
+  // because it's added as a diferent chain on the SDK
+  // and we need to support monitoring sepolia and goerli
+  // at the same time.
+  // We'll need to do the same of L2 chains :(
+  [SEPOLIA]: 12,
 };
 
 export type EvmDefaultConfig = {
@@ -98,6 +109,7 @@ export const EVM_CHAIN_CONFIGS: Record<EVMChainName, EvmChainConfig> = {
   [OPTIMISM]: OPTIMISM_CHAIN_CONFIG,
   [KLAYTN]: KLAYTN_CHAIN_CONFIG,
   [BASE]: BASE_CHAIN_CONFIG,
+  [SEPOLIA]: SEPOLIA_CHAIN_CONFIG,
 };
 
 export type EvmWalletOptions = BaseWalletOptions & {
@@ -116,7 +128,8 @@ export type EvmNetworks =
   | ArbitrumNetwork
   | OptimismNetwork
   | KlaytnNetwork
-  | BaseNetwork;
+  | BaseNetwork
+  | SepoliaNetwork;
 
 function getUniqueTokens(wallets: WalletConfig[]): string[] {
   const tokens = wallets.reduce((acc, wallet) => {
