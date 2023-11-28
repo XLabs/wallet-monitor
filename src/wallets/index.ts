@@ -65,7 +65,7 @@ export type Balance = {
   rawBalance: string;
   chainName: ChainName;
   formattedBalance: string;
-  blockHeight?: number;
+  blockHeight: number;
   tokenUsdPrice?: number;
   balanceUsd?: number;
 };
