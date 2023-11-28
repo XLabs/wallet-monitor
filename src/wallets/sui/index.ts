@@ -175,6 +175,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     return {
       ...balance,
       address,
+      chainName: this.chainName,
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
@@ -203,6 +204,7 @@ export class SuiWalletToolbox extends WalletToolbox {
         return {
           tokenAddress,
           address,
+          chainName: this.chainName,
           isNative: false,
           rawBalance: "0",
           formattedBalance: "0",
@@ -222,6 +224,7 @@ export class SuiWalletToolbox extends WalletToolbox {
       return {
         tokenAddress,
         address,
+        chainName: this.chainName,
         isNative: false,
         rawBalance: balance.totalBalance,
         formattedBalance,
