@@ -13,6 +13,7 @@ import {
   rebalanceStrategies,
   RebalanceStrategyName,
 } from "./rebalance-strategies";
+import { CosmosProvider, CosmosWallet } from "./wallets/cosmos";
 import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
@@ -56,8 +57,12 @@ export type WalletInterface = {
   walletToolbox: Wallet;
 };
 
-export type Providers = EVMProvider | SolanaProvider | SuiProvider;
-export type Wallets = EVMWallet | SolanaWallet | SuiWallet;
+export type Providers =
+  | EVMProvider
+  | SolanaProvider
+  | SuiProvider
+  | CosmosProvider;
+export type Wallets = EVMWallet | SolanaWallet | SuiWallet | CosmosWallet;
 export type WithWalletExecutor = (wallet: WalletInterface) => Promise<void>;
 
 export class ChainWalletManager {
@@ -255,7 +260,9 @@ export class ChainWalletManager {
   public async start() {
     this.logger.info(`Starting Manager for chain: ${this.options.chainName}`);
     if (this.priceFeed) {
-      this.logger.info(`Starting PriceFeed for chain: ${this.options.chainName}`);
+      this.logger.info(
+        `Starting PriceFeed for chain: ${this.options.chainName}`,
+      );
       this.priceFeed?.start();
     }
 

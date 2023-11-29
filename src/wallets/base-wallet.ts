@@ -51,7 +51,10 @@ export abstract class WalletToolbox {
   // calculate data which could be re-utilized (for example token's local addresses, symbol and decimals in evm chains)
   protected abstract warmup(): Promise<void>;
 
-  protected abstract getAddressFromPrivateKey(privateKey: string): string;
+  protected abstract getAddressFromPrivateKey(
+    privateKey: string,
+    options?: WalletOptions,
+  ): string;
 
   // Should return balances for a native address in the chain
   abstract pullNativeBalance(
@@ -94,7 +97,7 @@ export abstract class WalletToolbox {
     const wallets = {} as Record<string, WalletData>;
 
     for (const raw of rawConfig) {
-      const config = this.buildWalletConfig(raw, options.failOnInvalidTokens);
+      const config = this.buildWalletConfig(raw, options);
       this.validateConfig(config, options.failOnInvalidTokens);
       wallets[config.address] = config;
     }
@@ -169,12 +172,7 @@ export abstract class WalletToolbox {
 
         this.logger.debug(
           `Token balances for ${address} pulled: ${JSON.stringify(
-            // usd is a big number, so we need to convert it to string
-            tokenBalances.map(balance => ({
-              ...balance,
-              balanceUsd: balance?.balanceUsd?.toString(),
-              tokenUsdPrice: balance?.tokenUsdPrice?.toString(),
-            })),
+            tokenBalances,
           )}`,
         );
 
@@ -271,12 +269,13 @@ export abstract class WalletToolbox {
 
   private buildWalletConfig(
     rawConfig: any,
-    failOnInvalidTokens: boolean,
+    options: WalletOptions,
   ): WalletData {
     const privateKey = rawConfig.privateKey;
+    const { failOnInvalidTokens } = options;
 
     const address =
-      rawConfig.address || this.getAddressFromPrivateKey(privateKey);
+      rawConfig.address || this.getAddressFromPrivateKey(privateKey, options);
 
     const tokens = rawConfig.tokens
       ? this.parseTokensConfig(rawConfig.tokens, failOnInvalidTokens)
