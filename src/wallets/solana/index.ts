@@ -129,7 +129,6 @@ export class SolanaWalletToolbox extends WalletToolbox {
     return {
       ...balance,
       address,
-      chainName: this.chainName,
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
@@ -185,7 +184,6 @@ export class SolanaWalletToolbox extends WalletToolbox {
         isNative: false,
         rawBalance: tokenBalance.toString(),
         address,
-        chainName: this.chainName,
         formattedBalance: formattedBalance.toString(),
         symbol: tokenKnownSymbol ?? "unknown",
         ...(tokenUsdPrice && {

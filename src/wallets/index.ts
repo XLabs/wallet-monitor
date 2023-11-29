@@ -63,7 +63,6 @@ export type Balance = {
   address: string;
   isNative: boolean;
   rawBalance: string;
-  chainName: ChainName;
   formattedBalance: string;
   blockHeight?: number;
   tokenUsdPrice?: number;

@@ -138,25 +138,56 @@ export class ClientWalletManager implements IClientWalletManager {
     return await this.balanceHandlerMapper("pullBalances");
   }
 
+  private validateBlockHeightByChain(
+    blockHeightByChain: Record<ChainName, number>,
+  ) {
+    for (const chain in blockHeightByChain) {
+      const manager = this.managers[chain as ChainName];
+      if (!manager)
+        throw new Error(`No wallets configured for chain: ${chain}`);
+    }
+  }
+
+  public async getBlockHeightForAllSupportedChains(): Promise<
+    Record<ChainName, number>
+  > {
+    // Required concurrency is the number of chains as we want to fetch the block height for all chains in parallel
+    // to be precise about the block height at the time of fetching balances
+    let blockHeightPerChain = {} as Record<ChainName, number>;
+    const requiredConcurrency = Object.keys(this.managers).length;
+    await mapConcurrent(
+      Object.entries(this.managers),
+      async ([chainName, manager]) => {
+        try {
+          const blockHeight = await manager.getBlockHeight();          
+          blockHeightPerChain = {
+            ...blockHeightPerChain,
+            [chainName]: blockHeight,
+          } as Record<ChainName, number>;
+        } catch (err) {
+          throw new Error(`No block height found for chain: ${chainName}, error: ${err}`);
+        }
+      },
+      requiredConcurrency,
+    );
+    return blockHeightPerChain;
+  }
+
+  // pullBalancesAtBlockHeight doesn't need balances to be refreshed in the background
   public async pullBalancesAtBlockHeight(
     blockHeightByChain?: Record<ChainName, number>,
   ): Promise<Record<string, WalletBalancesByAddress>> {
     const balances: Record<string, WalletBalancesByAddress> = {};
     if (blockHeightByChain) {
-      // Validate blockHeightByChain
-      for (const chain in blockHeightByChain) {
-        const manager = this.managers[chain as ChainName];
-        if (!manager)
-          throw new Error(`No wallets configured for chain: ${chain}`);
-      }
+      this.validateBlockHeightByChain(blockHeightByChain);
     }
+
+    const blockHeightPerChain = blockHeightByChain ?? await this.getBlockHeightForAllSupportedChains();
 
     await mapConcurrent(
       Object.entries(this.managers),
       async ([chainName, manager]) => {
-        const blockHeight =
-          blockHeightByChain?.[chainName as ChainName] ??
-          (await manager.getBlockHeight());
+        const blockHeight = blockHeightPerChain[chainName as ChainName];
         const balancesByChain = await manager.pullBalancesAtBlockHeight(
           blockHeight,
         );

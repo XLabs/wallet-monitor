@@ -240,7 +240,6 @@ export class EvmWalletToolbox extends WalletToolbox {
       ...balance,
       address,
       formattedBalance,
-      chainName: this.chainName,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
       ...(tokenUsdPrice && {
@@ -278,7 +277,7 @@ export class EvmWalletToolbox extends WalletToolbox {
           address,
           tokenAddress,
           formattedBalance,
-          chainName: this.chainName,
+  
           symbol: tokenData.symbol,
           ...(tokenUsdPrice && {
             balanceUsd: Number(formattedBalance) * tokenUsdPrice,

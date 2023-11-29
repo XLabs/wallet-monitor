@@ -20,6 +20,7 @@ interface IWMContextManagedLocks {
     pullBalances: () => Promise<Record<string, WalletBalancesByAddress>>;
     pullBalancesAtBlockHeight: (blockHeightByChain?: Record<ChainName, number>) => Promise<Record<string, WalletBalancesByAddress>>;
     getBlockHeight: (chainName: ChainName) => Promise<number>;
+    getBlockHeightForAllSupportedChains: () => Promise<Record<ChainName, number>>;
 }
 interface IWMBareLocks {
     acquireLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<WalletInterface>
