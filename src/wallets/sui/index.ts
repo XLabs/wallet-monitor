@@ -245,8 +245,8 @@ export class SuiWalletToolbox extends WalletToolbox {
   }
 
   protected async getRawWallet (privateKey: string) {
-    const seiPrivateKeyAsBuffer = Buffer.from(privateKey, "hex");
-    const keyPair = Ed25519Keypair.fromSecretKey(seiPrivateKeyAsBuffer);
+    const suiPrivateKeyAsBuffer = Buffer.from(privateKey, "base64");
+    const keyPair = Ed25519Keypair.fromSecretKey(suiPrivateKeyAsBuffer);
     const suiJsonProvider = new JsonRpcProvider(this.connection);
     return new RawSigner(keyPair, suiJsonProvider);
   }
