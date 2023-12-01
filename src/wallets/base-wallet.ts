@@ -9,7 +9,7 @@ export type BaseWalletOptions = {
   failOnInvalidTokens: boolean;
 };
 
-export type TransferRecepit = {
+export type TransferReceipt = {
   transactionHash: string;
   gasUsed: string;
   gasPrice: string;
@@ -74,7 +74,7 @@ export abstract class WalletToolbox {
     amount: number,
     maxGasPrice?: number,
     gasLimit?: number,
-  ): Promise<TransferRecepit>;
+  ): Promise<TransferReceipt>;
 
   protected abstract getRawWallet(privateKey: string): Promise<Wallets>;
 

@@ -15,7 +15,7 @@ import {
 import { PYTHNET, PYTHNET_CHAIN_CONFIG } from "./pythnet.config";
 import {
   BaseWalletOptions,
-  TransferRecepit,
+  TransferReceipt,
   WalletToolbox,
 } from "../base-wallet";
 import {
@@ -261,7 +261,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     sourceAddress: string,
     targetAddress: string,
     amount: number,
-  ): Promise<TransferRecepit> {
+  ): Promise<TransferReceipt> {
     // TODO: implement
     throw new Error(
       "SolanaWalletToolbox.transferNativeBalance not implemented.",

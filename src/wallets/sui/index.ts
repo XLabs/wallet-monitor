@@ -4,7 +4,7 @@ import { WalletConfig, WalletBalance, TokenBalance } from "../";
 import {
   WalletToolbox,
   BaseWalletOptions,
-  TransferRecepit, WalletData,
+  TransferReceipt, WalletData,
 } from "../base-wallet";
 import { 
   SuiTokenData, 
@@ -246,7 +246,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     amount: number,
     maxGasPrice?: number,
     gasLimit?: number
-  ): Promise<TransferRecepit> {
+  ): Promise<TransferReceipt> {
     const txDetails = { targetAddress, amount, maxGasPrice, gasLimit };
     return transferSuiNativeBalance(this.connection, privateKey, txDetails);
   }

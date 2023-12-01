@@ -18,7 +18,7 @@ import {
   WalletBalance,
   WalletConfigSchema,
 } from "./wallets";
-import { TransferRecepit } from "./wallets/base-wallet";
+import { TransferReceipt } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
 import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
@@ -255,7 +255,7 @@ export class WalletManager {
 
       chainManager.on(
         "rebalance-finished",
-        (strategy: string, receipts: TransferRecepit[]) => {
+        (strategy: string, receipts: TransferReceipt[]) => {
           this.logger.info(
             `Rebalance Finished. Executed transactions: ${receipts.length}}`,
           );

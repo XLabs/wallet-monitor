@@ -3,7 +3,7 @@ import Router from 'koa-router';
 import { Counter, Gauge, Registry } from 'prom-client';
 
 import { WalletBalance, TokenBalance } from './wallets';
-import { TransferRecepit } from './wallets/base-wallet';
+import { TransferReceipt } from './wallets/base-wallet';
 
 function updateBalancesGauge(gauge: Gauge, chainName: string, network: string, balance: WalletBalance | TokenBalance) {
   const { symbol, address, isNative } = balance;
@@ -177,7 +177,7 @@ export class PrometheusExporter {
     updateWalletsLockPeriodGauge(this.walletsLockPeriodGauge, chainName, network, walletAddress, lockTime);
   }
   
-  public updateRebalanceSuccess(chainName: string, strategy: string, receipts: TransferRecepit[]) {
+  public updateRebalanceSuccess(chainName: string, strategy: string, receipts: TransferReceipt[]) {
     this.rebalanceInstructionsCounter.labels(chainName, strategy, "success").inc(receipts.length);
     const totalExpenditure = receipts.reduce((total, receipt) => {
       return total + parseFloat(receipt.formattedCost);
