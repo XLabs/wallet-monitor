@@ -84,6 +84,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     options: WalletOptions,
     priceFeed?: PriceFeed,
   ) {
+    // TODO: purge useless wallet pool
     super(network, chainName, rawConfig, options);
 
     this.chainConfig = SOLANA_CHAIN_CONFIGS[this.chainName];

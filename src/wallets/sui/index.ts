@@ -70,6 +70,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     options: SuiWalletOptions,
     priceFeed?: PriceFeed
   ) {
+    // TODO: purge useless wallet pool
     super(network, chainName, rawConfig, options);
     this.chainConfig = SUI_CHAIN_CONFIGS[this.chainName];
 
