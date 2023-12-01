@@ -193,8 +193,8 @@ export class SolanaWalletToolbox extends WalletToolbox {
         address,
         formattedBalance: formattedBalance.toString(),
         symbol: tokenKnownSymbol ?? "unknown",
-        ...(tokenUsdPrice && {
-          balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+        ...(tokenUsdPrice !== undefined && {
+          balanceUsd: formattedBalance * tokenUsdPrice,
           tokenUsdPrice
         })
       };
