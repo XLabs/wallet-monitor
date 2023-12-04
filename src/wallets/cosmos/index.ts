@@ -170,6 +170,7 @@ export class CosmosWalletToolbox extends WalletToolbox {
     this.provider = await StargateClient.connect(this.options.nodeUrl!);
   }
 
+  // TODO: Implement getNativeBalance by blockHeight if possible
   public async pullNativeBalance(address: string): Promise<WalletBalance> {
     const { nativeDenom, defaultDecimals } =
       this.chainConfig.defaultConfigs[this.network];

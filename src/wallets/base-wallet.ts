@@ -146,7 +146,7 @@ export abstract class WalletToolbox {
           minBalanceThreshold ?? 0,
         );
 
-        balances.push({ ...nativeBalance, blockHeight });
+        balances.push(nativeBalance);
 
         this.logger.debug(
           `Balances for ${address} pulled: ${JSON.stringify(nativeBalance)}`,

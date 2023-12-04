@@ -115,7 +115,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     return validTokens;
   }
 
-  public async pullNativeBalance(address: string): Promise<WalletBalance> {
+  public async pullNativeBalance(address: string, blockHeight?: number): Promise<WalletBalance> {
     const balance = await pullSolanaNativeBalance(this.connection, address);
     const formattedBalance = (
       Number(balance.rawBalance) / LAMPORTS_PER_SOL
@@ -132,6 +132,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
+      blockHeight,
       ...(tokenUsdPrice && {
         balanceUsd: Number(formattedBalance) * tokenUsdPrice,
         tokenUsdPrice

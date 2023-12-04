@@ -242,6 +242,7 @@ export class EvmWalletToolbox extends WalletToolbox {
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
+      blockHeight,
       ...(tokenUsdPrice && {
         balanceUsd: Number(formattedBalance) * tokenUsdPrice,
         tokenUsdPrice

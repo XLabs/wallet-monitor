@@ -163,7 +163,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     }, [] as string[]);
   }
 
-  public async pullNativeBalance(address: string): Promise<WalletBalance> {
+  public async pullNativeBalance(address: string, blockHeight?: number): Promise<WalletBalance> {
     const balance = await pullSuiNativeBalance(this.connection, address);
     const formattedBalance = String(+balance.rawBalance / 10 ** 9);
     
@@ -178,6 +178,7 @@ export class SuiWalletToolbox extends WalletToolbox {
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
+      blockHeight,
       ...(tokenUsdPrice && {
         balanceUsd: Number(formattedBalance) * tokenUsdPrice,
         tokenUsdPrice
