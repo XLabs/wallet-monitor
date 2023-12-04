@@ -27,10 +27,10 @@ import {
 import { EVMOS, EVMOS_CHAIN_CONFIG, EvmosNetwork } from "./evmos.config";
 import { KUJIRA, KUJIRA_CHAIN_CONFIG, KujiraNetwork } from "./kujira.config";
 import {
-  GATEWAY,
-  GATEWAY_CHAIN_CONFIG,
-  GatewayNetwork,
-} from "./gateway.config";
+  WORMCHAIN,
+  WORMCHAIN_CHAIN_CONFIG,
+  WormchainNetwork,
+} from "./wormchain.config";
 
 export type CosmosChainConfig = {
   chainName: string;
@@ -46,7 +46,7 @@ const COSMOS_CHAINS = {
   [COSMOSHUB]: 2,
   [EVMOS]: 3,
   [KUJIRA]: 4,
-  [GATEWAY]: 5,
+  [WORMCHAIN]: 5,
 };
 
 export type CosmosDefaultConfig = {
@@ -69,7 +69,7 @@ export const COSMOS_CHAIN_CONFIGS: Record<CosmosChainName, CosmosChainConfig> =
     [COSMOSHUB]: COSMOSHUB_CHAIN_CONFIG,
     [EVMOS]: EVMOS_CHAIN_CONFIG,
     [KUJIRA]: KUJIRA_CHAIN_CONFIG,
-    [GATEWAY]: GATEWAY_CHAIN_CONFIG,
+    [WORMCHAIN]: WORMCHAIN_CHAIN_CONFIG,
   };
 
 export type CosmosWalletOptions = BaseWalletOptions & {
@@ -85,7 +85,7 @@ export type CosmosNetworks =
   | CosmoshubNetwork
   | EvmosNetwork
   | KujiraNetwork
-  | GatewayNetwork;
+  | WormchainNetwork;
 
 export class CosmosWalletToolbox extends WalletToolbox {
   private provider: CosmosProvider | null;
