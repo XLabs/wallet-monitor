@@ -121,6 +121,11 @@ export class SolanaWalletToolbox extends WalletToolbox {
       Number(balance.rawBalance) / LAMPORTS_PER_SOL
     ).toString();
 
+
+    if (blockHeight) {
+      this.logger.warn(`Solana does not support pulling balances by block height, ignoring blockHeight: ${blockHeight}`);
+    }
+
     // Pull prices in USD for all the native tokens in single network call
     await this.priceFeed?.pullTokenPrices();
     const coingeckoId = coinGeckoIdByChainName[this.chainName];

@@ -166,6 +166,10 @@ export class SuiWalletToolbox extends WalletToolbox {
   public async pullNativeBalance(address: string, blockHeight?: number): Promise<WalletBalance> {
     const balance = await pullSuiNativeBalance(this.connection, address);
     const formattedBalance = String(+balance.rawBalance / 10 ** 9);
+
+    if (blockHeight) {
+      this.logger.warn(`Sui does not support pulling balances by block height, ignoring blockHeight: ${blockHeight}`);
+    }
     
     // Pull prices in USD for all the native tokens in single network call
     await this.priceFeed?.pullTokenPrices();

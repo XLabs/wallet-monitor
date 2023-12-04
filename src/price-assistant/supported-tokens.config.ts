@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ChainName, Environment } from "../wallets";
 import { TokenInfo } from "../wallet-manager";
 
+// get all coingeckoIds from here: https://api.coingecko.com/api/v3/coins/list
 export const CoinGeckoIdsSchema = z
 .union([
   z.literal("solana"),
@@ -21,7 +22,13 @@ export const CoinGeckoIdsSchema = z
   z.literal("optimism"),
   z.literal("klay-token"),
   z.literal("base"),
-  z.literal("pyth-network")
+  z.literal("pyth-network"),
+  z.literal("sepolia"),
+  z.literal("osmosis"),
+  z.literal("cosmos"),
+  z.literal("evmos"),
+  z.literal("kujira"),
+  z.literal("gateway"),
 ]);
 
 export type CoinGeckoIds = z.infer<typeof CoinGeckoIdsSchema>;
@@ -40,7 +47,13 @@ export const coinGeckoIdByChainName = {
   "optimism": "optimism",
   "base": "base",
   "klaytn": "klay-token",
-  "pythnet": "pyth-network"
+  "pythnet": "pyth-network",
+  "sepolia": "ethereum",
+  "osmosis": "osmosis",
+  "cosmoshub": "cosmos",
+  "evmos": "evmos",
+  "kujira": "kujira",
+  "gateway": "gateway"
 } as const satisfies Record<ChainName, CoinGeckoIds>;
 
 const mainnetNativeTokens = [
