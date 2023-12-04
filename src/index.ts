@@ -13,7 +13,7 @@ import {
 
 export type WalletBalancesByAddress = WBBA;
 export type WalletInterface = WI;
-export type {ChainName} from "./wallets";
+export type {ChainName, Environment} from "./wallets";
 
 export {isEvmChain, isSolanaChain, isSuiChain} from './wallets';
 

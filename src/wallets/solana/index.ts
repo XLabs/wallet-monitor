@@ -6,7 +6,12 @@ import {
   RecentPrioritizationFees,
 } from "@solana/web3.js";
 import { decode } from "bs58";
-import { SOLANA, SOLANA_CHAIN_CONFIG, SolanaNetworks } from "./solana.config";
+import {
+  SOLANA,
+  SOLANA_CHAIN_CONFIG,
+  SOLANA_DEFAULT_COMMITMENT,
+  SolanaNetworks,
+} from "./solana.config";
 import { PYTHNET, PYTHNET_CHAIN_CONFIG } from "./pythnet.config";
 import {
   BaseWalletOptions,
@@ -26,6 +31,7 @@ import {
 import { getMint, Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { findMedian, mapConcurrent } from "../../utils";
 import { PriceFeed } from "../../wallet-manager";
+import { coinGeckoIdByChainName } from "../../price-assistant/supported-tokens.config";
 
 export type SolanaChainConfig = {
   chainName: string;
@@ -109,11 +115,21 @@ export class SolanaWalletToolbox extends WalletToolbox {
     return validTokens;
   }
 
-  public async pullNativeBalance(address: string): Promise<WalletBalance> {
+  public async pullNativeBalance(address: string, blockHeight?: number): Promise<WalletBalance> {
     const balance = await pullSolanaNativeBalance(this.connection, address);
     const formattedBalance = (
       Number(balance.rawBalance) / LAMPORTS_PER_SOL
     ).toString();
+
+
+    if (blockHeight) {
+      this.logger.warn(`Solana does not support pulling balances by block height, ignoring blockHeight: ${blockHeight}`);
+    }
+
+    // Pull prices in USD for all the native tokens in single network call
+    await this.priceFeed?.pullTokenPrices();
+    const coingeckoId = coinGeckoIdByChainName[this.chainName];
+    const tokenUsdPrice = this.priceFeed?.getKey(coingeckoId);
 
     return {
       ...balance,
@@ -121,6 +137,11 @@ export class SolanaWalletToolbox extends WalletToolbox {
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
+      blockHeight,
+      ...(tokenUsdPrice && {
+        balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+        tokenUsdPrice
+      })
     };
   }
 
@@ -147,53 +168,36 @@ export class SolanaWalletToolbox extends WalletToolbox {
       );
     });
 
-    // Assuming that tokens[] is actually an array of mint account addresses.
-    const balances = await mapConcurrent(
-      tokens,
-      async token => {
-        const tokenData = this.tokenData[token];
-        const tokenKnownInfo = Object.entries(
-          this.chainConfig.knownTokens[this.network],
-        ).find(([_, value]) => value === token);
-        const tokenKnownSymbol = tokenKnownInfo ? tokenKnownInfo[0] : undefined;
-
-        // We are choosing to show a balance of 0 for a token that is not owned by the address.
-        const tokenBalance = tokenBalancesDistinct.get(token) ?? 0;
-        const formattedBalance = (
-          tokenBalance /
-          10 ** tokenData.decimals
-        ).toString();
-
-        return {
-          isNative: false,
-          rawBalance: tokenBalance.toString(),
-          address,
-          formattedBalance,
-          symbol: tokenKnownSymbol ?? "unknown",
-        };
-      },
-      this.options.tokenPollConcurrency,
-    ) as TokenBalance[];
-
     // Pull prices in USD for all the tokens in single network call
-    await this.priceFeed?.pullTokenPrices(tokens);
+    const tokenPrices = await this.priceFeed?.pullTokenPrices();
 
-    // Add USD price to each token balance
-    return mapConcurrent(
-      balances,
-      async balance => {
-        const tokenPrice = await this.priceFeed?.getKey(balance.tokenAddress!);
-        const tokenBalanceInUsd = tokenPrice
-          ? BigInt(balance.formattedBalance) * tokenPrice
-          : undefined;
-    
-        return {
-          ...balance,
-          usd: tokenBalanceInUsd,
-        };
-      },
-      this.options.tokenPollConcurrency,
-    );
+    // Assuming that tokens[] is actually an array of mint account addresses.
+    return tokens.map(token => {
+      const tokenData = this.tokenData[token];
+      const tokenKnownInfo = Object.entries(
+        this.chainConfig.knownTokens[this.network],
+      ).find(([_, value]) => value === token);
+      const tokenKnownSymbol = tokenKnownInfo ? tokenKnownInfo[0] : undefined;
+
+      // We are choosing to show a balance of 0 for a token that is not owned by the address.
+      const tokenBalance = tokenBalancesDistinct.get(token) ?? 0;
+      const formattedBalance = tokenBalance / 10 ** tokenData.decimals;
+
+      const coinGeckoId = this.priceFeed?.getCoinGeckoId(token);
+      const tokenUsdPrice = coinGeckoId && tokenPrices?.[coinGeckoId];
+
+      return {
+        isNative: false,
+        rawBalance: tokenBalance.toString(),
+        address,
+        formattedBalance: formattedBalance.toString(),
+        symbol: tokenKnownSymbol ?? "unknown",
+        ...(tokenUsdPrice && {
+          balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+          tokenUsdPrice
+        })
+      };
+    });
   }
 
   protected validateChainName(chainName: string): chainName is SolanaChainName {
@@ -304,6 +308,6 @@ export class SolanaWalletToolbox extends WalletToolbox {
   }
 
   public async getBlockHeight(): Promise<number> {
-    return this.connection.getBlockHeight();
+    return this.connection.getBlockHeight(SOLANA_DEFAULT_COMMITMENT);
   }
 }

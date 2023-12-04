@@ -17,13 +17,7 @@ import { CosmosProvider, CosmosWallet } from "./wallets/cosmos";
 import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
-import {
-  PriceFeed,
-  WalletPriceFeedConfig,
-  WalletRebalancingConfig,
-} from "./wallet-manager";
-import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
-import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
+import { PriceFeed, WalletBalanceConfig, WalletPriceFeedConfig, WalletRebalancingConfig } from "./wallet-manager";
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
@@ -42,6 +36,7 @@ export type ChainWalletManagerOptions = {
     maxGasPrice?: number;
     gasLimit?: number;
   };
+  walletBalanceConfig: WalletBalanceConfig;
   priceFeedConfig: WalletPriceFeedConfig;
   balancePollInterval?: number;
   walletOptions?: WalletOptions;
@@ -85,7 +80,11 @@ export class ChainWalletManager {
   public walletToolbox: Wallet;
   protected priceFeed?: PriceFeed;
 
-  constructor(options: any, private wallets: WalletConfig[]) {
+  constructor(
+    options: any,
+    private wallets: WalletConfig[],
+    priceFeedInstance?: PriceFeed,
+  ) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
 
@@ -94,15 +93,7 @@ export class ChainWalletManager {
     }
 
     this.logger = createLogger(this.options.logger);
-    const { priceFeedConfig } = this.options;
-
-    if (priceFeedConfig?.enabled) {
-      if (priceFeedConfig?.scheduled?.enabled) {
-        this.priceFeed = new ScheduledPriceFeed(priceFeedConfig, this.logger);
-      } else {
-        this.priceFeed = new OnDemandPriceFeed(priceFeedConfig, this.logger);
-      }
-    }
+    this.priceFeed = priceFeedInstance
 
     this.walletToolbox = createWalletToolbox(
       options.network,
@@ -274,9 +265,20 @@ export class ChainWalletManager {
       );
       this.priceFeed?.start();
     }
-    this.interval = setInterval(async () => {
-      await this.refreshBalances();
-    }, this.options.balancePollInterval);
+
+    if (this.options.walletBalanceConfig?.enabled) {
+      if (this.options.walletBalanceConfig?.scheduled?.enabled) {
+        this.interval = setInterval(async () => {
+          await this.refreshBalances();
+        }, this.options.walletBalanceConfig?.scheduled?.interval ?? this.options.balancePollInterval);
+      } else {
+        // no op: Don't poll balances, fetch on demand instead
+      }
+    } else {
+      this.interval = setInterval(async () => {
+        await this.refreshBalances();
+      }, this.options.balancePollInterval);
+    }
 
     if (this.options.rebalance.enabled) {
       this.logger.info(
@@ -418,5 +420,20 @@ export class ChainWalletManager {
       network,
       this.availableWalletsByChainName[chainName],
     );
+  }
+
+  public getBlockHeight () {
+    return this.walletToolbox.getBlockHeight();
+  }
+  /** Pull balances on demand */
+  public async pullBalances () {
+    const balances = await this.walletToolbox.pullBalances();
+    return this.mapBalances(balances);
+  }
+
+  /** Pull balances on demand with block height */
+  public async pullBalancesAtBlockHeight(blockHeight: number) {
+    const balances = await this.walletToolbox.pullBalancesAtBlockHeight(blockHeight);
+    return this.mapBalances(balances);
   }
 }

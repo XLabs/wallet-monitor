@@ -3,9 +3,8 @@ import { Logger } from "winston";
 import { printError } from "../utils";
 
 const DEFAULT_FEED_INTERVAL = 10_000;
-const DEFAULT_PRICE_PRECISION = 8;
 
-export type TokenPriceData = Partial<Record<string, bigint>>;
+export type TokenPriceData = Partial<Record<string, number>>;
 
 export abstract class PriceFeed<K, V> {
   private name: string;
@@ -13,23 +12,21 @@ export abstract class PriceFeed<K, V> {
   private locked: boolean;
   private runIntervalMs: number;
   private metrics?: BasePriceFeedMetrics;
-  protected pricePrecision: number;
   protected logger: Logger;
 
-  constructor(name: string, logger: Logger, registry?: Registry, runIntervalMs?: number, pricePrecision?: number) {
+  constructor(name: string, logger: Logger, registry?: Registry, runIntervalMs?: number) {
     this.name = name;
     this.logger = logger;
     this.locked = false;
     this.runIntervalMs = runIntervalMs || DEFAULT_FEED_INTERVAL;
     if (registry) this.metrics = this.initMetrics(registry);
-    this.pricePrecision = pricePrecision || DEFAULT_PRICE_PRECISION;
   }
 
   protected abstract update(): Promise<void>;
 
-  protected abstract get(key: K): Promise<V>;
+  protected abstract get(key: K): V;
 
-  public abstract pullTokenPrices (tokens: string[]): Promise<TokenPriceData>;
+  public abstract pullTokenPrices (): Promise<TokenPriceData>;
 
   public start(): void {
     this.interval = setInterval(() => this.run(), this.runIntervalMs);
@@ -40,9 +37,9 @@ export abstract class PriceFeed<K, V> {
     clearInterval(this.interval);
   }
 
-  public async getKey(key: K): Promise<V> {
+  public getKey(key: K): V {
     const result = this.get(key);
-    if (result === undefined || result === null) throw new Error(`Key Not Found: ${key}`);
+    if (result === undefined || result === null) this.logger.error(`PriceFeed Key Not Found: ${key}`);
     return result;
   }
 

@@ -53,6 +53,7 @@ import {
 import { KlaytnNetwork, KLAYTN, KLAYTN_CHAIN_CONFIG } from "./klaytn.config";
 import { BaseNetwork, BASE, BASE_CHAIN_CONFIG } from "./base.config";
 import { PriceFeed } from "../../wallet-manager";
+import { coinGeckoIdByChainName } from "../../price-assistant/supported-tokens.config";
 
 const EVM_HEX_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
@@ -239,9 +240,14 @@ export class EvmWalletToolbox extends WalletToolbox {
     this.logger.debug(`EVM token data: ${JSON.stringify(this.tokenData)}`);
   }
 
-  public async pullNativeBalance(address: string): Promise<WalletBalance> {
-    const balance = await pullEvmNativeBalance(this.provider, address);
+  public async pullNativeBalance(address: string, blockHeight?: number): Promise<WalletBalance> {
+    const balance = await pullEvmNativeBalance(this.provider, address, blockHeight);
     const formattedBalance = ethers.utils.formatEther(balance.rawBalance);
+    
+    // Pull prices in USD for all the native tokens in single network call
+    await this.priceFeed?.pullTokenPrices();
+    const coingeckoId = coinGeckoIdByChainName[this.chainName];
+    const tokenUsdPrice = this.priceFeed?.getKey(coingeckoId);
 
     return {
       ...balance,
@@ -249,6 +255,11 @@ export class EvmWalletToolbox extends WalletToolbox {
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
+      blockHeight,
+      ...(tokenUsdPrice && {
+        balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+        tokenUsdPrice
+      })
     };
   }
 
@@ -256,7 +267,9 @@ export class EvmWalletToolbox extends WalletToolbox {
     address: string,
     tokens: string[],
   ): Promise<TokenBalance[]> {
-    const tokenBalances = await mapConcurrent(
+    // Pull prices in USD for all the tokens in single network call
+    const tokenPrices = await this.priceFeed?.pullTokenPrices();
+    return mapConcurrent(
       tokens,
       async tokenAddress => {
         const tokenData = this.tokenData[tokenAddress];
@@ -270,29 +283,24 @@ export class EvmWalletToolbox extends WalletToolbox {
           tokenData.decimals,
         );
 
+        const coinGeckoId = this.priceFeed?.getCoinGeckoId(tokenAddress);
+        const tokenUsdPrice = coinGeckoId && tokenPrices?.[coinGeckoId];
+
         return {
           ...balance,
           address,
           tokenAddress,
           formattedBalance,
+  
           symbol: tokenData.symbol,
+          ...(tokenUsdPrice && {
+            balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+            tokenUsdPrice
+          })
         };
       },
       this.options.tokenPollConcurrency,
     );
-    
-    // Pull prices in USD for all the tokens in single network call
-    await this.priceFeed?.pullTokenPrices(tokens);
-
-    // Add USD price to each token balance
-    return mapConcurrent(tokenBalances, async balance => {
-      const tokenPrice = await this.priceFeed?.getKey(balance.tokenAddress);
-      const tokenBalanceInUsd = tokenPrice ? Number(balance.formattedBalance) * Number(tokenPrice) : undefined;
-      return {
-        ...balance,
-        usd: tokenBalanceInUsd,
-      };
-    }, this.options.tokenPollConcurrency);
   }
 
   protected async transferNativeBalance(

@@ -23,6 +23,7 @@ import { getSuiAddressFromPrivateKey } from "../../balances/sui";
 import {mapConcurrent} from "../../utils";
 import { formatFixed } from "@ethersproject/bignumber";
 import { PriceFeed } from "../../wallet-manager";
+import { coinGeckoIdByChainName } from "../../price-assistant/supported-tokens.config";
 
 export const SUI_CHAINS = {
   [SUI]: 1,
@@ -162,15 +163,30 @@ export class SuiWalletToolbox extends WalletToolbox {
     }, [] as string[]);
   }
 
-  public async pullNativeBalance(address: string): Promise<WalletBalance> {
+  public async pullNativeBalance(address: string, blockHeight?: number): Promise<WalletBalance> {
     const balance = await pullSuiNativeBalance(this.connection, address);
     const formattedBalance = String(+balance.rawBalance / 10 ** 9);
+
+    if (blockHeight) {
+      this.logger.warn(`Sui does not support pulling balances by block height, ignoring blockHeight: ${blockHeight}`);
+    }
+    
+    // Pull prices in USD for all the native tokens in single network call
+    await this.priceFeed?.pullTokenPrices();
+    const coingeckoId = coinGeckoIdByChainName[this.chainName];
+    const tokenUsdPrice = this.priceFeed?.getKey(coingeckoId);
+    
     return {
       ...balance,
       address,
       formattedBalance,
       tokens: [],
       symbol: this.chainConfig.nativeCurrencySymbol,
+      blockHeight,
+      ...(tokenUsdPrice && {
+        balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+        tokenUsdPrice
+      })
     };
   }
 
@@ -180,57 +196,48 @@ export class SuiWalletToolbox extends WalletToolbox {
   ): Promise<TokenBalance[]> {
     const uniqueTokens = [...new Set(tokens)];
     const allBalances = await pullSuiTokenBalances(this.connection, address);
+    // Pull prices in USD for all the tokens in single network call
+    const tokenPrices = await this.priceFeed?.pullTokenPrices();
 
-    const tokenBalances = await mapConcurrent(uniqueTokens, async (tokenAddress: string) => {
+    return uniqueTokens.map(tokenAddress => {
       const tokenData = this.tokenData[tokenAddress];
       const symbol: string = tokenData?.symbol ? tokenData.symbol : "";
 
-      for (const balance of allBalances) {
-        if (balance.coinType === tokenData.address) {
+      const balance = allBalances.find(balance => balance.coinType === tokenData.address);
+      if (!balance) {
+        return {
+          tokenAddress,
+          address,
 
-          const formattedBalance = formatFixed(
-              balance.totalBalance,
-              tokenData?.decimals ? tokenData.decimals : 9
-          );
-
-          return {
-            tokenAddress,
-            address,
-            isNative: false,
-            rawBalance: balance.totalBalance,
-            formattedBalance,
-            symbol,
-          };
+          isNative: false,
+          rawBalance: "0",
+          formattedBalance: "0",
+          symbol,
         }
       }
+
+      const tokenDecimals = tokenData?.decimals ?? 9;
+      const formattedBalance = formatFixed(
+          balance.totalBalance,
+          tokenDecimals
+      );
+
+      const coinGeckoId = this.priceFeed?.getCoinGeckoId(tokenAddress);
+      const tokenUsdPrice = coinGeckoId && tokenPrices?.[coinGeckoId];
 
       return {
         tokenAddress,
         address,
         isNative: false,
-        rawBalance: "0",
-        formattedBalance: "0",
+        rawBalance: balance.totalBalance,
+        formattedBalance,
         symbol,
-      }
-    }, this.options.tokenPollConcurrency) as TokenBalance[];
-
-    // Pull prices in USD for all the tokens in single network call
-    await this.priceFeed?.pullTokenPrices(tokens);
-
-    // Add USD price to each token balance
-    return mapConcurrent(
-      tokenBalances,
-      async balance => {
-        const tokenPrice = await this.priceFeed?.getKey(balance.tokenAddress!);
-        const tokenBalanceInUsd = tokenPrice ? BigInt(balance.formattedBalance) * tokenPrice : undefined;
-    
-        return {
-          ...balance,
-          usd: tokenBalanceInUsd,
-        };
-      },
-      this.options.tokenPollConcurrency,
-    );
+        ...(tokenUsdPrice && {
+          balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+          tokenUsdPrice
+        })
+      };
+    });
   }
 
   protected async transferNativeBalance(

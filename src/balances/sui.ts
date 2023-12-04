@@ -18,6 +18,8 @@ export interface SuiTransactionDetails {
 export async function pullSuiNativeBalance(conn: Connection, address: string): Promise<WalletBalance> {
   const provider = new JsonRpcProvider(conn);
 
+  // mysten SDK doesn't support passing checkpoint (block number) to getBalance
+  // https://github.com/MystenLabs/sui/issues/14137
   const rawBalance = await provider.getBalance({ owner: address });
 
   return {
@@ -54,7 +56,15 @@ export async function pullSuiTokenData(
 export async function pullSuiTokenBalances(
     conn: Connection,
     address: string
-): Promise<any> {
+): Promise<{
+  coinType: string;
+  coinObjectCount: number;
+  totalBalance: string;
+  lockedBalance: {
+      number?: number | undefined;
+      epochId?: number | undefined;
+  };
+}[]> {
   const provider = new JsonRpcProvider(conn);
 
   return provider.getAllBalances({ owner: address });

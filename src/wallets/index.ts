@@ -2,6 +2,12 @@ import { z } from "zod";
 
 export const DEVNET = "devnet";
 
+export const enum Environment {
+  MAINNET = "mainnet",
+  TESTNET = "testnet",
+  DEVNET = "devnet",
+}
+
 import {
   EvmWalletOptions,
   EvmWalletToolbox,
@@ -80,7 +86,9 @@ export type Balance = {
   isNative: boolean;
   rawBalance: string;
   formattedBalance: string;
-  usd?: bigint;
+  blockHeight?: number;
+  tokenUsdPrice?: number;
+  balanceUsd?: number;
 };
 
 export type TokenBalance = Balance & {

@@ -57,7 +57,10 @@ export abstract class WalletToolbox {
   ): string;
 
   // Should return balances for a native address in the chain
-  abstract pullNativeBalance(address: string): Promise<WalletBalance>;
+  abstract pullNativeBalance(
+    address: string,
+    blockHeight?: number,
+  ): Promise<WalletBalance>;
 
   // Should return balances for tokens in the list for the address specified
   abstract pullTokenBalances(
@@ -107,6 +110,7 @@ export abstract class WalletToolbox {
   public async pullBalances(
     isRebalancingEnabled = false,
     minBalanceThreshold?: number,
+    blockHeight?: number,
   ): Promise<WalletBalance[]> {
     if (!this.warm) {
       this.logger.debug(
@@ -133,7 +137,7 @@ export abstract class WalletToolbox {
       let nativeBalance: WalletBalance;
 
       try {
-        nativeBalance = await this.pullNativeBalance(address);
+        nativeBalance = await this.pullNativeBalance(address, blockHeight);
 
         this.addOrDiscardWalletIfRequired(
           isRebalancingEnabled,
@@ -181,6 +185,10 @@ export abstract class WalletToolbox {
     }
 
     return balances;
+  }
+
+  public async pullBalancesAtBlockHeight(blockHeight: number) {
+    return this.pullBalances(false, undefined, blockHeight);
   }
 
   public async acquire(address?: string, acquireTimeout?: number) {

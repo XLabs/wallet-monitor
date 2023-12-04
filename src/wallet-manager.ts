@@ -2,7 +2,7 @@ import { EventEmitter } from "stream";
 
 import { z } from "zod";
 import winston from "winston";
-import { createLogger } from "./utils";
+import { createLogger, mapConcurrent } from "./utils";
 import { PrometheusExporter } from "./prometheus-exporter";
 import {
   ChainWalletManager,
@@ -23,6 +23,7 @@ import { RebalanceInstruction } from "./rebalance-strategies";
 import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
+import { preparePriceFeedConfig } from "./price-assistant/helper";
 
 export const WalletRebalancingConfigSchema = z.object({
   enabled: z.boolean(),
@@ -36,26 +37,45 @@ export const WalletRebalancingConfigSchema = z.object({
 const TokenInfoSchema = z.object({
   tokenContract: z.string(),
   chainId: z.number(),
+  chainName: z.string(),
   coingeckoId: CoinGeckoIdsSchema,
   symbol: z.string().optional(),
-})
+});
 
-export type TokenInfo = z.infer<
-  typeof TokenInfoSchema
->
+export type TokenInfo = z.infer<typeof TokenInfoSchema>;
 
 export const WalletPriceFeedConfigSchema = z.object({
-  enabled: z.boolean(),
   supportedTokens: z.array(TokenInfoSchema),
-  pricePrecision: z.number().optional(),
-  scheduled: z.object({
-    enabled: z.boolean().default(false),
-    interval: z.number().optional(),
-  }).optional(),
-})
+});
 
-export type WalletPriceFeedConfig = z.infer<
-  typeof WalletPriceFeedConfigSchema
+export const WalletPriceFeedOptionsSchema = z.object({
+  enabled: z.boolean(),
+  scheduled: z
+    .object({
+      enabled: z.boolean().default(false),
+      interval: z.number().optional(),
+    })
+    .optional(),
+});
+
+export const WalletBalanceConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    scheduled: z
+      .object({
+        enabled: z.boolean().default(false),
+        interval: z.number().optional(),
+      })
+      .optional(),
+  })
+  .optional();
+
+export type WalletBalanceConfig = z.infer<typeof WalletBalanceConfigSchema>;
+
+export type WalletPriceFeedConfig = z.infer<typeof WalletPriceFeedConfigSchema>;
+
+export type WalletPriceFeedOptions = z.infer<
+  typeof WalletPriceFeedOptionsSchema
 >;
 
 export type WalletRebalancingConfig = z.infer<
@@ -67,8 +87,10 @@ export const WalletManagerChainConfigSchema = z.object({
   // FIXME: This should be a zod schema
   chainConfig: z.any().optional(),
   rebalance: WalletRebalancingConfigSchema.optional(),
+  // This config can be used to control refresh balances behaviour
+  walletBalanceConfig: WalletBalanceConfigSchema.optional(),
   wallets: z.array(WalletConfigSchema),
-  priceFeedConfig: WalletPriceFeedConfigSchema.optional()
+  priceFeedConfig: WalletPriceFeedConfigSchema.optional(),
 });
 
 export const WalletManagerConfigSchema = z.record(
@@ -101,6 +123,7 @@ export const WalletManagerOptionsSchema = z.object({
     .optional(),
   failOnInvalidChain: z.boolean().default(true),
   failOnInvalidTokens: z.boolean().default(true).optional(),
+  priceFeedOptions: WalletPriceFeedOptionsSchema.optional(),
 });
 
 export type WalletManagerOptions = z.infer<typeof WalletManagerOptionsSchema>;
@@ -148,6 +171,24 @@ export class WalletManager {
       }
     }
 
+    const isPriceFeedEnabled = options?.priceFeedOptions?.enabled;
+    // Create PriceFeed instance once for all chains
+    let priceFeedInstance;
+    if (isPriceFeedEnabled) {
+      const allSupportedTokens = preparePriceFeedConfig(config);
+      if (options?.priceFeedOptions?.scheduled?.enabled) {
+        priceFeedInstance = new ScheduledPriceFeed(
+          { supportedTokens: allSupportedTokens, ...options.priceFeedOptions },
+          this.logger,
+        );
+      } else {
+        priceFeedInstance = new OnDemandPriceFeed(
+          { supportedTokens: allSupportedTokens },
+          this.logger,
+        );
+      }
+    }
+
     for (const [chainName, chainConfig] of Object.entries(config)) {
       if (!isChain(chainName)) {
         if (options?.failOnInvalidChain) {
@@ -157,6 +198,7 @@ export class WalletManager {
           continue;
         }
       }
+
       const network = chainConfig.network || getDefaultNetwork(chainName);
 
       const chainManagerConfig = {
@@ -165,14 +207,15 @@ export class WalletManager {
         logger: this.logger,
         rebalance: chainConfig.rebalance,
         walletOptions: chainConfig.chainConfig,
-        priceFeedConfig: chainConfig.priceFeedConfig,
+        walletBalanceConfig: chainConfig.walletBalanceConfig,
         balancePollInterval: options?.balancePollInterval,
         failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
       };
 
       const chainManager = new ChainWalletManager(
         chainManagerConfig,
-        chainConfig.wallets
+        chainConfig.wallets,
+        priceFeedInstance,
       );
 
       chainManager.on("error", error => {
@@ -183,7 +226,6 @@ export class WalletManager {
       chainManager.on(
         "balances",
         (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
-
           this.logger.verbose(`Balances updated for ${chainName} (${network})`);
           this.exporter?.updateBalances(chainName, network, balances);
 
@@ -223,11 +265,19 @@ export class WalletManager {
 
       chainManager.on("active-wallets-count", (chainName, network, count) => {
         this.exporter?.updateActiveWallets(chainName, network, count);
-      })
+      });
 
-      chainManager.on("wallets-lock-period", (chainName, network, walletAddress, lockTime) => {
-        this.exporter?.updateWalletsLockPeriod(chainName, network, walletAddress, lockTime);
-      })
+      chainManager.on(
+        "wallets-lock-period",
+        (chainName, network, walletAddress, lockTime) => {
+          this.exporter?.updateWalletsLockPeriod(
+            chainName,
+            network,
+            walletAddress,
+            lockTime,
+          );
+        },
+      );
 
       this.managers[chainName] = chainManager;
 
@@ -301,12 +351,97 @@ export class WalletManager {
     }
   }
 
-  public getAllBalances(): Record<string, WalletBalancesByAddress> {
+  private async balanceHandlerMapper(method: "getBalances" | "pullBalances") {
     const balances: Record<string, WalletBalancesByAddress> = {};
 
-    for (const [chainName, manager] of Object.entries(this.managers)) {
-      balances[chainName] = manager.getBalances();
+    await mapConcurrent(
+      Object.entries(this.managers),
+      async ([chainName, manager]) => {
+        const balancesByChain = await manager[method]();
+        balances[chainName] = balancesByChain;
+      },
+    );
+
+    return balances;
+  }
+
+  public async getAllBalances(): Promise<
+    Record<string, WalletBalancesByAddress>
+  > {
+    return await this.balanceHandlerMapper("getBalances");
+  }
+
+  public getBlockHeight(chainName: ChainName): Promise<number> {
+    const manager = this.managers[chainName];
+    if (!manager)
+      throw new Error(`No wallets configured for chain: ${chainName}`);
+
+    return manager.getBlockHeight();
+  }
+
+  // PullBalances doesn't need balances to be refreshed in the background
+  public async pullBalances(): Promise<
+    Record<string, WalletBalancesByAddress>
+  > {
+    return await this.balanceHandlerMapper("pullBalances");
+  }
+
+  private validateBlockHeightByChain(
+    blockHeightByChain: Record<ChainName, number>,
+  ) {
+    for (const chain in blockHeightByChain) {
+      const manager = this.managers[chain as ChainName];
+      if (!manager)
+        throw new Error(`No wallets configured for chain: ${chain}`);
     }
+  }
+
+  public async getBlockHeightForAllSupportedChains(): Promise<
+    Record<ChainName, number>
+  > {
+    // Required concurrency is the number of chains as we want to fetch the block height for all chains in parallel
+    // to be precise about the block height at the time of fetching balances
+    let blockHeightPerChain = {} as Record<ChainName, number>;
+    const requiredConcurrency = Object.keys(this.managers).length;
+    await mapConcurrent(
+      Object.entries(this.managers),
+      async ([chainName, manager]) => {
+        try {
+          const blockHeight = await manager.getBlockHeight();          
+          blockHeightPerChain = {
+            ...blockHeightPerChain,
+            [chainName]: blockHeight,
+          } as Record<ChainName, number>;
+        } catch (err) {
+          throw new Error(`No block height found for chain: ${chainName}, error: ${err}`);
+        }
+      },
+      requiredConcurrency,
+    );
+    return blockHeightPerChain;
+  }
+
+  // pullBalancesAtBlockHeight doesn't need balances to be refreshed in the background
+  public async pullBalancesAtBlockHeight(
+    blockHeightByChain?: Record<ChainName, number>,
+  ): Promise<Record<string, WalletBalancesByAddress>> {
+    const balances: Record<string, WalletBalancesByAddress> = {};
+    if (blockHeightByChain) {
+      this.validateBlockHeightByChain(blockHeightByChain);
+    }
+
+    const blockHeightPerChain = blockHeightByChain ?? await this.getBlockHeightForAllSupportedChains();
+
+    await mapConcurrent(
+      Object.entries(this.managers),
+      async ([chainName, manager]) => {
+        const blockHeight = blockHeightPerChain[chainName as ChainName];
+        const balancesByChain = await manager.pullBalancesAtBlockHeight(
+          blockHeight,
+        );
+        balances[chainName] = balancesByChain;
+      },
+    );
 
     return balances;
   }

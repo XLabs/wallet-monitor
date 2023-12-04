@@ -4,6 +4,7 @@ const SOLANA_TESTNET = 'solana-devnet';
 const SOLANA_CURRENCY_SYMBOL = 'SOL';
 
 export const SOLANA = 'solana';
+export const SOLANA_DEFAULT_COMMITMENT = 'finalized';
 
 export const SOLANA_NETWORKS = {
   [SOLANA_MAINNET]: 1,
