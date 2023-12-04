@@ -53,7 +53,7 @@ export const coinGeckoIdByChainName = {
   "cosmoshub": "cosmos",
   "evmos": "evmos",
   "kujira": "kujira",
-  "gateway": "gateway"
+  "wormchain": "gateway"
 } as const satisfies Record<ChainName, CoinGeckoIds>;
 
 const mainnetNativeTokens = [
