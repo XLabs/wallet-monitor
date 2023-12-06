@@ -82,6 +82,8 @@ export type WalletRebalancingConfig = z.infer<
   typeof WalletRebalancingConfigSchema
 >;
 
+type WalletManagerChainConfig = z.infer<typeof WalletManagerChainConfigSchema>;
+
 export const WalletManagerChainConfigSchema = z.object({
   network: z.string().optional(),
   // FIXME: This should be a zod schema
@@ -162,6 +164,7 @@ export class WalletManager {
     this.logger = createLogger(options?.logger, options?.logLevel, {
       label: "WalletManager",
     });
+
     this.managers = {} as Record<ChainName, ChainWalletManager>;
 
     if (options?.metrics?.enabled) {
@@ -193,7 +196,8 @@ export class WalletManager {
       }
     }
 
-    for (const [chainName, chainConfig] of Object.entries(config)) {
+    for (const entry  of Object.entries(config)) {
+      const [chainName, chainConfig] = entry as [ChainName, WalletManagerChainConfig]
       if (!isChain(chainName)) {
         if (options?.failOnInvalidChain) {
           throw new Error(`Invalid chain name: ${chainName}`);
@@ -203,87 +207,7 @@ export class WalletManager {
         }
       }
 
-      const network = chainConfig.network || getDefaultNetwork(chainName);
-
-      const chainManagerConfig = {
-        network,
-        chainName,
-        logger: this.logger,
-        rebalance: chainConfig.rebalance,
-        walletOptions: chainConfig.chainConfig,
-        walletBalanceConfig: chainConfig.walletBalanceConfig,
-        balancePollInterval: options?.balancePollInterval,
-        failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
-      };
-
-      const chainManager = new ChainWalletManager(
-        chainManagerConfig,
-        chainConfig.wallets,
-        priceFeedInstance,
-      );
-
-      chainManager.on("error", error => {
-        this.logger.error("Error in chain manager: ${error}");
-        this.emitter.emit("error", error, chainName);
-      });
-
-      chainManager.on(
-        "balances",
-        (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
-          this.logger.verbose(`Balances updated for ${chainName} (${network})`);
-          this.exporter?.updateBalances(chainName, network, balances);
-
-          this.emitter.emit(
-            "balances",
-            chainName,
-            network,
-            balances,
-            previousBalances,
-          );
-        },
-      );
-
-      chainManager.on(
-        "rebalance-started",
-        (strategy: string, instructions: RebalanceInstruction[]) => {
-          this.logger.info(
-            `Rebalance Started. Instructions to execute: ${instructions.length}`,
-          );
-        },
-      );
-
-      chainManager.on(
-        "rebalance-finished",
-        (strategy: string, receipts: TransferReceipt[]) => {
-          this.logger.info(
-            `Rebalance Finished. Executed transactions: ${receipts.length}}`,
-          );
-          this.exporter?.updateRebalanceSuccess(chainName, strategy, receipts);
-        },
-      );
-
-      chainManager.on("rebalance-error", (error, _, strategy) => {
-        this.logger.error(`Rebalance Error: ${error}`);
-        this.exporter?.updateRebalanceFailure(chainName, strategy);
-      });
-
-      // TODO: Events shouldreflect things happening, not metrics
-      chainManager.on("active-wallets-count", (chainName, network, count) => {
-        this.exporter?.updateActiveWallets(chainName, network, count);
-      });
-
-      // TODO: Events should reflect things happening, not metrics
-      chainManager.on(
-        "wallets-lock-period",
-        (chainName, network, walletAddress, lockTime) => {
-          this.exporter?.updateWalletsLockPeriod(
-            chainName,
-            network,
-            walletAddress,
-            lockTime,
-          );
-        },
-      );
+      const chainManager = this.buildChainManager(chainName, chainConfig, priceFeedInstance, options);
 
       this.managers[chainName] = chainManager;
 
@@ -296,6 +220,97 @@ export class WalletManager {
     if (!manager)
       throw new Error(`No wallets configured for chain: ${chainName}`);
     return manager;
+  }
+
+  private buildChainManager(
+    chainName: ChainName,
+    chainConfig: WalletManagerChainConfig,
+    priceFeedInstance?: PriceFeed,
+    options?: WalletManagerOptions
+  ) {
+    const network = chainConfig.network || getDefaultNetwork(chainName);
+
+    const chainManagerConfig = {
+      network,
+      chainName,
+      logger: this.logger,
+      rebalance: chainConfig.rebalance,
+      walletOptions: chainConfig.chainConfig,
+      walletBalanceConfig: chainConfig.walletBalanceConfig,
+      balancePollInterval: options?.balancePollInterval,
+      failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
+    };
+
+    const chainManager = new ChainWalletManager(
+      chainManagerConfig,
+      chainConfig.wallets,
+      priceFeedInstance,
+    );
+
+    chainManager.on("error", error => {
+      this.logger.error("Error in chain manager: ${error}");
+      this.emitter.emit("error", error, chainName);
+    });
+
+    chainManager.on(
+      "balances",
+      (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
+        this.logger.verbose(`Balances updated for ${chainName} (${network})`);
+        this.exporter?.updateBalances(chainName, network, balances);
+
+        this.emitter.emit(
+          "balances",
+          chainName,
+          network,
+          balances,
+          previousBalances,
+        );
+      },
+    );
+
+    chainManager.on(
+      "rebalance-started",
+      (strategy: string, instructions: RebalanceInstruction[]) => {
+        this.logger.info(
+          `Rebalance Started. Instructions to execute: ${instructions.length}`,
+        );
+      },
+    );
+
+    chainManager.on(
+      "rebalance-finished",
+      (strategy: string, receipts: TransferReceipt[]) => {
+        this.logger.info(
+          `Rebalance Finished. Executed transactions: ${receipts.length}}`,
+        );
+        this.exporter?.updateRebalanceSuccess(chainName, strategy, receipts);
+      },
+    );
+
+    chainManager.on("rebalance-error", (error, _, strategy) => {
+      this.logger.error(`Rebalance Error: ${error}`);
+      this.exporter?.updateRebalanceFailure(chainName, strategy);
+    });
+
+    // TODO: Events shouldreflect things happening, not metrics
+    chainManager.on("active-wallets-count", (chainName, network, count) => {
+      this.exporter?.updateActiveWallets(chainName, network, count);
+    });
+
+    // TODO: Events should reflect things happening, not metrics
+    chainManager.on(
+      "wallets-lock-period",
+      (chainName, network, walletAddress, lockTime) => {
+        this.exporter?.updateWalletsLockPeriod(
+          chainName,
+          network,
+          walletAddress,
+          lockTime,
+        );
+      },
+    );
+
+    return chainManager;
   }
 
   public stop() {
