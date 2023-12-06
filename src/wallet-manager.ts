@@ -291,6 +291,13 @@ export class WalletManager {
     }
   }
 
+  private getManager(chainName: ChainName) {
+    const manager = this.managers[chainName];
+    if (!manager)
+      throw new Error(`No wallets configured for chain: ${chainName}`);
+    return manager;
+  }
+
   public stop() {
     Object.values(this.managers).forEach(manager => manager.stop());
   }
@@ -311,10 +318,7 @@ export class WalletManager {
     chainName: ChainName,
     opts?: WalletExecuteOptions,
   ): Promise<WalletInterface> {
-    const chainManager = this.managers[chainName];
-    if (!chainManager)
-      throw new Error(`No wallets configured for chain: ${chainName}`);
-
+    const chainManager = this.getManager(chainName);
     let wallet: WalletInterface;
     try {
       wallet = await chainManager.acquireLock(opts);
@@ -327,10 +331,7 @@ export class WalletManager {
   }
 
   public releaseLock(chainName: ChainName, address: string) {
-    const chainManager = this.managers[chainName];
-    if (!chainManager)
-      throw new Error(`No wallets configured for chain: ${chainName}`);
-
+    const chainManager = this.getManager(chainName);
     return chainManager.releaseLock(address);
   }
 
@@ -357,7 +358,7 @@ export class WalletManager {
     }
   }
 
-  private async mapToChains<T>(method: (chain: ChainName, manager: ChainWalletManager) =>  Promise<T>): Promise<MapChainsResult<T>> {
+  public async mapToChains<T>(method: (chain: ChainName, manager: ChainWalletManager) =>  Promise<T>): Promise<MapChainsResult<T>> {
     const result  = {} as MapChainsResult<T>;
 
     await mapConcurrent(
@@ -390,13 +391,9 @@ export class WalletManager {
   }
 
   public getBlockHeight(chainName: ChainName): Promise<number> {
-    const manager = this.managers[chainName];
-    if (!manager)
-      throw new Error(`No wallets configured for chain: ${chainName}`);
-
+    const manager = this.getManager(chainName);
     return manager.getBlockHeight();
   }
-
 
   private validateBlockHeightByChain(
     blockHeightByChain: Record<ChainName, number>,
@@ -459,9 +456,7 @@ export class WalletManager {
   }
 
   public getChainBalances(chainName: ChainName): WalletBalancesByAddress {
-    const manager = this.managers[chainName];
-    if (!manager)
-      throw new Error(`No wallets configured for chain: ${chainName}`);
+    const manager = this.getManager(chainName);
 
     return manager.getBalances();
   }
