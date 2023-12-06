@@ -373,7 +373,7 @@ export class WalletManager {
     }
   }
 
-  public async mapToChains<T>(method: (chain: ChainName, manager: ChainWalletManager) =>  Promise<T>): Promise<MapChainsResult<T>> {
+  public async mapToChains<T>(method: (chain: ChainName, manager: ChainWalletManager) =>  Promise<T>, concurrency?: number): Promise<MapChainsResult<T>> {
     const result  = {} as MapChainsResult<T>;
 
     await mapConcurrent(
@@ -382,6 +382,7 @@ export class WalletManager {
         const chainName = chain as ChainName;
         result[chainName] = await method(chainName as ChainName, manager) as T;
       },
+      concurrency,
     );
 
     return result;
@@ -423,26 +424,9 @@ export class WalletManager {
   public async getBlockHeightForAllSupportedChains(): Promise<
     Record<ChainName, number>
   > {
-    // Required concurrency is the number of chains as we want to fetch the block height for all chains in parallel
-    // to be precise about the block height at the time of fetching balances
-    let blockHeightPerChain = {} as Record<ChainName, number>;
-    const requiredConcurrency = Object.keys(this.managers).length;
-    await mapConcurrent(
-      Object.entries(this.managers),
-      async ([chainName, manager]) => {
-        try {
-          const blockHeight = await manager.getBlockHeight();          
-          blockHeightPerChain = {
-            ...blockHeightPerChain,
-            [chainName]: blockHeight,
-          } as Record<ChainName, number>;
-        } catch (err) {
-          throw new Error(`No block height found for chain: ${chainName}, error: ${err}`);
-        }
-      },
-      requiredConcurrency,
-    );
-    return blockHeightPerChain;
+    return this.mapToChains<number>(async (chainName: ChainName, manager: ChainWalletManager) => {
+      return manager.getBlockHeight();
+    }, Object.keys(this.managers).length);
   }
 
   // pullBalancesAtBlockHeight doesn't need balances to be refreshed in the background
