@@ -244,6 +244,7 @@ export class WalletManager {
     const chainManager = new ChainWalletManager(
       chainManagerConfig,
       chainConfig.wallets,
+      // TODO: review why does ChainWalletManager has price feed as an injected dependency :/ 
       priceFeedInstance,
     );
 
@@ -410,17 +411,6 @@ export class WalletManager {
     const manager = this.getManager(chainName);
     return manager.getBlockHeight();
   }
-
-  private validateBlockHeightByChain(
-    blockHeightByChain: Record<ChainName, number>,
-  ) {
-    for (const chain in blockHeightByChain) {
-      const manager = this.managers[chain as ChainName];
-      if (!manager)
-        throw new Error(`No wallets configured for chain: ${chain}`);
-    }
-  }
-
   public async getBlockHeightForAllSupportedChains(): Promise<
     Record<ChainName, number>
   > {
@@ -429,29 +419,17 @@ export class WalletManager {
     }, Object.keys(this.managers).length);
   }
 
-  // pullBalancesAtBlockHeight doesn't need balances to be refreshed in the background
-  public async pullBalancesAtBlockHeight(
-    blockHeightByChain?: Record<ChainName, number>,
-  ): Promise<Record<string, WalletBalancesByAddress>> {
-    const balances: Record<string, WalletBalancesByAddress> = {};
-    if (blockHeightByChain) {
-      this.validateBlockHeightByChain(blockHeightByChain);
-    }
+  // This method is similar to pullBalances, but it gets the block-height of each chain concurrently 
+  // and uses the resulting block-height to pull balances at that specific block-height
+  // it tends to return a balance that better represents a snapshot in time (as opposed to pullBalances
+  // which tries to return the latest possible balance)
+  public async pullBalancesAtCurrentBlockHeight(): Promise<Record<string, WalletBalancesByAddress>> {
+    const blockHeightByChain = await this.getBlockHeightForAllSupportedChains();
 
-    const blockHeightPerChain = blockHeightByChain ?? await this.getBlockHeightForAllSupportedChains();
-
-    await mapConcurrent(
-      Object.entries(this.managers),
-      async ([chainName, manager]) => {
-        const blockHeight = blockHeightPerChain[chainName as ChainName];
-        const balancesByChain = await manager.pullBalancesAtBlockHeight(
-          blockHeight,
-        );
-        balances[chainName] = balancesByChain;
-      },
-    );
-
-    return balances;
+    return this.mapToChains(async (chainName: ChainName, manager: ChainWalletManager) => {
+      const blockHeight = blockHeightByChain[chainName];
+      return manager.pullBalancesAtBlockHeight(blockHeight);  
+    });
   }
 
   public getChainBalances(chainName: ChainName): WalletBalancesByAddress {
