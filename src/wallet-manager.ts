@@ -24,6 +24,7 @@ import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 import { preparePriceFeedConfig } from "./price-assistant/helper";
+import { ChainName } from '../lib/wallets/index';
 
 export const WalletRebalancingConfigSchema = z.object({
   enabled: z.boolean(),
@@ -150,6 +151,8 @@ export function getDefaultNetwork(chainName: ChainName) {
 
 export type PriceFeed = ScheduledPriceFeed | OnDemandPriceFeed;
 
+export type MapChainsResult<T> = Record<ChainName, T>;
+
 export class WalletManager {
   private emitter: EventEmitter = new EventEmitter();
   private managers: Record<ChainName, ChainWalletManager>;
@@ -172,7 +175,9 @@ export class WalletManager {
     }
 
     const isPriceFeedEnabled = options?.priceFeedOptions?.enabled;
-    // Create PriceFeed instance once for all chains
+    
+    // TODO: might be better to remove price feed from wallet manager to avoid cluttering
+    // PriceFeed can be used as a singleton until we have it as a separate "PriceOracle" service
     let priceFeedInstance;
     if (isPriceFeedEnabled) {
       const allSupportedTokens = preparePriceFeedConfig(config);
@@ -263,10 +268,12 @@ export class WalletManager {
         this.exporter?.updateRebalanceFailure(chainName, strategy);
       });
 
+      // TODO: Events shouldreflect things happening, not metrics
       chainManager.on("active-wallets-count", (chainName, network, count) => {
         this.exporter?.updateActiveWallets(chainName, network, count);
       });
 
+      // TODO: Events should reflect things happening, not metrics
       chainManager.on(
         "wallets-lock-period",
         (chainName, network, walletAddress, lockTime) => {
@@ -351,24 +358,36 @@ export class WalletManager {
     }
   }
 
-  private async balanceHandlerMapper(method: "getBalances" | "pullBalances") {
-    const balances: Record<string, WalletBalancesByAddress> = {};
+  private async mapToChains<T>(method: (chain: ChainName, manager: ChainWalletManager) =>  Promise<T>): Promise<MapChainsResult<T>> {
+    const result  = {} as MapChainsResult<T>;
 
     await mapConcurrent(
       Object.entries(this.managers),
-      async ([chainName, manager]) => {
-        const balancesByChain = await manager[method]();
-        balances[chainName] = balancesByChain;
+      async ([chain, manager]) => {
+        const chainName = chain as ChainName;
+        result[chainName] = await method(chainName as ChainName, manager) as T;
       },
     );
 
-    return balances;
+    return result;
   }
 
+  // gets balances from memory
   public async getAllBalances(): Promise<
-    Record<string, WalletBalancesByAddress>
+    MapChainsResult<WalletBalancesByAddress>
   > {
-    return await this.balanceHandlerMapper("getBalances");
+    return await this.mapToChains(async(_chainName: ChainName, manager: ChainWalletManager) => {
+      return manager.getBalances();
+    });
+  }
+  
+  // pulls de balances from the node
+  public async pullBalances(): Promise<
+    MapChainsResult<WalletBalancesByAddress>
+  > {
+    return this.mapToChains(async (chainName: ChainName, manager: ChainWalletManager) => {
+      return manager.pullBalances();
+    });
   }
 
   public getBlockHeight(chainName: ChainName): Promise<number> {
@@ -379,12 +398,6 @@ export class WalletManager {
     return manager.getBlockHeight();
   }
 
-  // PullBalances doesn't need balances to be refreshed in the background
-  public async pullBalances(): Promise<
-    Record<string, WalletBalancesByAddress>
-  > {
-    return await this.balanceHandlerMapper("pullBalances");
-  }
 
   private validateBlockHeightByChain(
     blockHeightByChain: Record<ChainName, number>,
