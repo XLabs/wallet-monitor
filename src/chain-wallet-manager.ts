@@ -8,7 +8,7 @@ import {
   Wallet,
   WalletBalance,
 } from "./wallets";
-import { TransferRecepit } from "./wallets/base-wallet";
+import { TransferReceipt } from "./wallets/base-wallet";
 import {
   rebalanceStrategies,
   RebalanceStrategyName,
@@ -362,7 +362,7 @@ export class ChainWalletManager {
 
     this.emitter.emit("rebalance-started", strategy, instructions);
 
-    const receipts: TransferRecepit[] = [];
+    const receipts: TransferReceipt[] = [];
 
     for (const instruction of instructions) {
       const { sourceAddress, targetAddress, amount } = instruction;

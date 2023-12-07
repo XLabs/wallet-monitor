@@ -92,7 +92,9 @@ export type Balance = {
 };
 
 export type TokenBalance = Balance & {
-  tokenAddress?: string; // Why can solana tokens not have a token address?
+  // TODO: put Solana mint address here and make this not optional
+  // Otherwise handle this as a tagged union if there are other types of tokens there.
+  tokenAddress?: string;
 };
 
 export type WalletBalance = Balance & {

@@ -13,6 +13,7 @@ module.exports = {
   },
   plugins: ["@typescript-eslint", "unused-imports"],
   rules: {
-    "unused-imports/no-unused-imports-ts": 2,
+    "unused-imports/no-unused-imports-ts": "error",
+    "@typescript-eslint/no-empty-function": "off",
   },
 };

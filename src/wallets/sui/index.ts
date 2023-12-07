@@ -4,7 +4,7 @@ import { WalletConfig, WalletBalance, TokenBalance } from "../";
 import {
   WalletToolbox,
   BaseWalletOptions,
-  TransferRecepit, WalletData,
+  TransferReceipt, WalletData,
 } from "../base-wallet";
 import { 
   SuiTokenData, 
@@ -70,6 +70,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     options: SuiWalletOptions,
     priceFeed?: PriceFeed
   ) {
+    // TODO: purge useless wallet pool
     super(network, chainName, rawConfig, options);
     this.chainConfig = SUI_CHAIN_CONFIGS[this.chainName];
 
@@ -246,7 +247,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     amount: number,
     maxGasPrice?: number,
     gasLimit?: number
-  ): Promise<TransferRecepit> {
+  ): Promise<TransferReceipt> {
     const txDetails = { targetAddress, amount, maxGasPrice, gasLimit };
     return transferSuiNativeBalance(this.connection, privateKey, txDetails);
   }
@@ -277,4 +278,25 @@ export class SuiWalletToolbox extends WalletToolbox {
     const sequenceNumber = await suiJsonProvider.getLatestCheckpointSequenceNumber();
     return Number(sequenceNumber);
   }
+
+  public async acquire(address?: string, acquireTimeout?: number) {
+    // We'll pick the first one only
+    const wallets = Object.values(this.wallets).filter(
+      ({ privateKey }) => privateKey !== undefined,
+    );
+    if (wallets.length === 0) {
+      throw new Error("No signer wallet found for Sui.");
+    }
+
+    const wallet = wallets[0];
+    const privateKey = wallet.privateKey;
+
+    return {
+      address: wallet.address,
+      // We already checked that the private key is defined above
+      rawWallet: await this.getRawWallet(privateKey!),
+    };
+  }
+
+  public async release(address: string): Promise<void> {}
 }

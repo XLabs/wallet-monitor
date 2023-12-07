@@ -18,13 +18,12 @@ import {
   WalletBalance,
   WalletConfigSchema,
 } from "./wallets";
-import { TransferRecepit } from "./wallets/base-wallet";
+import { TransferReceipt } from "./wallets/base-wallet";
 import { RebalanceInstruction } from "./rebalance-strategies";
 import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 import { preparePriceFeedConfig } from "./price-assistant/helper";
-import { ChainName } from '../lib/wallets/index';
 
 export const WalletRebalancingConfigSchema = z.object({
   enabled: z.boolean(),
@@ -255,7 +254,7 @@ export class WalletManager {
 
       chainManager.on(
         "rebalance-finished",
-        (strategy: string, receipts: TransferRecepit[]) => {
+        (strategy: string, receipts: TransferReceipt[]) => {
           this.logger.info(
             `Rebalance Finished. Executed transactions: ${receipts.length}}`,
           );

@@ -15,7 +15,7 @@ import {
 import { PYTHNET, PYTHNET_CHAIN_CONFIG } from "./pythnet.config";
 import {
   BaseWalletOptions,
-  TransferRecepit,
+  TransferReceipt,
   WalletToolbox,
 } from "../base-wallet";
 import {
@@ -84,6 +84,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     options: WalletOptions,
     priceFeed?: PriceFeed,
   ) {
+    // TODO: purge useless wallet pool
     super(network, chainName, rawConfig, options);
 
     this.chainConfig = SOLANA_CHAIN_CONFIGS[this.chainName];
@@ -192,8 +193,8 @@ export class SolanaWalletToolbox extends WalletToolbox {
         address,
         formattedBalance: formattedBalance.toString(),
         symbol: tokenKnownSymbol ?? "unknown",
-        ...(tokenUsdPrice && {
-          balanceUsd: Number(formattedBalance) * tokenUsdPrice,
+        ...(tokenUsdPrice !== undefined && {
+          balanceUsd: formattedBalance * tokenUsdPrice,
           tokenUsdPrice
         })
       };
@@ -261,7 +262,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     sourceAddress: string,
     targetAddress: string,
     amount: number,
-  ): Promise<TransferRecepit> {
+  ): Promise<TransferReceipt> {
     // TODO: implement
     throw new Error(
       "SolanaWalletToolbox.transferNativeBalance not implemented.",
@@ -310,4 +311,25 @@ export class SolanaWalletToolbox extends WalletToolbox {
   public async getBlockHeight(): Promise<number> {
     return this.connection.getBlockHeight(SOLANA_DEFAULT_COMMITMENT);
   }
+
+  public async acquire(address?: string, acquireTimeout?: number) {
+    // We'll pick the first one only
+    const wallets = Object.values(this.wallets).filter(
+      ({ privateKey }) => privateKey !== undefined,
+    );
+    if (wallets.length === 0) {
+      throw new Error("No signer wallet found for Solana.");
+    }
+
+    const wallet = wallets[0];
+    const privateKey = wallet.privateKey;
+
+    return {
+      address: wallet.address,
+      // We already checked that the private key is defined above
+      rawWallet: await this.getRawWallet(privateKey!),
+    };
+  }
+
+  public async release(address: string): Promise<void> {}
 }

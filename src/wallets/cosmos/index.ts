@@ -5,7 +5,7 @@ import { Wallets } from "../../chain-wallet-manager";
 import { PriceFeed } from "../../wallet-manager";
 import {
   BaseWalletOptions,
-  TransferRecepit,
+  TransferReceipt,
   WalletToolbox,
 } from "../base-wallet";
 import {
@@ -205,7 +205,7 @@ export class CosmosWalletToolbox extends WalletToolbox {
     amount: number,
     maxGasPrice?: number | undefined,
     gasLimit?: number | undefined,
-  ): Promise<TransferRecepit> {
+  ): Promise<TransferReceipt> {
     const { addressPrefix, defaultDecimals, nativeDenom, minGasPrice } =
       this.chainConfig.defaultConfigs[this.network];
     const nodeUrl = this.options.nodeUrl!;
