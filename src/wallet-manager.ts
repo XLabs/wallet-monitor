@@ -24,7 +24,6 @@ import { CoinGeckoIdsSchema } from "./price-assistant/supported-tokens.config";
 import { ScheduledPriceFeed } from "./price-assistant/scheduled-price-feed";
 import { OnDemandPriceFeed } from "./price-assistant/ondemand-price-feed";
 import { preparePriceFeedConfig } from "./price-assistant/helper";
-import { ChainName } from '../lib/wallets/index';
 
 export const WalletRebalancingConfigSchema = z.object({
   enabled: z.boolean(),
