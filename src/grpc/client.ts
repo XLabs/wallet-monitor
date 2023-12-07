@@ -197,4 +197,8 @@ export class ClientWalletManager implements IClientWalletManager {
 
     return balances;
   }
+
+  public async pullBalancesAtCurrentBlockHeight(): Promise<Record<string, WalletBalancesByAddress>> {
+    throw new Error("Method not implemented.");
+  }
 }

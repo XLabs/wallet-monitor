@@ -82,6 +82,8 @@ export type WalletRebalancingConfig = z.infer<
   typeof WalletRebalancingConfigSchema
 >;
 
+type WalletManagerChainConfig = z.infer<typeof WalletManagerChainConfigSchema>;
+
 export const WalletManagerChainConfigSchema = z.object({
   network: z.string().optional(),
   // FIXME: This should be a zod schema
@@ -162,6 +164,7 @@ export class WalletManager {
     this.logger = createLogger(options?.logger, options?.logLevel, {
       label: "WalletManager",
     });
+
     this.managers = {} as Record<ChainName, ChainWalletManager>;
 
     if (options?.metrics?.enabled) {
@@ -193,7 +196,8 @@ export class WalletManager {
       }
     }
 
-    for (const [chainName, chainConfig] of Object.entries(config)) {
+    for (const entry  of Object.entries(config)) {
+      const [chainName, chainConfig] = entry as [ChainName, WalletManagerChainConfig]
       if (!isChain(chainName)) {
         if (options?.failOnInvalidChain) {
           throw new Error(`Invalid chain name: ${chainName}`);
@@ -203,92 +207,111 @@ export class WalletManager {
         }
       }
 
-      const network = chainConfig.network || getDefaultNetwork(chainName);
-
-      const chainManagerConfig = {
-        network,
-        chainName,
-        logger: this.logger,
-        rebalance: chainConfig.rebalance,
-        walletOptions: chainConfig.chainConfig,
-        walletBalanceConfig: chainConfig.walletBalanceConfig,
-        balancePollInterval: options?.balancePollInterval,
-        failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
-      };
-
-      const chainManager = new ChainWalletManager(
-        chainManagerConfig,
-        chainConfig.wallets,
-        priceFeedInstance,
-      );
-
-      chainManager.on("error", error => {
-        this.logger.error("Error in chain manager: ${error}");
-        this.emitter.emit("error", error, chainName);
-      });
-
-      chainManager.on(
-        "balances",
-        (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
-          this.logger.verbose(`Balances updated for ${chainName} (${network})`);
-          this.exporter?.updateBalances(chainName, network, balances);
-
-          this.emitter.emit(
-            "balances",
-            chainName,
-            network,
-            balances,
-            previousBalances,
-          );
-        },
-      );
-
-      chainManager.on(
-        "rebalance-started",
-        (strategy: string, instructions: RebalanceInstruction[]) => {
-          this.logger.info(
-            `Rebalance Started. Instructions to execute: ${instructions.length}`,
-          );
-        },
-      );
-
-      chainManager.on(
-        "rebalance-finished",
-        (strategy: string, receipts: TransferReceipt[]) => {
-          this.logger.info(
-            `Rebalance Finished. Executed transactions: ${receipts.length}}`,
-          );
-          this.exporter?.updateRebalanceSuccess(chainName, strategy, receipts);
-        },
-      );
-
-      chainManager.on("rebalance-error", (error, _, strategy) => {
-        this.logger.error(`Rebalance Error: ${error}`);
-        this.exporter?.updateRebalanceFailure(chainName, strategy);
-      });
-
-      // TODO: Events shouldreflect things happening, not metrics
-      chainManager.on("active-wallets-count", (chainName, network, count) => {
-        this.exporter?.updateActiveWallets(chainName, network, count);
-      });
-
-      // TODO: Events should reflect things happening, not metrics
-      chainManager.on(
-        "wallets-lock-period",
-        (chainName, network, walletAddress, lockTime) => {
-          this.exporter?.updateWalletsLockPeriod(
-            chainName,
-            network,
-            walletAddress,
-            lockTime,
-          );
-        },
-      );
+      const chainManager = this.buildChainManager(chainName, chainConfig, priceFeedInstance, options);
 
       this.managers[chainName] = chainManager;
 
       chainManager.start();
     }
+  }
+
+  private getManager(chainName: ChainName) {
+    const manager = this.managers[chainName];
+    if (!manager)
+      throw new Error(`No wallets configured for chain: ${chainName}`);
+    return manager;
+  }
+
+  private buildChainManager(
+    chainName: ChainName,
+    chainConfig: WalletManagerChainConfig,
+    priceFeedInstance?: PriceFeed,
+    options?: WalletManagerOptions
+  ) {
+    const network = chainConfig.network || getDefaultNetwork(chainName);
+
+    const chainManagerConfig = {
+      network,
+      chainName,
+      logger: this.logger,
+      rebalance: chainConfig.rebalance,
+      walletOptions: chainConfig.chainConfig,
+      walletBalanceConfig: chainConfig.walletBalanceConfig,
+      balancePollInterval: options?.balancePollInterval,
+      failOnInvalidTokens: options?.failOnInvalidTokens ?? true,
+    };
+
+    const chainManager = new ChainWalletManager(
+      chainManagerConfig,
+      chainConfig.wallets,
+      // TODO: review why does ChainWalletManager has price feed as an injected dependency :/ 
+      priceFeedInstance,
+    );
+
+    chainManager.on("error", error => {
+      this.logger.error("Error in chain manager: ${error}");
+      this.emitter.emit("error", error, chainName);
+    });
+
+    chainManager.on(
+      "balances",
+      (balances: WalletBalance[], previousBalances: WalletBalance[]) => {
+        this.logger.verbose(`Balances updated for ${chainName} (${network})`);
+        this.exporter?.updateBalances(chainName, network, balances);
+
+        this.emitter.emit(
+          "balances",
+          chainName,
+          network,
+          balances,
+          previousBalances,
+        );
+      },
+    );
+
+    chainManager.on(
+      "rebalance-started",
+      (strategy: string, instructions: RebalanceInstruction[]) => {
+        this.logger.info(
+          `Rebalance Started. Instructions to execute: ${instructions.length}`,
+        );
+      },
+    );
+
+    chainManager.on(
+      "rebalance-finished",
+      (strategy: string, receipts: TransferReceipt[]) => {
+        this.logger.info(
+          `Rebalance Finished. Executed transactions: ${receipts.length}}`,
+        );
+        this.exporter?.updateRebalanceSuccess(chainName, strategy, receipts);
+      },
+    );
+
+    chainManager.on("rebalance-error", (error, _, strategy) => {
+      this.logger.error(`Rebalance Error: ${error}`);
+      this.exporter?.updateRebalanceFailure(chainName, strategy);
+    });
+
+    // TODO: Events shouldreflect things happening, not metrics
+    chainManager.on("active-wallets-count", (chainName, network, count) => {
+      this.exporter?.updateActiveWallets(chainName, network, count);
+    });
+
+    // TODO: Events should reflect things happening, not metrics
+    chainManager.on(
+      "wallets-lock-period",
+      (chainName, network, walletAddress, lockTime) => {
+        this.exporter?.updateWalletsLockPeriod(
+          chainName,
+          network,
+          walletAddress,
+          lockTime,
+        );
+      },
+    );
+
+    return chainManager;
   }
 
   public stop() {
@@ -311,10 +334,7 @@ export class WalletManager {
     chainName: ChainName,
     opts?: WalletExecuteOptions,
   ): Promise<WalletInterface> {
-    const chainManager = this.managers[chainName];
-    if (!chainManager)
-      throw new Error(`No wallets configured for chain: ${chainName}`);
-
+    const chainManager = this.getManager(chainName);
     let wallet: WalletInterface;
     try {
       wallet = await chainManager.acquireLock(opts);
@@ -327,10 +347,7 @@ export class WalletManager {
   }
 
   public releaseLock(chainName: ChainName, address: string) {
-    const chainManager = this.managers[chainName];
-    if (!chainManager)
-      throw new Error(`No wallets configured for chain: ${chainName}`);
-
+    const chainManager = this.getManager(chainName);
     return chainManager.releaseLock(address);
   }
 
@@ -357,7 +374,7 @@ export class WalletManager {
     }
   }
 
-  private async mapToChains<T>(method: (chain: ChainName, manager: ChainWalletManager) =>  Promise<T>): Promise<MapChainsResult<T>> {
+  public async mapToChains<T>(method: (chain: ChainName, manager: ChainWalletManager) =>  Promise<T>, concurrency?: number): Promise<MapChainsResult<T>> {
     const result  = {} as MapChainsResult<T>;
 
     await mapConcurrent(
@@ -366,6 +383,7 @@ export class WalletManager {
         const chainName = chain as ChainName;
         result[chainName] = await method(chainName as ChainName, manager) as T;
       },
+      concurrency,
     );
 
     return result;
@@ -390,78 +408,32 @@ export class WalletManager {
   }
 
   public getBlockHeight(chainName: ChainName): Promise<number> {
-    const manager = this.managers[chainName];
-    if (!manager)
-      throw new Error(`No wallets configured for chain: ${chainName}`);
-
+    const manager = this.getManager(chainName);
     return manager.getBlockHeight();
   }
-
-
-  private validateBlockHeightByChain(
-    blockHeightByChain: Record<ChainName, number>,
-  ) {
-    for (const chain in blockHeightByChain) {
-      const manager = this.managers[chain as ChainName];
-      if (!manager)
-        throw new Error(`No wallets configured for chain: ${chain}`);
-    }
-  }
-
   public async getBlockHeightForAllSupportedChains(): Promise<
     Record<ChainName, number>
   > {
-    // Required concurrency is the number of chains as we want to fetch the block height for all chains in parallel
-    // to be precise about the block height at the time of fetching balances
-    let blockHeightPerChain = {} as Record<ChainName, number>;
-    const requiredConcurrency = Object.keys(this.managers).length;
-    await mapConcurrent(
-      Object.entries(this.managers),
-      async ([chainName, manager]) => {
-        try {
-          const blockHeight = await manager.getBlockHeight();          
-          blockHeightPerChain = {
-            ...blockHeightPerChain,
-            [chainName]: blockHeight,
-          } as Record<ChainName, number>;
-        } catch (err) {
-          throw new Error(`No block height found for chain: ${chainName}, error: ${err}`);
-        }
-      },
-      requiredConcurrency,
-    );
-    return blockHeightPerChain;
+    return this.mapToChains<number>(async (chainName: ChainName, manager: ChainWalletManager) => {
+      return manager.getBlockHeight();
+    }, Object.keys(this.managers).length);
   }
 
-  // pullBalancesAtBlockHeight doesn't need balances to be refreshed in the background
-  public async pullBalancesAtBlockHeight(
-    blockHeightByChain?: Record<ChainName, number>,
-  ): Promise<Record<string, WalletBalancesByAddress>> {
-    const balances: Record<string, WalletBalancesByAddress> = {};
-    if (blockHeightByChain) {
-      this.validateBlockHeightByChain(blockHeightByChain);
-    }
+  // This method is similar to pullBalances, but it gets the block-height of each chain concurrently 
+  // and uses the resulting block-height to pull balances at that specific block-height
+  // it tends to return a balance that better represents a snapshot in time (as opposed to pullBalances
+  // which tries to return the latest possible balance)
+  public async pullBalancesAtCurrentBlockHeight(): Promise<Record<string, WalletBalancesByAddress>> {
+    const blockHeightByChain = await this.getBlockHeightForAllSupportedChains();
 
-    const blockHeightPerChain = blockHeightByChain ?? await this.getBlockHeightForAllSupportedChains();
-
-    await mapConcurrent(
-      Object.entries(this.managers),
-      async ([chainName, manager]) => {
-        const blockHeight = blockHeightPerChain[chainName as ChainName];
-        const balancesByChain = await manager.pullBalancesAtBlockHeight(
-          blockHeight,
-        );
-        balances[chainName] = balancesByChain;
-      },
-    );
-
-    return balances;
+    return this.mapToChains(async (chainName: ChainName, manager: ChainWalletManager) => {
+      const blockHeight = blockHeightByChain[chainName];
+      return manager.pullBalancesAtBlockHeight(blockHeight);  
+    });
   }
 
   public getChainBalances(chainName: ChainName): WalletBalancesByAddress {
-    const manager = this.managers[chainName];
-    if (!manager)
-      throw new Error(`No wallets configured for chain: ${chainName}`);
+    const manager = this.getManager(chainName);
 
     return manager.getBalances();
   }

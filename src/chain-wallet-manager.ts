@@ -259,6 +259,7 @@ export class ChainWalletManager {
 
   public async start() {
     this.logger.info(`Starting Manager for chain: ${this.options.chainName}`);
+    // TODO: review why price feed is started once per chain instead of once globally
     if (this.priceFeed) {
       this.logger.info(
         `Starting PriceFeed for chain: ${this.options.chainName}`,
