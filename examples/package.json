@@ -2,7 +2,8 @@
   "description": "A set of examples for the wallet-monitor package",
   "scripts": {
     "wallet-manager": "ts-node ./wallet-manager.ts",
-    "rebalancing": "ts-node ./rebalancing.ts"
+    "rebalancing": "ts-node ./rebalancing.ts",
+    "wallet-acquire": "ts-node ./wallet-acquire.ts"
   },
   "dependencies": {
     "wallet-monitor": "file:../",
