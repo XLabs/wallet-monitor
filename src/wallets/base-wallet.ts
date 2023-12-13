@@ -114,7 +114,7 @@ export abstract class WalletToolbox {
         return {
           address,
           getBalance: () => {
-            if(!walletToolBox.balancesByWalletAddress[address].length){
+            if(!walletToolBox.balancesByWalletAddress[address]){
               return "0"
             }
             return walletToolBox.balancesByWalletAddress[address].find((balance) => balance.isNative)!.formattedBalance;
