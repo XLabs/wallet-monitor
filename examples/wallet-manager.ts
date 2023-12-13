@@ -144,7 +144,7 @@ export const manager = buildWalletManager({
 (async () => {
   try {
     console.time('balances')
-    const balances = await manager.pullBalancesAtBlockHeight();
+    const balances = await manager.pullBalancesAtCurrentBlockHeight();
     console.timeLog('balances', JSON.stringify(balances))
   } catch (err) {
     console.error('Failed to pullBalancesAtBlockHeight', err);
