@@ -69,6 +69,7 @@ export class ChainWalletManager {
   private locked = false;
   private rebalanceLocked = false;
   protected logger: winston.Logger;
+
   protected balancesByAddress: WalletBalancesByAddress = {};
   private interval: ReturnType<typeof setInterval> | null = null;
   private rebalanceInterval: ReturnType<typeof setInterval> | null = null;

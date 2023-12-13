@@ -8,23 +8,41 @@ export interface WalletPool {
   addWalletBackToPoolIfRequired(wallet: string): void;
 }
 
-type ResourcePool = Record<string, Resource>;
+type GetBalanceFn = () => number | string;
+
+type ResourceWithBalance =  { resource: Resource, getBalance?: GetBalanceFn };
+
+type ResourcePool = Record<string, ResourceWithBalance>;
+
+export interface WalletOption{
+  /** Wallet address */
+  address: string
+  /** Function to get wallet balance. Optional.
+   * @returns Wallet balance in formatted.
+   */
+  getBalance?: GetBalanceFn
+}
+
+export interface WalletPoolOptions{
+  walletOptions: WalletOption[]
+}
 
 export class LocalWalletPool implements WalletPool {
   private resources: ResourcePool = {};
 
-  constructor(walletAddresses: string[]) {
-    for (const address of walletAddresses) {
-      this.resources[address] = new Resource(address)
+  constructor(options: WalletPoolOptions) {
+    for (const {address, getBalance} of options.walletOptions) {
+      this.resources[address] = {
+        resource: new Resource(address),
+        getBalance: getBalance
+      }
     }
   }
 
   private async acquire(resourceId?: string): Promise<string> {
     const resource = resourceId
-      ? this.resources[resourceId]
-      : Object.values(this.resources).find(
-          resource => resource.isAvailable(),
-        );
+      ? this.resources[resourceId].resource
+      : this.getHighestBalanceWallet().resource;
 
     if (!resource || !resource?.isAvailable())
       throw new Error("Resource not available");
@@ -34,17 +52,33 @@ export class LocalWalletPool implements WalletPool {
     return resource.getId();
   }
 
+  private getHighestBalanceWallet(): ResourceWithBalance {
+    return this.availableResources.reduce((acc, curr) => {
+      if(!acc) return curr
+
+      if(curr.getBalance && acc.getBalance) {
+        return curr.getBalance() > acc.getBalance() ? curr : acc
+      }
+
+      return acc
+    })
+  }
+
+  private get availableResources(): ResourceWithBalance[] {
+    return Object.values(this.resources).filter((rs) => rs.resource.isAvailable())
+  }
+
   public discardWalletFromPool(resourceId: string): void {
     if (resourceId in this.resources) {
-      this.resources[resourceId].discard();
+      this.resources[resourceId].resource.discard();
     } else {
       throw new Error(`Resource ${resourceId} not available for discarding`);
     }
   }
 
   public addWalletBackToPoolIfRequired(resourceId: string): void {
-    if (resourceId in this.resources && this.resources[resourceId].isDiscarded()) {
-      this.resources[resourceId].retain();
+    if (resourceId in this.resources && this.resources[resourceId].resource.isDiscarded()) {
+      this.resources[resourceId].resource.retain();
     }
   }
 
@@ -77,7 +111,7 @@ export class LocalWalletPool implements WalletPool {
   }
 
   public async release(walletAddress: string): Promise<void> {
-    const resource = this.resources[walletAddress];
+    const resource = this.resources[walletAddress].resource
     if (!resource) throw new Error(`Resource "${walletAddress}" not found`);
     resource.unlock();
   }

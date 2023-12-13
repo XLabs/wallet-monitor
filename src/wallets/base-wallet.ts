@@ -1,6 +1,6 @@
 import winston from "winston";
 import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
-import { LocalWalletPool, WalletPool } from "./wallet-pool";
+import { LocalWalletPool, WalletPool, WalletPoolOptions } from "./wallet-pool";
 import { createLogger } from "../utils";
 import { Wallets } from "../chain-wallet-manager";
 
@@ -26,6 +26,8 @@ export type WalletData = {
 
 export abstract class WalletToolbox {
   private warm = false;
+
+  // TODO: Check if I can move this to the chain-wallet-manager
   private walletPool: WalletPool;
   protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};
   protected wallets: Record<string, WalletData>;
@@ -104,7 +106,21 @@ export abstract class WalletToolbox {
 
     this.wallets = wallets;
 
-    this.walletPool = new LocalWalletPool(Object.keys(this.wallets)); // if HA: new DistributedWalletPool();
+    const walletToolBox = this
+
+    const walletPoolOptions: WalletPoolOptions = {
+
+      walletOptions: Object.keys(this.wallets).map((address) => {
+        return {
+          address,
+          getBalance: () => {
+            return walletToolBox.balancesByWalletAddress[address].find((balance) => balance.isNative)!.formattedBalance;
+          }
+        }
+      })
+    }
+
+    this.walletPool = new LocalWalletPool(walletPoolOptions); // if HA: new DistributedWalletPool();
   }
 
   public async pullBalances(
