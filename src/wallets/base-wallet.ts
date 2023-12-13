@@ -2,7 +2,7 @@ import winston from "winston";
 import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
 import { LocalWalletPool, WalletPool, WalletPoolOptions } from "./wallet-pool";
 import { createLogger } from "../utils";
-import { Wallets } from "../chain-wallet-manager";
+import { ChainWalletManager, Wallets } from "../chain-wallet-manager";
 
 export type BaseWalletOptions = {
   logger: winston.Logger;
@@ -114,6 +114,9 @@ export abstract class WalletToolbox {
         return {
           address,
           getBalance: () => {
+            if(!walletToolBox.balancesByWalletAddress[address].length){
+              return "0"
+            }
             return walletToolBox.balancesByWalletAddress[address].find((balance) => balance.isNative)!.formattedBalance;
           }
         }
@@ -309,6 +312,7 @@ export abstract class WalletToolbox {
    * @param minBalanceThreshold passed from rebalance config, defaults to zero
    * @returns true if there is enough balance on the wallet, false otherwise
    */
+  // TODO: Move this logic to the wallet pool
   private addOrDiscardWalletIfRequired(
     isRebalancingEnabled: boolean,
     address: string,

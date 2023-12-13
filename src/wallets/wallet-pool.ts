@@ -10,7 +10,7 @@ export interface WalletPool {
 
 type GetBalanceFn = () => number | string;
 
-type ResourceWithBalance =  { resource: Resource, getBalance?: GetBalanceFn };
+type ResourceWithBalance =  { resource: Resource, getBalance: GetBalanceFn };
 
 type ResourcePool = Record<string, ResourceWithBalance>;
 
@@ -20,7 +20,7 @@ export interface WalletOption{
   /** Function to get wallet balance. Optional.
    * @returns Wallet balance in formatted.
    */
-  getBalance?: GetBalanceFn
+  getBalance: GetBalanceFn
 }
 
 export interface WalletPoolOptions{
@@ -39,20 +39,24 @@ export class LocalWalletPool implements WalletPool {
     }
   }
 
+  // TODO: AddOrDiscard wallets when calling this method
   private async acquire(resourceId?: string): Promise<string> {
     const resource = resourceId
       ? this.resources[resourceId].resource
-      : this.getHighestBalanceWallet().resource;
+      : this.getHighestBalanceWallet()?.resource;
 
-    if (!resource || !resource?.isAvailable())
+      
+      if (!resource || !resource?.isAvailable())
       throw new Error("Resource not available");
-
+    
     resource.lock();
 
     return resource.getId();
   }
 
-  private getHighestBalanceWallet(): ResourceWithBalance {
+  private getHighestBalanceWallet(): ResourceWithBalance | undefined {
+    if(!this.availableResources.length) return
+
     return this.availableResources.reduce((acc, curr) => {
       if(!acc) return curr
 

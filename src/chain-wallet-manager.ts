@@ -69,7 +69,7 @@ export class ChainWalletManager {
   private locked = false;
   private rebalanceLocked = false;
   protected logger: winston.Logger;
-  protected balancesByAddress: WalletBalancesByAddress = {};
+  public balancesByAddress: WalletBalancesByAddress = {};
   private interval: ReturnType<typeof setInterval> | null = null;
   private rebalanceInterval: ReturnType<typeof setInterval> | null = null;
   private options: ChainWalletManagerOptions;
@@ -221,6 +221,7 @@ export class ChainWalletManager {
       );
       const lastBalance = this.balancesByAddress;
       this.balancesByAddress = this.mapBalances(balances);
+
       this.emitter.emit(
         "balances",
         balances,
@@ -238,6 +239,7 @@ export class ChainWalletManager {
     this.locked = false;
   }
 
+  // TODO: This method is bad implemented
   protected mapBalances(balances: WalletBalance[]) {
     return balances.reduce((acc, balance) => {
       if (!acc[balance.address])
