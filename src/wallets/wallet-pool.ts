@@ -94,7 +94,7 @@ export class LocalWalletPool implements WalletPool {
   private getHighestBalanceWallet(): ResourceWithBalance | undefined {
     if (!this.availableResources.length) return;
 
-    return this.availableResources.reduce((acc, curr) => {
+    return this.availableResources().reduce((acc, curr) => {
       if (!acc) return curr;
 
       if (curr.getBalance && acc.getBalance) {
@@ -105,7 +105,7 @@ export class LocalWalletPool implements WalletPool {
     });
   }
 
-  private get availableResources(): ResourceWithBalance[] {
+  private availableResources(): ResourceWithBalance[] {
     return Object.values(this.resources).filter(rs =>
       rs.resource.isAvailable(),
     );
