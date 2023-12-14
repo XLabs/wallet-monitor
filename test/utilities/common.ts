@@ -3,9 +3,12 @@
 export const timeout = <T>(promise: Promise<T>, timeoutMs: number) => {
   let timer: NodeJS.Timeout;
   const timeoutPromise = new Promise<T>(
-    (_, reject) => (timer = setTimeout(() => reject(new Error("timeout")), timeoutMs))
+    (_, reject) =>
+      (timer = setTimeout(() => reject(new Error("timeout")), timeoutMs)),
   );
-  return Promise.race<T>([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+  return Promise.race<T>([promise, timeoutPromise]).finally(() =>
+    clearTimeout(timer),
+  );
 };
 
 export const wait = (ms: number) =>

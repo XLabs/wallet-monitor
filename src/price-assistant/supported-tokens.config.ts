@@ -3,8 +3,7 @@ import { ChainName, Environment } from "../wallets";
 import { TokenInfo } from "../wallet-manager";
 
 // get all coingeckoIds from here: https://api.coingecko.com/api/v3/coins/list
-export const CoinGeckoIdsSchema = z
-.union([
+export const CoinGeckoIdsSchema = z.union([
   z.literal("solana"),
   z.literal("ethereum"),
   z.literal("binancecoin"),
@@ -34,26 +33,26 @@ export const CoinGeckoIdsSchema = z
 export type CoinGeckoIds = z.infer<typeof CoinGeckoIdsSchema>;
 
 export const coinGeckoIdByChainName = {
-  "solana": "solana",
-  "ethereum": "ethereum",
-  "bsc": "binancecoin",
-  "polygon": "matic-network",
-  "avalanche": "avalanche-2",
-  "fantom": "fantom",
-  "celo": "celo",
-  "moonbeam": "moonbeam",
-  "sui": "sui",
-  "arbitrum": "arbitrum",
-  "optimism": "optimism",
-  "base": "base",
-  "klaytn": "klay-token",
-  "pythnet": "pyth-network",
-  "sepolia": "ethereum",
-  "osmosis": "osmosis",
-  "cosmoshub": "cosmos",
-  "evmos": "evmos",
-  "kujira": "kujira",
-  "wormchain": "gateway"
+  solana: "solana",
+  ethereum: "ethereum",
+  bsc: "binancecoin",
+  polygon: "matic-network",
+  avalanche: "avalanche-2",
+  fantom: "fantom",
+  celo: "celo",
+  moonbeam: "moonbeam",
+  sui: "sui",
+  arbitrum: "arbitrum",
+  optimism: "optimism",
+  base: "base",
+  klaytn: "klay-token",
+  pythnet: "pyth-network",
+  sepolia: "ethereum",
+  osmosis: "osmosis",
+  cosmoshub: "cosmos",
+  evmos: "evmos",
+  kujira: "kujira",
+  wormchain: "gateway",
 } as const satisfies Record<ChainName, CoinGeckoIds>;
 
 const mainnetNativeTokens = [
@@ -62,42 +61,48 @@ const mainnetNativeTokens = [
     chainName: "solana",
     coingeckoId: "solana",
     symbol: "WSOL",
-    tokenContract: "069b8857feab8184fb687f634618c035dac439dc1aeb3b5598a0f00000000001",
+    tokenContract:
+      "069b8857feab8184fb687f634618c035dac439dc1aeb3b5598a0f00000000001",
   },
   {
     chainId: 2,
     chainName: "ethereum",
     coingeckoId: "ethereum",
     symbol: "WETH",
-    tokenContract: "000000000000000000000000C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    tokenContract:
+      "000000000000000000000000C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
   },
   {
     chainId: 4,
     chainName: "bsc",
     coingeckoId: "binancecoin",
     symbol: "WBNB",
-    tokenContract: "000000000000000000000000bb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+    tokenContract:
+      "000000000000000000000000bb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
   },
   {
     chainId: 5,
     chainName: "polygon",
     coingeckoId: "matic-network",
     symbol: "WMATIC",
-    tokenContract: "0000000000000000000000000d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+    tokenContract:
+      "0000000000000000000000000d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
   },
   {
     chainId: 6,
     chainName: "avalanche",
     coingeckoId: "avalanche-2",
     symbol: "WAVAX",
-    tokenContract: "000000000000000000000000B31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+    tokenContract:
+      "000000000000000000000000B31f66AA3C1e785363F0875A1B74E27b85FD66c7",
   },
   {
     chainId: 10,
     chainName: "fantom",
     coingeckoId: "fantom",
     symbol: "WFTM",
-    tokenContract: "00000000000000000000000021be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
+    tokenContract:
+      "00000000000000000000000021be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
   },
   {
     chainId: 13,
@@ -111,21 +116,24 @@ const mainnetNativeTokens = [
     chainName: "celo",
     coingeckoId: "celo",
     symbol: "WCELO",
-    tokenContract: "000000000000000000000000471EcE3750Da237f93B8E339c536989b8978a438",
+    tokenContract:
+      "000000000000000000000000471EcE3750Da237f93B8E339c536989b8978a438",
   },
   {
     chainId: 16,
     chainName: "moonbeam",
     coingeckoId: "moonbeam",
     symbol: "WGLMR",
-    tokenContract: "000000000000000000000000Acc15dC74880C9944775448304B263D191c6077F",
+    tokenContract:
+      "000000000000000000000000Acc15dC74880C9944775448304B263D191c6077F",
   },
   {
     chainId: 21,
     chainName: "sui",
     coingeckoId: "sui",
     symbol: "WSUI",
-    tokenContract: "9258181f5ceac8dbffb7030890243caed69a9599d2886d957a9cb7656af3bdb3",
+    tokenContract:
+      "9258181f5ceac8dbffb7030890243caed69a9599d2886d957a9cb7656af3bdb3",
   },
   {
     chainId: 23,
@@ -170,35 +178,40 @@ const testnetNativeTokens = [
     chainName: "ethereum",
     coingeckoId: "ethereum",
     symbol: "ETH",
-    tokenContract: "000000000000000000000000B4FBF271143F4FBf7B91A5ded31805e42b2208d6",
+    tokenContract:
+      "000000000000000000000000B4FBF271143F4FBf7B91A5ded31805e42b2208d6",
   },
   {
     chainId: 4,
     chainName: "bsc",
     coingeckoId: "binancecoin",
     symbol: "BNB",
-    tokenContract: "000000000000000000000000ae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+    tokenContract:
+      "000000000000000000000000ae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
   },
   {
     chainId: 5,
     chainName: "polygon",
     coingeckoId: "matic-network",
     symbol: "MATIC",
-    tokenContract: "0000000000000000000000009c3C9283D3e44854697Cd22D3Faa240Cfb032889",
+    tokenContract:
+      "0000000000000000000000009c3C9283D3e44854697Cd22D3Faa240Cfb032889",
   },
   {
     chainId: 6,
     chainName: "avalanche",
     coingeckoId: "avalanche-2",
     symbol: "AVAX",
-    tokenContract: "000000000000000000000000d00ae08403B9bbb9124bB305C09058E32C39A48c",
+    tokenContract:
+      "000000000000000000000000d00ae08403B9bbb9124bB305C09058E32C39A48c",
   },
   {
     chainId: 10,
     chainName: "fantom",
     coingeckoId: "fantom",
     symbol: "FTM",
-    tokenContract: "000000000000000000000000f1277d1Ed8AD466beddF92ef448A132661956621",
+    tokenContract:
+      "000000000000000000000000f1277d1Ed8AD466beddF92ef448A132661956621",
   },
   {
     chainId: 13,
@@ -212,21 +225,24 @@ const testnetNativeTokens = [
     chainName: "celo",
     coingeckoId: "celo",
     symbol: "CELO",
-    tokenContract: "000000000000000000000000F194afDf50B03e69Bd7D057c1Aa9e10c9954E4C9",
+    tokenContract:
+      "000000000000000000000000F194afDf50B03e69Bd7D057c1Aa9e10c9954E4C9",
   },
   {
     chainId: 16,
     chainName: "moonbeam",
     coingeckoId: "moonbeam",
     symbol: "GLMR",
-    tokenContract: "000000000000000000000000D909178CC99d318e4D46e7E66a972955859670E1",
+    tokenContract:
+      "000000000000000000000000D909178CC99d318e4D46e7E66a972955859670E1",
   },
   {
     chainId: 21,
     chainName: "sui",
     coingeckoId: "sui",
     symbol: "SUI",
-    tokenContract: "587c29de216efd4219573e08a1f6964d4fa7cb714518c2c8a0f29abfa264327d",
+    tokenContract:
+      "587c29de216efd4219573e08a1f6964d4fa7cb714518c2c8a0f29abfa264327d",
   },
   {
     chainId: 23,

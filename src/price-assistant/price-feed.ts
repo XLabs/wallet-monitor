@@ -14,7 +14,12 @@ export abstract class PriceFeed<K, V> {
   private metrics?: BasePriceFeedMetrics;
   protected logger: Logger;
 
-  constructor(name: string, logger: Logger, registry?: Registry, runIntervalMs?: number) {
+  constructor(
+    name: string,
+    logger: Logger,
+    registry?: Registry,
+    runIntervalMs?: number,
+  ) {
     this.name = name;
     this.logger = logger;
     this.locked = false;
@@ -26,7 +31,7 @@ export abstract class PriceFeed<K, V> {
 
   protected abstract get(key: K): V;
 
-  public abstract pullTokenPrices (): Promise<TokenPriceData>;
+  public abstract pullTokenPrices(): Promise<TokenPriceData>;
 
   public start(): void {
     this.interval = setInterval(() => this.run(), this.runIntervalMs);
@@ -39,7 +44,8 @@ export abstract class PriceFeed<K, V> {
 
   public getKey(key: K): V {
     const result = this.get(key);
-    if (result === undefined || result === null) this.logger.error(`PriceFeed Key Not Found: ${key}`);
+    if (result === undefined || result === null)
+      this.logger.error(`PriceFeed Key Not Found: ${key}`);
     return result;
   }
 
@@ -70,7 +76,9 @@ export abstract class PriceFeed<K, V> {
       await this.update();
       this.countPollOperations("success");
     } catch (error) {
-      this.logger.error(`Error trying to update feed data: ${printError(error)}`);
+      this.logger.error(
+        `Error trying to update feed data: ${printError(error)}`,
+      );
       this.countPollOperations("failure");
     } finally {
       this.locked = false;

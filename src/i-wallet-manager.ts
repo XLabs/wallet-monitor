@@ -1,4 +1,11 @@
-import {Providers, WalletBalancesByAddress, WalletExecuteOptions, WalletInterface, Wallets, WithWalletExecutor} from "./chain-wallet-manager";
+import {
+  Providers,
+  WalletBalancesByAddress,
+  WalletExecuteOptions,
+  WalletInterface,
+  Wallets,
+  WithWalletExecutor,
+} from "./chain-wallet-manager";
 import { ChainName } from "./wallets";
 
 /*
@@ -16,17 +23,26 @@ import { ChainName } from "./wallets";
 */
 
 interface IWMContextManagedLocks {
-    withWallet<P extends Providers, W extends Wallets>(chainName: ChainName, fn: WithWalletExecutor, opts?: WalletExecuteOptions): Promise<void>;
-    pullBalances: () => Promise<Record<string, WalletBalancesByAddress>>;
-    pullBalancesAtCurrentBlockHeight: () => Promise<Record<string, WalletBalancesByAddress>>;
-    getBlockHeight: (chainName: ChainName) => Promise<number>;
-    getBlockHeightForAllSupportedChains: () => Promise<Record<ChainName, number>>;
+  withWallet<P extends Providers, W extends Wallets>(
+    chainName: ChainName,
+    fn: WithWalletExecutor,
+    opts?: WalletExecuteOptions,
+  ): Promise<void>;
+  pullBalances: () => Promise<Record<string, WalletBalancesByAddress>>;
+  pullBalancesAtCurrentBlockHeight: () => Promise<
+    Record<string, WalletBalancesByAddress>
+  >;
+  getBlockHeight: (chainName: ChainName) => Promise<number>;
+  getBlockHeightForAllSupportedChains: () => Promise<Record<ChainName, number>>;
 }
 interface IWMBareLocks {
-    acquireLock(chainName: ChainName, opts?: WalletExecuteOptions): Promise<WalletInterface>
-    releaseLock(chainName: ChainName, address: string): Promise<void>
+  acquireLock(
+    chainName: ChainName,
+    opts?: WalletExecuteOptions,
+  ): Promise<WalletInterface>;
+  releaseLock(chainName: ChainName, address: string): Promise<void>;
 }
 
-export type ILibraryWalletManager = IWMContextManagedLocks
-export type IClientWalletManager = IWMContextManagedLocks
-export type IServiceWalletManager = IWMBareLocks
+export type ILibraryWalletManager = IWMContextManagedLocks;
+export type IClientWalletManager = IWMContextManagedLocks;
+export type IServiceWalletManager = IWMBareLocks;

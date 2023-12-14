@@ -177,7 +177,7 @@ export class WalletManager {
     }
 
     const isPriceFeedEnabled = options?.priceFeedOptions?.enabled;
-    
+
     // TODO: might be better to remove price feed from wallet manager to avoid cluttering
     // PriceFeed can be used as a singleton until we have it as a separate "PriceOracle" service
     let priceFeedInstance;
@@ -196,8 +196,11 @@ export class WalletManager {
       }
     }
 
-    for (const entry  of Object.entries(config)) {
-      const [chainName, chainConfig] = entry as [ChainName, WalletManagerChainConfig]
+    for (const entry of Object.entries(config)) {
+      const [chainName, chainConfig] = entry as [
+        ChainName,
+        WalletManagerChainConfig,
+      ];
       if (!isChain(chainName)) {
         if (options?.failOnInvalidChain) {
           throw new Error(`Invalid chain name: ${chainName}`);
@@ -207,7 +210,12 @@ export class WalletManager {
         }
       }
 
-      const chainManager = this.buildChainManager(chainName, chainConfig, priceFeedInstance, options);
+      const chainManager = this.buildChainManager(
+        chainName,
+        chainConfig,
+        priceFeedInstance,
+        options,
+      );
 
       this.managers[chainName] = chainManager;
 
@@ -226,7 +234,7 @@ export class WalletManager {
     chainName: ChainName,
     chainConfig: WalletManagerChainConfig,
     priceFeedInstance?: PriceFeed,
-    options?: WalletManagerOptions
+    options?: WalletManagerOptions,
   ) {
     const network = chainConfig.network || getDefaultNetwork(chainName);
 
@@ -244,7 +252,7 @@ export class WalletManager {
     const chainManager = new ChainWalletManager(
       chainManagerConfig,
       chainConfig.wallets,
-      // TODO: review why does ChainWalletManager has price feed as an injected dependency :/ 
+      // TODO: review why does ChainWalletManager has price feed as an injected dependency :/
       priceFeedInstance,
     );
 
@@ -374,14 +382,20 @@ export class WalletManager {
     }
   }
 
-  public async mapToChains<T>(method: (chain: ChainName, manager: ChainWalletManager) =>  Promise<T>, concurrency?: number): Promise<MapChainsResult<T>> {
-    const result  = {} as MapChainsResult<T>;
+  public async mapToChains<T>(
+    method: (chain: ChainName, manager: ChainWalletManager) => Promise<T>,
+    concurrency?: number,
+  ): Promise<MapChainsResult<T>> {
+    const result = {} as MapChainsResult<T>;
 
     await mapConcurrent(
       Object.entries(this.managers),
       async ([chain, manager]) => {
         const chainName = chain as ChainName;
-        result[chainName] = await method(chainName as ChainName, manager) as T;
+        result[chainName] = (await method(
+          chainName as ChainName,
+          manager,
+        )) as T;
       },
       concurrency,
     );
@@ -393,18 +407,22 @@ export class WalletManager {
   public async getAllBalances(): Promise<
     MapChainsResult<WalletBalancesByAddress>
   > {
-    return await this.mapToChains(async(_chainName: ChainName, manager: ChainWalletManager) => {
-      return manager.getBalances();
-    });
+    return await this.mapToChains(
+      async (_chainName: ChainName, manager: ChainWalletManager) => {
+        return manager.getBalances();
+      },
+    );
   }
-  
+
   // pulls de balances from the node
   public async pullBalances(): Promise<
     MapChainsResult<WalletBalancesByAddress>
   > {
-    return this.mapToChains(async (chainName: ChainName, manager: ChainWalletManager) => {
-      return manager.pullBalances();
-    });
+    return this.mapToChains(
+      async (chainName: ChainName, manager: ChainWalletManager) => {
+        return manager.pullBalances();
+      },
+    );
   }
 
   public getBlockHeight(chainName: ChainName): Promise<number> {
@@ -414,22 +432,29 @@ export class WalletManager {
   public async getBlockHeightForAllSupportedChains(): Promise<
     Record<ChainName, number>
   > {
-    return this.mapToChains<number>(async (chainName: ChainName, manager: ChainWalletManager) => {
-      return manager.getBlockHeight();
-    }, Object.keys(this.managers).length);
+    return this.mapToChains<number>(
+      async (chainName: ChainName, manager: ChainWalletManager) => {
+        return manager.getBlockHeight();
+      },
+      Object.keys(this.managers).length,
+    );
   }
 
-  // This method is similar to pullBalances, but it gets the block-height of each chain concurrently 
+  // This method is similar to pullBalances, but it gets the block-height of each chain concurrently
   // and uses the resulting block-height to pull balances at that specific block-height
   // it tends to return a balance that better represents a snapshot in time (as opposed to pullBalances
   // which tries to return the latest possible balance)
-  public async pullBalancesAtCurrentBlockHeight(): Promise<Record<string, WalletBalancesByAddress>> {
+  public async pullBalancesAtCurrentBlockHeight(): Promise<
+    Record<string, WalletBalancesByAddress>
+  > {
     const blockHeightByChain = await this.getBlockHeightForAllSupportedChains();
 
-    return this.mapToChains(async (chainName: ChainName, manager: ChainWalletManager) => {
-      const blockHeight = blockHeightByChain[chainName];
-      return manager.pullBalancesAtBlockHeight(blockHeight);  
-    });
+    return this.mapToChains(
+      async (chainName: ChainName, manager: ChainWalletManager) => {
+        const blockHeight = blockHeightByChain[chainName];
+        return manager.pullBalancesAtBlockHeight(blockHeight);
+      },
+    );
   }
 
   public getChainBalances(chainName: ChainName): WalletBalancesByAddress {

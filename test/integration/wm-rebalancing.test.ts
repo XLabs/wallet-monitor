@@ -1,5 +1,8 @@
 import { describe, expect, test } from "@jest/globals";
-import { WalletManager, WalletRebalancingConfig } from "../../src/wallet-manager";
+import {
+  WalletManager,
+  WalletRebalancingConfig,
+} from "../../src/wallet-manager";
 import { ChainName, DEVNET } from "../../src/wallets";
 import {
   WalletExecuteOptions,

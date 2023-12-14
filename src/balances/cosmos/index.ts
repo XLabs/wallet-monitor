@@ -84,7 +84,10 @@ export async function transferCosmosNativeBalance(
     transactionHash: receipt.transactionHash,
     gasUsed: receipt.gasUsed.toString(),
     gasPrice: gasPrice.toString(),
-    formattedCost: ethers.utils.formatUnits(txCost.amount[0].amount, defaultDecimals),
+    formattedCost: ethers.utils.formatUnits(
+      txCost.amount[0].amount,
+      defaultDecimals,
+    ),
   };
 }
 

@@ -81,29 +81,28 @@ export const manager = buildWalletManager({
   },
 });
 
-async function main(){
+async function main() {
+  const timeout = 5000;
+  console.log(`Waiting ${timeout}ms for wallets to be ready...`);
+  await wait(timeout);
+  console.log("Done waiting");
+  for (let i = 0; i < 10; i++) {
+    // perform an action with any wallet available in the pool:
+    try {
+      manager.withWallet("ethereum", async wallet => {
+        // do what you need with the wallet
+        wallet.walletToolbox.pullBalances();
 
-    const timeout = 5000
-    console.log(`Waiting ${timeout}ms for wallets to be ready...`)
-    await wait(timeout)
-    console.log("Done waiting")
-for (let i = 0; i < 10; i++) {
-  // perform an action with any wallet available in the pool:
-  try {
-    manager.withWallet("ethereum", async wallet => {
-    // do what you need with the wallet
-        wallet.walletToolbox.pullBalances()
-
-      console.log({
-        address: wallet.address,
-        chainName: wallet.walletToolbox.chainName,
+        console.log({
+          address: wallet.address,
+          chainName: wallet.walletToolbox.chainName,
+        });
+        await wait(3000);
       });
-      await wait(3000);
-    });
-  } catch (e) {
-    console.log(printError(e));
+    } catch (e) {
+      console.log(printError(e));
+    }
   }
 }
-}
 
-main()
+main();

@@ -1,7 +1,11 @@
 import { Gauge, Registry } from "prom-client";
 import { Logger } from "winston";
 import { PriceFeed, TokenPriceData } from "./price-feed";
-import { TokenInfo, WalletPriceFeedConfig, WalletPriceFeedOptions } from "../wallet-manager";
+import {
+  TokenInfo,
+  WalletPriceFeedConfig,
+  WalletPriceFeedOptions,
+} from "../wallet-manager";
 import { getCoingeckoPrices } from "./helper";
 import { inspect } from "util";
 import { CoinGeckoIds } from "./supported-tokens.config";
@@ -15,8 +19,12 @@ export class ScheduledPriceFeed extends PriceFeed<string, number | undefined> {
   tokenPriceGauge?: Gauge;
   private tokenContractToCoingeckoId: Record<string, CoinGeckoIds> = {};
 
-  constructor(priceFeedConfig: WalletPriceFeedConfig & WalletPriceFeedOptions, logger: Logger, registry?: Registry) {
-    const {scheduled, supportedTokens} = priceFeedConfig;
+  constructor(
+    priceFeedConfig: WalletPriceFeedConfig & WalletPriceFeedOptions,
+    logger: Logger,
+    registry?: Registry,
+  ) {
+    const { scheduled, supportedTokens } = priceFeedConfig;
     super("SCHEDULED_TOKEN_PRICE", logger, registry, scheduled?.interval);
     this.supportedTokens = supportedTokens;
 
@@ -35,11 +43,11 @@ export class ScheduledPriceFeed extends PriceFeed<string, number | undefined> {
     }
   }
 
-  public getCoinGeckoId (tokenContract: string): CoinGeckoIds | undefined {
+  public getCoinGeckoId(tokenContract: string): CoinGeckoIds | undefined {
     return this.tokenContractToCoingeckoId[tokenContract];
   }
 
-  async pullTokenPrices (): Promise<TokenPriceData> {
+  async pullTokenPrices(): Promise<TokenPriceData> {
     const priceDict: TokenPriceData = {};
     for (const token of this.supportedTokens) {
       const { coingeckoId } = token;
@@ -48,17 +56,24 @@ export class ScheduledPriceFeed extends PriceFeed<string, number | undefined> {
         priceDict[coingeckoId] = tokenPrice;
       }
     }
-    return priceDict
+    return priceDict;
   }
 
   async update() {
-    const coingekoTokenIds = this.supportedTokens.map((token) => token.coingeckoId);
-    const coingeckoData = await getCoingeckoPrices(coingekoTokenIds, this.logger);
+    const coingekoTokenIds = this.supportedTokens.map(
+      token => token.coingeckoId,
+    );
+    const coingeckoData = await getCoingeckoPrices(
+      coingekoTokenIds,
+      this.logger,
+    );
     for (const token of this.supportedTokens) {
       const { coingeckoId, symbol } = token;
 
       if (!(coingeckoId in coingeckoData)) {
-        this.logger.warn(`Token ${symbol} (coingecko: ${coingeckoId}) not found in coingecko response data`);
+        this.logger.warn(
+          `Token ${symbol} (coingecko: ${coingeckoId}) not found in coingecko response data`,
+        );
         continue;
       }
 
@@ -75,4 +90,3 @@ export class ScheduledPriceFeed extends PriceFeed<string, number | undefined> {
     return this.data[coingeckoId];
   }
 }
-

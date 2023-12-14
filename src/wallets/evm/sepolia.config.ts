@@ -12,8 +12,7 @@ export const SEPOLIA_NETWORKS = {
 };
 
 export const SEPOLIA_KNOWN_TOKENS = {
-  [ETHEREUM_SEPOLIA]: {
-  },
+  [ETHEREUM_SEPOLIA]: {},
 };
 
 const ETHEREUM_DEFAULT_TOKEN_POLL_CONCURRENCY = 10;

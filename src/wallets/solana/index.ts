@@ -116,15 +116,19 @@ export class SolanaWalletToolbox extends WalletToolbox {
     return validTokens;
   }
 
-  public async pullNativeBalance(address: string, blockHeight?: number): Promise<WalletBalance> {
+  public async pullNativeBalance(
+    address: string,
+    blockHeight?: number,
+  ): Promise<WalletBalance> {
     const balance = await pullSolanaNativeBalance(this.connection, address);
     const formattedBalance = (
       Number(balance.rawBalance) / LAMPORTS_PER_SOL
     ).toString();
 
-
     if (blockHeight) {
-      this.logger.warn(`Solana does not support pulling balances by block height, ignoring blockHeight: ${blockHeight}`);
+      this.logger.warn(
+        `Solana does not support pulling balances by block height, ignoring blockHeight: ${blockHeight}`,
+      );
     }
 
     // Pull prices in USD for all the native tokens in single network call
@@ -141,8 +145,8 @@ export class SolanaWalletToolbox extends WalletToolbox {
       blockHeight,
       ...(tokenUsdPrice && {
         balanceUsd: Number(formattedBalance) * tokenUsdPrice,
-        tokenUsdPrice
-      })
+        tokenUsdPrice,
+      }),
     };
   }
 
@@ -195,8 +199,8 @@ export class SolanaWalletToolbox extends WalletToolbox {
         symbol: tokenKnownSymbol ?? "unknown",
         ...(tokenUsdPrice !== undefined && {
           balanceUsd: formattedBalance * tokenUsdPrice,
-          tokenUsdPrice
-        })
+          tokenUsdPrice,
+        }),
       };
     });
   }

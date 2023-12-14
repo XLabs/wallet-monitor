@@ -1,7 +1,7 @@
 import winston from "winston";
 import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
 import { createLogger } from "../utils";
-import {  Wallets } from "../chain-wallet-manager";
+import { Wallets } from "../chain-wallet-manager";
 
 export type BaseWalletOptions = {
   logger: winston.Logger;
@@ -14,7 +14,6 @@ export type TransferReceipt = {
   gasPrice: string;
   formattedCost: string;
 };
-
 
 export type WalletData = {
   address: string;
@@ -103,9 +102,7 @@ export abstract class WalletToolbox {
     this.wallets = wallets;
   }
 
-  public async pullBalances(
-    blockHeight?: number,
-  ): Promise<WalletBalance[]> {
+  public async pullBalances(blockHeight?: number): Promise<WalletBalance[]> {
     if (!this.warm) {
       this.logger.debug(
         `Warming up wallet toolbox for chain ${this.chainName}...`,
@@ -197,10 +194,7 @@ export abstract class WalletToolbox {
     return true;
   }
 
-  public buildWalletConfig(
-    rawConfig: any,
-    options: WalletOptions,
-  ): WalletData {
+  public buildWalletConfig(rawConfig: any, options: WalletOptions): WalletData {
     const privateKey = rawConfig.privateKey;
     const { failOnInvalidTokens } = options;
 

@@ -14,7 +14,7 @@ services:
     image: grafana/grafana:latest
     container_name: wallet-manager-d_grafana
     ports:
-      - '4000:3000'
+      - "4000:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: 1234
     volumes:
@@ -24,7 +24,7 @@ services:
     image: prom/prometheus
     container_name: wallet-monitor-d_prometheus
     ports:
-      - '9090:9090'
+      - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     command: "--config.file=/etc/prometheus/prometheus.yml"

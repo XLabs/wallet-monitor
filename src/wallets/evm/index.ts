@@ -17,7 +17,7 @@ import {
   ETHEREUM_CHAIN_CONFIG,
   ETHEREUM,
 } from "./ethereum.config";
-import { 
+import {
   SepoliaNetwork,
   SEPOLIA,
   SEPOLIA_CHAIN_CONFIG,
@@ -152,7 +152,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     public chainName: EVMChainName,
     public rawConfig: WalletConfig[],
     options: EvmWalletOptions,
-    priceFeed?: PriceFeed
+    priceFeed?: PriceFeed,
   ) {
     super(network, chainName, rawConfig, options);
     this.chainConfig = EVM_CHAIN_CONFIGS[this.chainName];
@@ -162,7 +162,8 @@ export class EvmWalletToolbox extends WalletToolbox {
     this.options = { ...defaultOptions, ...options } as EvmWalletOptions;
     this.priceFeed = priceFeed;
 
-    const nodeUrlOrigin = this.options.nodeUrl && new URL(this.options.nodeUrl).origin
+    const nodeUrlOrigin =
+      this.options.nodeUrl && new URL(this.options.nodeUrl).origin;
     this.logger.debug(`EVM rpc url: ${nodeUrlOrigin}`);
     this.provider = new ethers.providers.JsonRpcProvider(this.options.nodeUrl);
   }
@@ -240,10 +241,17 @@ export class EvmWalletToolbox extends WalletToolbox {
     this.logger.debug(`EVM token data: ${JSON.stringify(this.tokenData)}`);
   }
 
-  public async pullNativeBalance(address: string, blockHeight?: number): Promise<WalletBalance> {
-    const balance = await pullEvmNativeBalance(this.provider, address, blockHeight);
+  public async pullNativeBalance(
+    address: string,
+    blockHeight?: number,
+  ): Promise<WalletBalance> {
+    const balance = await pullEvmNativeBalance(
+      this.provider,
+      address,
+      blockHeight,
+    );
     const formattedBalance = ethers.utils.formatEther(balance.rawBalance);
-    
+
     // Pull prices in USD for all the native tokens in single network call
     await this.priceFeed?.pullTokenPrices();
     const coingeckoId = coinGeckoIdByChainName[this.chainName];
@@ -258,8 +266,8 @@ export class EvmWalletToolbox extends WalletToolbox {
       blockHeight,
       ...(tokenUsdPrice && {
         balanceUsd: Number(formattedBalance) * tokenUsdPrice,
-        tokenUsdPrice
-      })
+        tokenUsdPrice,
+      }),
     };
   }
 
@@ -291,12 +299,12 @@ export class EvmWalletToolbox extends WalletToolbox {
           address,
           tokenAddress,
           formattedBalance,
-  
+
           symbol: tokenData.symbol,
           ...(tokenUsdPrice && {
             balanceUsd: Number(formattedBalance) * tokenUsdPrice,
-            tokenUsdPrice
-          })
+            tokenUsdPrice,
+          }),
         };
       },
       this.options.tokenPollConcurrency,
@@ -320,11 +328,11 @@ export class EvmWalletToolbox extends WalletToolbox {
     return receipt;
   }
 
-  public async getRawWallet (privateKey: string) {
+  public async getRawWallet(privateKey: string) {
     return new ethers.Wallet(privateKey, this.provider);
   }
 
-  public async getGasPrice () {
+  public async getGasPrice() {
     const gasPrice = await this.provider.getGasPrice();
     return BigInt(gasPrice.toString());
   }

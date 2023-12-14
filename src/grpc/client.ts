@@ -159,13 +159,15 @@ export class ClientWalletManager implements IClientWalletManager {
       Object.entries(this.managers),
       async ([chainName, manager]) => {
         try {
-          const blockHeight = await manager.getBlockHeight();          
+          const blockHeight = await manager.getBlockHeight();
           blockHeightPerChain = {
             ...blockHeightPerChain,
             [chainName]: blockHeight,
           } as Record<ChainName, number>;
         } catch (err) {
-          throw new Error(`No block height found for chain: ${chainName}, error: ${err}`);
+          throw new Error(
+            `No block height found for chain: ${chainName}, error: ${err}`,
+          );
         }
       },
       requiredConcurrency,
@@ -182,7 +184,8 @@ export class ClientWalletManager implements IClientWalletManager {
       this.validateBlockHeightByChain(blockHeightByChain);
     }
 
-    const blockHeightPerChain = blockHeightByChain ?? await this.getBlockHeightForAllSupportedChains();
+    const blockHeightPerChain =
+      blockHeightByChain ?? (await this.getBlockHeightForAllSupportedChains());
 
     await mapConcurrent(
       Object.entries(this.managers),
@@ -198,7 +201,9 @@ export class ClientWalletManager implements IClientWalletManager {
     return balances;
   }
 
-  public async pullBalancesAtCurrentBlockHeight(): Promise<Record<string, WalletBalancesByAddress>> {
+  public async pullBalancesAtCurrentBlockHeight(): Promise<
+    Record<string, WalletBalancesByAddress>
+  > {
     throw new Error("Method not implemented.");
   }
 }
