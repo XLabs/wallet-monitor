@@ -83,7 +83,7 @@ export const manager = buildWalletManager({
 
 async function main(){
 
-    const timeout = 30000
+    const timeout = 5000
     console.log(`Waiting ${timeout}ms for wallets to be ready...`)
     await wait(timeout)
     console.log("Done waiting")
