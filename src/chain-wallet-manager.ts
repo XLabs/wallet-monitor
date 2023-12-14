@@ -8,7 +8,7 @@ import {
   Wallet,
   WalletBalance,
 } from "./wallets";
-import { TransferReceipt } from "./wallets/base-wallet";
+import { TransferReceipt, WalletData } from "./wallets/base-wallet";
 import {
   rebalanceStrategies,
   RebalanceStrategyName,
@@ -17,11 +17,22 @@ import { CosmosProvider, CosmosWallet } from "./wallets/cosmos";
 import { EVMProvider, EVMWallet } from "./wallets/evm";
 import { SolanaProvider, SolanaWallet } from "./wallets/solana";
 import { SuiProvider, SuiWallet } from "./wallets/sui";
-import { PriceFeed, WalletBalanceConfig, WalletPriceFeedConfig, WalletRebalancingConfig } from "./wallet-manager";
+import {
+  PriceFeed,
+  WalletBalanceConfig,
+  WalletPriceFeedConfig,
+  WalletRebalancingConfig,
+} from "./wallet-manager";
+import {
+  LocalWalletPool,
+  WalletPool,
+  WalletPoolOptions,
+} from "./wallets/wallet-pool";
 
 const DEFAULT_POLL_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_INTERVAL = 60 * 1000;
 const DEFAULT_REBALANCE_STRATEGY = "pourOver";
+const DEFAULT_WALLET_ACQUIRE_TIMEOUT = 5000;
 
 export type ChainWalletManagerOptions = {
   logger: winston.Logger;
@@ -74,6 +85,8 @@ export class ChainWalletManager {
   private rebalanceInterval: ReturnType<typeof setInterval> | null = null;
   private options: ChainWalletManagerOptions;
   private emitter = new EventEmitter();
+  private walletPool: WalletPool;
+  private wallets: Record<string, WalletData>;
   protected availableWalletsByChainName: Record<string, number> = {};
   // store acquiredAt for each {wallet_address__chain_name} to calculate lock period
   protected walletAcquiredAt: Record<string, number> = {};
@@ -82,23 +95,23 @@ export class ChainWalletManager {
 
   constructor(
     options: any,
-    private wallets: WalletConfig[],
+    private rawWallets: WalletConfig[],
     priceFeedInstance?: PriceFeed,
   ) {
     this.validateOptions(options);
     this.options = this.parseOptions(options);
 
     if (this.options.rebalance.enabled) {
-      this.validateRebalanceConfiguration(this.options.rebalance, wallets);
+      this.validateRebalanceConfiguration(this.options.rebalance, rawWallets);
     }
 
     this.logger = createLogger(this.options.logger);
-    this.priceFeed = priceFeedInstance
+    this.priceFeed = priceFeedInstance;
 
     this.walletToolbox = createWalletToolbox(
       options.network,
       options.chainName,
-      wallets,
+      rawWallets,
       {
         ...options.walletOptions,
         logger: this.logger,
@@ -107,13 +120,54 @@ export class ChainWalletManager {
       this.priceFeed,
     );
 
-    this.availableWalletsByChainName[options.chainName] = wallets.length;
+    this.availableWalletsByChainName[options.chainName] = rawWallets.length;
     this.emitter.emit(
       "active-wallets-count",
       options.chainName,
       options.network,
       this.availableWalletsByChainName[options.chainName],
     );
+
+    const wallets = {} as Record<string, WalletData>;
+
+    // TODO: Avoid this code repetition between WalletToolbox and ChainWalletManager
+    /**
+     * Alternatives
+     * 1. Make WalletToolbox.wallets public and use that instead of this.wallets
+     * 2. Delete WalletToolbox wallets and move all methods present in WalletToolbox to ChainWalletManager
+     */
+    for (const walletConfig of rawWallets) {
+      const config = this.walletToolbox.buildWalletConfig(walletConfig, {
+        ...options.walletOptions,
+        logger: this.logger,
+        failOnInvalidTokens: this.options.failOnInvalidTokens,
+      });
+      this.walletToolbox.validateConfig(
+        config,
+        this.options.failOnInvalidTokens,
+      );
+      wallets[config.address] = config;
+    }
+
+    this.wallets = wallets;
+
+    const chainManager = this;
+
+    const walletPoolOptions: WalletPoolOptions = {
+      walletOptions: Object.keys(this.wallets).map(address => {
+        return {
+          address,
+          getBalance: () => {
+            if (!chainManager.balancesByAddress[address]) {
+              return "0";
+            }
+            return chainManager.balancesByAddress[address].formattedBalance;
+          },
+        };
+      }),
+    };
+
+    this.walletPool = new LocalWalletPool(walletPoolOptions); // if HA: new DistributedWalletPool();
   }
 
   private validateOptions(options: any): options is ChainWalletManagerOptions {
@@ -204,7 +258,7 @@ export class ChainWalletManager {
       );
       this.emitter.emit("skipped", {
         chainName: this.options.chainName,
-        rawConfig: this.wallets,
+        rawConfig: this.rawWallets,
       });
       return;
     }
@@ -215,10 +269,18 @@ export class ChainWalletManager {
       const {
         rebalance: { enabled: isRebalancingEnabled, minBalanceThreshold },
       } = this.options;
-      const balances = await this.walletToolbox.pullBalances(
-        isRebalancingEnabled,
-        minBalanceThreshold,
-      );
+
+      const balances = await this.walletToolbox.pullBalances();
+
+      for (const balance of balances) {
+        this.walletPool.addOrDiscardWalletIfRequired(
+          isRebalancingEnabled,
+          balance.address,
+          balance,
+          minBalanceThreshold,
+        );
+      }
+
       const lastBalance = this.balancesByAddress;
       this.balancesByAddress = this.mapBalances(balances);
       this.emitter.emit(
@@ -308,10 +370,18 @@ export class ChainWalletManager {
   public async acquireLock(
     opts?: WalletExecuteOptions,
   ): Promise<WalletInterface> {
-    const { address, rawWallet } = await this.walletToolbox.acquire(
+    const timeout =
+      opts?.waitToAcquireTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
+    // this.grpcClient.acquireWallet(address);
+    const address = await this.walletPool.blockAndAcquire(
+      timeout,
       opts?.address,
-      opts?.waitToAcquireTimeout,
     );
+
+    const privateKey = this.wallets[address].privateKey;
+
+    const rawWallet = await this.walletToolbox.getRawWallet(privateKey!);
+
     this.updateActiveWalletsMetric(address);
 
     return {
@@ -323,7 +393,7 @@ export class ChainWalletManager {
 
   public async releaseLock(address: string) {
     this.updateActiveWalletsMetric(address, true);
-    return this.walletToolbox.release(address);
+    return this.walletPool.release(address);
   }
 
   // Returns a boolean indicating if a rebalance was executed
@@ -371,7 +441,7 @@ export class ChainWalletManager {
 
       let receipt;
       try {
-        receipt = await this.walletToolbox.transferBalance(
+        receipt = await this.transferBalance(
           sourceAddress,
           targetAddress,
           amount,
@@ -393,6 +463,43 @@ export class ChainWalletManager {
     this.emitter.emit("rebalance-finished", strategy, receipts);
 
     return true;
+  }
+
+  public async transferBalance(
+    sourceAddress: string,
+    targetAddress: string,
+    amount: number,
+    maxGasPrice?: number,
+    gasLimit?: number,
+  ) {
+    const privateKey = this.wallets[sourceAddress].privateKey;
+
+    if (!privateKey) {
+      throw new Error(`Private key for ${sourceAddress} not found`);
+    }
+
+    await this.walletPool.blockAndAcquire(
+      DEFAULT_WALLET_ACQUIRE_TIMEOUT,
+      sourceAddress,
+    );
+
+    let receipt;
+    try {
+      receipt = await this.walletToolbox.transferNativeBalance(
+        privateKey,
+        targetAddress,
+        amount,
+        maxGasPrice ?? 0, // TODO: ask what to do with this
+        gasLimit ?? 0, // TODO: ask what to do with this
+      );
+    } catch (error) {
+      await this.walletPool.release(sourceAddress);
+      throw error;
+    }
+
+    await this.walletPool.release(sourceAddress);
+
+    return receipt;
   }
 
   private updateActiveWalletsMetric(walletAddress: string, isReleased = false) {
@@ -424,18 +531,20 @@ export class ChainWalletManager {
     );
   }
 
-  public getBlockHeight () {
+  public getBlockHeight() {
     return this.walletToolbox.getBlockHeight();
   }
   /** Pull balances on demand */
-  public async pullBalances () {
+  public async pullBalances() {
     const balances = await this.walletToolbox.pullBalances();
     return this.mapBalances(balances);
   }
 
   /** Pull balances on demand with block height */
   public async pullBalancesAtBlockHeight(blockHeight: number) {
-    const balances = await this.walletToolbox.pullBalancesAtBlockHeight(blockHeight);
+    const balances = await this.walletToolbox.pullBalancesAtBlockHeight(
+      blockHeight,
+    );
     return this.mapBalances(balances);
   }
 }

@@ -1,8 +1,7 @@
 import winston from "winston";
 import { WalletBalance, TokenBalance, WalletOptions, WalletConfig } from ".";
-import { LocalWalletPool, WalletPool, WalletPoolOptions } from "./wallet-pool";
 import { createLogger } from "../utils";
-import { ChainWalletManager, Wallets } from "../chain-wallet-manager";
+import {  Wallets } from "../chain-wallet-manager";
 
 export type BaseWalletOptions = {
   logger: winston.Logger;
@@ -16,7 +15,6 @@ export type TransferReceipt = {
   formattedCost: string;
 };
 
-const DEFAULT_WALLET_ACQUIRE_TIMEOUT = 5000;
 
 export type WalletData = {
   address: string;
@@ -27,8 +25,6 @@ export type WalletData = {
 export abstract class WalletToolbox {
   private warm = false;
 
-  // TODO: Check if I can move this to the chain-wallet-manager
-  private walletPool: WalletPool;
   protected balancesByWalletAddress: Record<string, WalletBalance[]> = {};
   protected wallets: Record<string, WalletData>;
   protected logger: winston.Logger;
@@ -70,7 +66,7 @@ export abstract class WalletToolbox {
     tokens: string[],
   ): Promise<TokenBalance[]>;
 
-  protected abstract transferNativeBalance(
+  public abstract transferNativeBalance(
     privateKey: string,
     targetAddress: string,
     amount: number,
@@ -78,7 +74,7 @@ export abstract class WalletToolbox {
     gasLimit?: number,
   ): Promise<TransferReceipt>;
 
-  protected abstract getRawWallet(privateKey: string): Promise<Wallets>;
+  public abstract getRawWallet(privateKey: string): Promise<Wallets>;
 
   public abstract getGasPrice(): Promise<bigint>;
 
@@ -105,30 +101,9 @@ export abstract class WalletToolbox {
     }
 
     this.wallets = wallets;
-
-    const walletToolBox = this
-
-    const walletPoolOptions: WalletPoolOptions = {
-
-      walletOptions: Object.keys(this.wallets).map((address) => {
-        return {
-          address,
-          getBalance: () => {
-            if(!walletToolBox.balancesByWalletAddress[address]){
-              return "0"
-            }
-            return walletToolBox.balancesByWalletAddress[address].find((balance) => balance.isNative)!.formattedBalance;
-          }
-        }
-      })
-    }
-
-    this.walletPool = new LocalWalletPool(walletPoolOptions); // if HA: new DistributedWalletPool();
   }
 
   public async pullBalances(
-    isRebalancingEnabled = false,
-    minBalanceThreshold?: number,
     blockHeight?: number,
   ): Promise<WalletBalance[]> {
     if (!this.warm) {
@@ -157,13 +132,6 @@ export abstract class WalletToolbox {
 
       try {
         nativeBalance = await this.pullNativeBalance(address, blockHeight);
-
-        this.addOrDiscardWalletIfRequired(
-          isRebalancingEnabled,
-          address,
-          nativeBalance,
-          minBalanceThreshold ?? 0,
-        );
 
         balances.push(nativeBalance);
 
@@ -207,67 +175,10 @@ export abstract class WalletToolbox {
   }
 
   public async pullBalancesAtBlockHeight(blockHeight: number) {
-    return this.pullBalances(false, undefined, blockHeight);
+    return this.pullBalances(blockHeight);
   }
 
-  public async acquire(address?: string, acquireTimeout?: number) {
-    const timeout = acquireTimeout || DEFAULT_WALLET_ACQUIRE_TIMEOUT;
-    // this.grpcClient.acquireWallet(address);
-    const walletAddress = await this.walletPool.blockAndAcquire(
-      timeout,
-      address,
-    );
-
-    const privateKey = this.wallets[walletAddress].privateKey;
-
-    return {
-      address: walletAddress,
-      rawWallet: await this.getRawWallet(privateKey!),
-    };
-  }
-
-  public async release(address: string) {
-    await this.walletPool.release(address);
-  }
-
-  public async transferBalance(
-    sourceAddress: string,
-    targetAddress: string,
-    amount: number,
-    maxGasPrice?: number,
-    gasLimit?: number,
-  ) {
-    const privateKey = this.wallets[sourceAddress].privateKey;
-
-    if (!privateKey) {
-      throw new Error(`Private key for ${sourceAddress} not found`);
-    }
-
-    await this.walletPool.blockAndAcquire(
-      DEFAULT_WALLET_ACQUIRE_TIMEOUT,
-      sourceAddress,
-    );
-
-    let receipt;
-    try {
-      receipt = await this.transferNativeBalance(
-        privateKey,
-        targetAddress,
-        amount,
-        maxGasPrice,
-        gasLimit,
-      );
-    } catch (error) {
-      await this.walletPool.release(sourceAddress);
-      throw error;
-    }
-
-    await this.walletPool.release(sourceAddress);
-
-    return receipt;
-  }
-
-  private validateConfig(rawConfig: any, failOnInvalidTokens: boolean) {
+  public validateConfig(rawConfig: any, failOnInvalidTokens: boolean) {
     if (!rawConfig.address && !rawConfig.privateKey)
       throw new Error(
         `Invalid config for chain: ${this.chainName}: Missing address`,
@@ -286,7 +197,7 @@ export abstract class WalletToolbox {
     return true;
   }
 
-  private buildWalletConfig(
+  public buildWalletConfig(
     rawConfig: any,
     options: WalletOptions,
   ): WalletData {
@@ -301,37 +212,5 @@ export abstract class WalletToolbox {
       : [];
 
     return { address, privateKey, tokens };
-  }
-
-  /**
-   * Removes the wallet from the pool or adds the wallet back in the
-   * pool based on the min threshold specified in the rebalance config
-   *
-   * @param address wallet address
-   * @param balance native balance in the wallet
-   * @param minBalanceThreshold passed from rebalance config, defaults to zero
-   * @returns true if there is enough balance on the wallet, false otherwise
-   */
-  // TODO: Move this logic to the wallet pool
-  private addOrDiscardWalletIfRequired(
-    isRebalancingEnabled: boolean,
-    address: string,
-    balance: WalletBalance,
-    minBalanceThreshold: number,
-  ): boolean {
-    const isEnoughWalletBalance =
-      Number(balance.formattedBalance) >= minBalanceThreshold;
-
-    if (isRebalancingEnabled && balance.isNative) {
-      if (isEnoughWalletBalance) {
-        // set's the discarded flag on the wallet to false
-        this.walletPool.addWalletBackToPoolIfRequired(address);
-      } else {
-        // set's the discarded flag on the wallet to true
-        this.walletPool.discardWalletFromPool(address);
-      }
-    }
-
-    return isEnoughWalletBalance;
   }
 }
