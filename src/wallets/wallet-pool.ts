@@ -92,7 +92,7 @@ export class LocalWalletPool implements WalletPool {
   }
 
   private getHighestBalanceWallet(): ResourceWithBalance | undefined {
-    if (!this.availableResources.length) return;
+    if (!this.availableResources().length) return;
 
     return this.availableResources().reduce((acc, curr) => {
       if (!acc) return curr;
