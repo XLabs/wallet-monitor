@@ -303,7 +303,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     );
   }
 
-  protected async transferNativeBalance(
+  public async transferNativeBalance(
     privateKey: string,
     targetAddress: string,
     amount: number,
@@ -320,7 +320,7 @@ export class EvmWalletToolbox extends WalletToolbox {
     return receipt;
   }
 
-  protected async getRawWallet (privateKey: string) {
+  public async getRawWallet (privateKey: string) {
     return new ethers.Wallet(privateKey, this.provider);
   }
 

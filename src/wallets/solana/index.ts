@@ -258,7 +258,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     );
   }
 
-  protected async transferNativeBalance(
+  public async transferNativeBalance(
     sourceAddress: string,
     targetAddress: string,
     amount: number,
@@ -269,7 +269,7 @@ export class SolanaWalletToolbox extends WalletToolbox {
     );
   }
 
-  protected async getRawWallet(privateKey: string) {
+  public async getRawWallet(privateKey: string) {
     let secretKey;
     try {
       secretKey = decode(privateKey);

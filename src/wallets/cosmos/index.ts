@@ -199,7 +199,7 @@ export class CosmosWalletToolbox extends WalletToolbox {
     return [];
   }
 
-  protected async transferNativeBalance(
+  public async transferNativeBalance(
     privateKey: string,
     targetAddress: string,
     amount: number,
@@ -223,7 +223,7 @@ export class CosmosWalletToolbox extends WalletToolbox {
     return receipt;
   }
 
-  protected async getRawWallet(privateKey: string): Promise<Wallets> {
+  public async getRawWallet(privateKey: string): Promise<Wallets> {
     const { addressPrefix } = this.chainConfig.defaultConfigs[this.network];
     const signer = await createSigner(privateKey, addressPrefix);
 

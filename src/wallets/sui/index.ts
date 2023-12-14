@@ -241,7 +241,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     });
   }
 
-  protected async transferNativeBalance(
+  public async transferNativeBalance(
     privateKey: string,
     targetAddress: string,
     amount: number,
@@ -252,7 +252,7 @@ export class SuiWalletToolbox extends WalletToolbox {
     return transferSuiNativeBalance(this.connection, privateKey, txDetails);
   }
 
-  protected async getRawWallet (privateKey: string) {
+  public async getRawWallet (privateKey: string) {
     const suiPrivateKeyAsBuffer = Buffer.from(privateKey, "base64");
     const keyPair = Ed25519Keypair.fromSecretKey(suiPrivateKeyAsBuffer);
     const suiJsonProvider = new JsonRpcProvider(this.connection);
