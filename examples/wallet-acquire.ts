@@ -6,7 +6,7 @@ import { rebalanceStrategies } from "../lib/rebalance-strategies";
 // npx ganache -i 5777 \
 //     --wallet.accounts=0xf9fdbcbcdb4c7c72642be9fe7c09ad5869a961a8ae3c3374841cb6ead5fd34b1,3000000000000000000 \
 //     --wallet.accounts=0x5da88a1c7df3490d040792fcca4676e709fdd3e6f6e0142accc96cb7e205e1e0,2000000000000000000 \
-//     --wallet.accounts=0xa2c984f6a752ee05af03dac0bb65f3ec93f1498d43d23ebe6c31cf988d771423,2000000000000000000 \
+//     --wallet.accounts=0xa2c984f6a752ee05af03dac0bb65f3ec93f1498d43d23ebe6c31cf988d771423,2000000000000000000
 
 const allChainWallets: WalletManagerFullConfig["config"] = {
   ethereum: {
