@@ -8,7 +8,6 @@ export interface WalletPool {
   discardWalletFromPool(wallet: string): void;
   addWalletBackToPoolIfRequired(wallet: string): void;
   addOrDiscardWalletIfRequired(
-    isRebalancingEnabled: boolean,
     address: string,
     balance: WalletBalance,
     minBalanceThreshold: number,
@@ -46,7 +45,6 @@ export class LocalWalletPool implements WalletPool {
     }
   }
 
-  // TODO: AddOrDiscard wallets when calling this method
   private async acquire(resourceId?: string): Promise<string> {
     const resource = resourceId
       ? this.resources[resourceId].resource
@@ -70,7 +68,6 @@ export class LocalWalletPool implements WalletPool {
    * @returns true if there is enough balance on the wallet, false otherwise
    */
   public addOrDiscardWalletIfRequired(
-    isRebalancingEnabled: boolean,
     address: string,
     balance: WalletBalance,
     minBalanceThreshold: number,
@@ -78,7 +75,7 @@ export class LocalWalletPool implements WalletPool {
     const isEnoughWalletBalance =
       Number(balance.formattedBalance) >= minBalanceThreshold;
 
-    if (isRebalancingEnabled && balance.isNative) {
+    if (balance.isNative) {
       if (isEnoughWalletBalance) {
         // set's the discarded flag on the wallet to false
         this.addWalletBackToPoolIfRequired(address);

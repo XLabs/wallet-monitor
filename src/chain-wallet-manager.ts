@@ -274,7 +274,6 @@ export class ChainWalletManager {
 
       for (const balance of balances) {
         this.walletPool.addOrDiscardWalletIfRequired(
-          isRebalancingEnabled,
           balance.address,
           balance,
           minBalanceThreshold,
